@@ -121,7 +121,7 @@ export const classes = pgTable("classes", {
   academicYearId: uuid("academic_year_id").notNull().references(() => academicYears.id, { onDelete: "cascade" }),
   name: varchar("name", { length: 100 }).notNull(),
   gradeLevel: varchar("grade_level", { length: 50 }).notNull(),
-  homeroomTeacherId: uuid("homeroom_teacher_id").references(() => teachers.id, { onDelete: "set null" }),
+  homeroomTeacherId: uuid("homeroom_teacher_id").references(() => teachers.id, { onDelete: "restrict" }),
   status: varchar("status", { length: 24 }).notNull().default("active"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow()
 }, (t) => [index("classes_school_year_idx").on(t.tenantId, t.schoolId, t.academicYearId)]);
