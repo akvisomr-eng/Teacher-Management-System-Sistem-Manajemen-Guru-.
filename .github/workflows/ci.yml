@@ -15,6 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       NEON_AUTH_BASE_URL: https://ci.invalid/neondb/auth
+      NEXT_PUBLIC_NEON_AUTH_URL: https://ci.invalid/neondb/auth
       NEON_AUTH_COOKIE_SECRET: tms-ci-only-cookie-secret-not-for-deployment
     steps:
       - uses: actions/checkout@v4
