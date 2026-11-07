@@ -6,15 +6,24 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   try {
     const result = await withAuthenticatedUser(async (tx, user, profile) => {
-      const rows = await tx`
-        SELECT m.tenant_id, m.school_id, m.role, s.name AS school_name, t.name AS tenant_name
-        FROM memberships m
-        JOIN schools s ON s.id = m.school_id
-        JOIN tenants t ON t.id = m.tenant_id
-        WHERE m.user_id = ${profile.id}
-        ORDER BY t.created_at ASC
+      const memberships = await tx`
+        SELECT tenant_id, school_id, role
+        FROM memberships
+        WHERE user_id = ${profile.id}
+        ORDER BY created_at ASC
       `;
-      return { user: { name: user.name, email: user.email }, memberships: rows };
+      const items = [];
+      for (const membership of memberships) {
+        await tx`SELECT set_config('app.tenant_id', ${membership.tenant_id}, true)`;
+        const [school] = await tx`
+          SELECT s.name AS school_name, t.name AS tenant_name
+          FROM schools s JOIN tenants t ON t.id = s.tenant_id
+          WHERE s.id = ${membership.school_id}
+          LIMIT 1
+        `;
+        items.push({ ...membership, schoolName: school?.school_name ?? "Sekolah", tenantName: school?.tenant_name ?? "Organisasi" });
+      }
+      return { user: { name: user.name, email: user.email }, memberships: items };
     });
     return NextResponse.json(result);
   } catch (error) {
