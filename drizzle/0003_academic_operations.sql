@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS classes (
   CONSTRAINT classes_tenant_school_id_uq UNIQUE (tenant_id, school_id, id),
   CONSTRAINT classes_school_fk FOREIGN KEY (tenant_id, school_id) REFERENCES schools(tenant_id, id) ON DELETE CASCADE,
   CONSTRAINT classes_academic_year_fk FOREIGN KEY (tenant_id, school_id, academic_year_id) REFERENCES academic_years(tenant_id, school_id, id) ON DELETE CASCADE,
-  CONSTRAINT classes_homeroom_teacher_fk FOREIGN KEY (tenant_id, school_id, homeroom_teacher_id) REFERENCES teachers(tenant_id, school_id, id) ON DELETE SET NULL
+  CONSTRAINT classes_homeroom_teacher_fk FOREIGN KEY (tenant_id, school_id, homeroom_teacher_id) REFERENCES teachers(tenant_id, school_id, id) ON DELETE RESTRICT
 );
 CREATE INDEX IF NOT EXISTS classes_school_year_idx ON classes(tenant_id, school_id, academic_year_id);
 
