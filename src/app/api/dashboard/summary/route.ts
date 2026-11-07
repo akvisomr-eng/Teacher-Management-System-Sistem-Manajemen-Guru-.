@@ -1,0 +1,49 @@
+import { NextResponse } from "next/server";
+import { withAuthenticatedUser } from "@/db/connection";
+
+export const dynamic = "force-dynamic";
+
+export async function GET() {
+  try {
+    const result = await withAuthenticatedUser(async (tx, user, profile) => {
+      const memberships = await tx`
+        SELECT tenant_id, school_id, role
+        FROM memberships
+        WHERE user_id = ${profile.id}
+        ORDER BY created_at ASC
+      `;
+      if (!memberships.length) return { needsOnboarding: true, user: { name: user.name, email: user.email } };
+
+      const membership = memberships[0];
+      await tx`SELECT set_config('app.tenant_id', ${membership.tenant_id}, true)`;
+      const schoolId = membership.school_id;
+      const [counts] = await tx`
+        SELECT
+          (SELECT count(*)::int FROM teachers WHERE tenant_id = ${membership.tenant_id} AND school_id = ${schoolId} AND employment_status = 'active') AS teachers,
+          (SELECT count(*)::int FROM students WHERE tenant_id = ${membership.tenant_id} AND school_id = ${schoolId} AND status = 'active') AS students,
+          (SELECT count(*)::int FROM classes WHERE tenant_id = ${membership.tenant_id} AND school_id = ${schoolId} AND status = 'active') AS classes,
+          (SELECT count(*)::int FROM teaching_journals WHERE tenant_id = ${membership.tenant_id} AND school_id = ${schoolId}) AS journals,
+          (SELECT count(*)::int FROM teaching_plans WHERE tenant_id = ${membership.tenant_id} AND school_id = ${schoolId}) AS teaching_plans
+      `;
+      const activityRows = await tx`
+        SELECT action, resource_type, created_at
+        FROM audit_logs
+        WHERE tenant_id = ${membership.tenant_id} AND school_id = ${schoolId}
+        ORDER BY created_at DESC
+        LIMIT 5
+      `;
+      return {
+        needsOnboarding: false,
+        user: { name: user.name, email: user.email },
+        school: { tenantId: membership.tenant_id, schoolId, role: membership.role },
+        counts,
+        activities: activityRows
+      };
+    });
+    return NextResponse.json(result);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Gagal memuat ringkasan.";
+    const status = message === "UNAUTHENTICATED" ? 401 : message.includes("DATABASE_URL") ? 503 : 500;
+    return NextResponse.json({ error: message }, { status });
+  }
+}
