@@ -3,7 +3,7 @@ import postgres, { type TransactionSql } from "postgres";
 import { auth } from "@/lib/auth/server";
 
 const connectionString = process.env.DATABASE_URL;
-type DbTx = TransactionSql<{}>;
+type DbTx = TransactionSql<Record<string, never>>;
 
 function getClient() {
   if (!connectionString) throw new Error("DATABASE_URL belum dikonfigurasi.");
