@@ -1,8 +1,7 @@
 import { auth } from "@/lib/auth/server";
 
 export default auth.middleware({
-  loginUrl: "/auth/sign-in",
-  publicRoutes: ["/auth"]
+  loginUrl: "/auth/sign-in"
 });
 
 export const config = {
