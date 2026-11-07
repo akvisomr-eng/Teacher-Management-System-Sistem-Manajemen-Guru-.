@@ -11,7 +11,7 @@ export async function GET() {
         FROM memberships
         WHERE user_id = ${profile.id}
         ORDER BY created_at ASC
-      `;
+      ` as { tenant_id: string; school_id: string | null; role: string }[];
       const items: { tenant_id: string; school_id: string | null; role: string; schoolName: string; tenantName: string }[] = [];
       for (const membership of memberships) {
         await tx`SELECT set_config('app.tenant_id', ${membership.tenant_id}, true)`;
