@@ -23,6 +23,7 @@ export const schools = pgTable("schools", {
 export const users = pgTable("users", {
   id: uuid("id").defaultRandom().primaryKey(),
   email: varchar("email", { length: 254 }).notNull().unique(),
+  authUserId: varchar("auth_user_id", { length: 64 }).unique(),
   fullName: varchar("full_name", { length: 180 }).notNull(),
   phone: varchar("phone", { length: 30 }),
   avatarUrl: text("avatar_url"),
