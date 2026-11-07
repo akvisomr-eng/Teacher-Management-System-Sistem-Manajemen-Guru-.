@@ -20,7 +20,7 @@ export async function GET() {
           FROM schools s JOIN tenants t ON t.id = s.tenant_id
           WHERE s.id = ${membership.school_id}
           LIMIT 1
-        `;
+        ` as { school_name: string; tenant_name: string }[];
         items.push({ ...membership, schoolName: school?.school_name ?? "Sekolah", tenantName: school?.tenant_name ?? "Organisasi" });
       }
       return { user: { name: user.name, email: user.email }, memberships: items };
