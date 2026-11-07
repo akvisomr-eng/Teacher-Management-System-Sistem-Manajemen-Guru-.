@@ -1,8 +1,9 @@
 import "server-only";
-import postgres from "postgres";
+import postgres, { type TransactionSql } from "postgres";
 import { auth } from "@/lib/auth/server";
 
 const connectionString = process.env.DATABASE_URL;
+type DbTx = TransactionSql<{}>;
 
 function getClient() {
   if (!connectionString) throw new Error("DATABASE_URL belum dikonfigurasi.");
@@ -10,8 +11,6 @@ function getClient() {
 }
 
 type DbClient = ReturnType<typeof postgres>;
-type DbTx = Parameters<Parameters<DbClient["begin"]>[0]>[0];
-
 let client: DbClient | undefined;
 function database() {
   client ??= getClient();
@@ -19,14 +18,15 @@ function database() {
 }
 
 export type AuthProfile = { id: string; email: string; full_name: string };
+export type AuthenticatedUser = { id: string; email: string; name: string | null };
 
 export async function withAuthenticatedUser<T>(
-  work: (tx: DbTx, user: { id: string; email: string; name: string | null }, profile: AuthProfile) => Promise<T>
+  work: (tx: DbTx, user: AuthenticatedUser, profile: AuthProfile) => Promise<T>
 ): Promise<T> {
   const { data: session } = await auth.getSession();
   if (!session?.user) throw new Error("UNAUTHENTICATED");
 
-  return database().begin(async (tx) => {
+  const result = await database().begin(async (tx) => {
     await tx`SELECT set_config('app.auth_user_id', ${session.user.id}, true)`;
     const profiles = await tx`
       INSERT INTO users (auth_user_id, email, full_name)
@@ -41,11 +41,12 @@ export async function withAuthenticatedUser<T>(
     if (!profile) throw new Error("USER_PROFILE_UNAVAILABLE");
     return work(tx, session.user, profile);
   });
+  return result as T;
 }
 
 export async function withTenantContext<T>(
   tenantId: string,
-  work: (tx: DbTx, user: { id: string; email: string; name: string | null }, profile: AuthProfile, membership: { tenant_id: string; school_id: string | null; role: string }) => Promise<T>
+  work: (tx: DbTx, user: AuthenticatedUser, profile: AuthProfile, membership: { tenant_id: string; school_id: string | null; role: string }) => Promise<T>
 ): Promise<T> {
   return withAuthenticatedUser(async (tx, user, profile) => {
     await tx`SELECT set_config('app.tenant_id', ${tenantId}, true)`;
