@@ -30,4 +30,4 @@ Variabel lingkungan dijelaskan pada `.env.example` dan `docs/OPERATIONS.md`. Jan
 - `docs/OPERATIONS.md`: staging, production, migrasi, dan release gates.
 
 ## Status rilis
-Fondasi sedang dikembangkan pada PR draft. Preview dan production belum dinyatakan siap sampai CI, verifikasi auth, onboarding, RLS lintas tenant, dan deployment selesai.
+Fondasi aplikasi, autentikasi, onboarding, dan schema akademik awal berada pada PR draft. Migrasi database 0001–0003 sudah diterapkan pada branch Neon staging dan production; pengujian RLS lintas tenant berhasil di staging. CI dan preview deployment masih menjadi release gate, dan environment DATABASE_URL Vercel belum diisi.
