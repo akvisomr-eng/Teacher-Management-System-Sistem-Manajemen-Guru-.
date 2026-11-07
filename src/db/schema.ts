@@ -113,3 +113,86 @@ export const auditLogs = pgTable("audit_logs", {
   metadata: jsonb("metadata").$type<Record<string, unknown>>().notNull().default({}),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow()
 }, (t) => [index("audit_logs_tenant_created_idx").on(t.tenantId, t.createdAt)]);
+
+export const classes = pgTable("classes", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id, { onDelete: "cascade" }),
+  schoolId: uuid("school_id").notNull().references(() => schools.id, { onDelete: "cascade" }),
+  academicYearId: uuid("academic_year_id").notNull().references(() => academicYears.id, { onDelete: "cascade" }),
+  name: varchar("name", { length: 100 }).notNull(),
+  gradeLevel: varchar("grade_level", { length: 50 }).notNull(),
+  homeroomTeacherId: uuid("homeroom_teacher_id").references(() => teachers.id, { onDelete: "set null" }),
+  status: varchar("status", { length: 24 }).notNull().default("active"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow()
+}, (t) => [index("classes_school_year_idx").on(t.tenantId, t.schoolId, t.academicYearId)]);
+
+export const subjects = pgTable("subjects", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id, { onDelete: "cascade" }),
+  schoolId: uuid("school_id").notNull().references(() => schools.id, { onDelete: "cascade" }),
+  code: varchar("code", { length: 40 }),
+  name: varchar("name", { length: 140 }).notNull(),
+  category: varchar("category", { length: 80 }),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow()
+}, (t) => [index("subjects_school_idx").on(t.tenantId, t.schoolId)]);
+
+export const teachingAssignments = pgTable("teaching_assignments", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id, { onDelete: "cascade" }),
+  schoolId: uuid("school_id").notNull().references(() => schools.id, { onDelete: "cascade" }),
+  classId: uuid("class_id").notNull().references(() => classes.id, { onDelete: "cascade" }),
+  subjectId: uuid("subject_id").notNull().references(() => subjects.id, { onDelete: "cascade" }),
+  teacherId: uuid("teacher_id").notNull().references(() => teachers.id, { onDelete: "restrict" }),
+  academicYearId: uuid("academic_year_id").notNull().references(() => academicYears.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow()
+}, (t) => [index("teaching_assignments_school_idx").on(t.tenantId, t.schoolId, t.academicYearId)]);
+
+export const studentEnrollments = pgTable("student_enrollments", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id, { onDelete: "cascade" }),
+  schoolId: uuid("school_id").notNull().references(() => schools.id, { onDelete: "cascade" }),
+  studentId: uuid("student_id").notNull().references(() => students.id, { onDelete: "cascade" }),
+  classId: uuid("class_id").notNull().references(() => classes.id, { onDelete: "cascade" }),
+  academicYearId: uuid("academic_year_id").notNull().references(() => academicYears.id, { onDelete: "cascade" }),
+  status: varchar("status", { length: 24 }).notNull().default("active"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow()
+}, (t) => [uniqueIndex("student_enrollments_year_student_uq").on(t.academicYearId, t.studentId), index("student_enrollments_class_idx").on(t.tenantId, t.schoolId, t.classId)]);
+
+export const teachingJournals = pgTable("teaching_journals", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id, { onDelete: "cascade" }),
+  schoolId: uuid("school_id").notNull().references(() => schools.id, { onDelete: "cascade" }),
+  assignmentId: uuid("assignment_id").notNull().references(() => teachingAssignments.id, { onDelete: "cascade" }),
+  teacherId: uuid("teacher_id").notNull().references(() => teachers.id, { onDelete: "restrict" }),
+  journalDate: timestamp("journal_date", { withTimezone: true }).notNull(),
+  topic: varchar("topic", { length: 200 }).notNull(),
+  reflection: text("reflection"),
+  status: varchar("status", { length: 24 }).notNull().default("draft"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow()
+}, (t) => [index("teaching_journals_teacher_date_idx").on(t.tenantId, t.schoolId, t.teacherId, t.journalDate)]);
+
+export const assessments = pgTable("assessments", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id, { onDelete: "cascade" }),
+  schoolId: uuid("school_id").notNull().references(() => schools.id, { onDelete: "cascade" }),
+  assignmentId: uuid("assignment_id").notNull().references(() => teachingAssignments.id, { onDelete: "cascade" }),
+  title: varchar("title", { length: 180 }).notNull(),
+  assessmentType: varchar("assessment_type", { length: 40 }).notNull(),
+  maxScore: integer("max_score").notNull().default(100),
+  dueAt: timestamp("due_at", { withTimezone: true }),
+  status: varchar("status", { length: 24 }).notNull().default("draft"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow()
+}, (t) => [index("assessments_school_status_idx").on(t.tenantId, t.schoolId, t.status)]);
+
+export const assessmentResults = pgTable("assessment_results", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id, { onDelete: "cascade" }),
+  schoolId: uuid("school_id").notNull().references(() => schools.id, { onDelete: "cascade" }),
+  assessmentId: uuid("assessment_id").notNull().references(() => assessments.id, { onDelete: "cascade" }),
+  studentId: uuid("student_id").notNull().references(() => students.id, { onDelete: "cascade" }),
+  score: integer("score"),
+  feedback: text("feedback"),
+  gradedAt: timestamp("graded_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow()
+}, (t) => [uniqueIndex("assessment_results_student_uq").on(t.assessmentId, t.studentId), index("assessment_results_student_idx").on(t.tenantId, t.schoolId, t.studentId)]);
