@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import { pgTable, uuid, varchar, text, timestamp, boolean, jsonb, integer, uniqueIndex, index } from "drizzle-orm/pg-core";
 
 export const tenants = pgTable("tenants", {
@@ -23,14 +24,14 @@ export const schools = pgTable("schools", {
 export const users = pgTable("users", {
   id: uuid("id").defaultRandom().primaryKey(),
   email: varchar("email", { length: 254 }).notNull().unique(),
-  authUserId: varchar("auth_user_id", { length: 64 }).unique(),
+  authUserId: varchar("auth_user_id", { length: 64 }),
   fullName: varchar("full_name", { length: 180 }).notNull(),
   phone: varchar("phone", { length: 30 }),
   avatarUrl: text("avatar_url"),
   status: varchar("status", { length: 24 }).notNull().default("invited"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow()
-});
+}, (t) => [uniqueIndex("users_auth_user_id_uq").on(t.authUserId).where(sql`${t.authUserId} IS NOT NULL`)]);
 
 export const memberships = pgTable("memberships", {
   id: uuid("id").defaultRandom().primaryKey(),
