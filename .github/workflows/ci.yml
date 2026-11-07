@@ -34,7 +34,7 @@ jobs:
             git add package-lock.json
             git commit -m "build: add npm dependency lockfile"
             LOCK_COMMIT=$(git rev-parse HEAD)
-            git fetch origin "${GITHUB_HEAD_REF}"
+            git fetch origin "+refs/heads/${GITHUB_HEAD_REF}:refs/remotes/origin/${GITHUB_HEAD_REF}"
             git checkout -B "${GITHUB_HEAD_REF}" "origin/${GITHUB_HEAD_REF}"
             git cherry-pick "${LOCK_COMMIT}"
             git push origin "${GITHUB_HEAD_REF}"
