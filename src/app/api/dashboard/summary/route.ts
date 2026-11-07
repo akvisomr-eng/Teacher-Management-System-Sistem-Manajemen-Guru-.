@@ -17,6 +17,13 @@ export async function GET() {
       const membership = memberships[0];
       await tx`SELECT set_config('app.tenant_id', ${membership.tenant_id}, true)`;
       const schoolId = membership.school_id;
+      const [schoolInfo] = await tx`
+        SELECT s.name AS school_name, t.name AS tenant_name
+        FROM schools s
+        JOIN tenants t ON t.id = s.tenant_id
+        WHERE s.id = ${schoolId}
+        LIMIT 1
+      `;
       const [counts] = await tx`
         SELECT
           (SELECT count(*)::int FROM teachers WHERE tenant_id = ${membership.tenant_id} AND school_id = ${schoolId} AND employment_status = 'active') AS teachers,
@@ -35,7 +42,7 @@ export async function GET() {
       return {
         needsOnboarding: false,
         user: { name: user.name, email: user.email },
-        school: { tenantId: membership.tenant_id, schoolId, role: membership.role },
+        school: { tenantId: membership.tenant_id, schoolId, role: membership.role, schoolName: schoolInfo?.school_name ?? "Sekolah", tenantName: schoolInfo?.tenant_name ?? "Organisasi" },
         counts,
         activities: activityRows
       };
