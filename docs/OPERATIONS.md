@@ -42,3 +42,9 @@ Email/password dan verifikasi OTP diaktifkan pada Neon Auth. Shared SMTP hanya u
 - Security: dua tenant terpisah dan tidak dapat membaca/mengubah data satu sama lain.
 - Database: seluruh migrasi staging berhasil; production migration dilakukan setelah preview disetujui.
 - Deployment: GitHub repository terhubung ke Vercel, environment target diverifikasi, dan domain/trusted origin didaftarkan.
+
+## Snapshot implementasi 7 November 2026
+- Migrasi 0001–0003 sudah diterapkan pada branch `tms-staging` dan `production` setelah berhasil diuji pada staging.
+- Kedua branch memiliki 17 tabel aplikasi awal dan 18 kebijakan RLS.
+- Role `tms_app` diuji: tanpa konteks tenant tidak dapat membaca data sekolah/siswa.
+- Environment Vercel masih memerlukan `DATABASE_URL` role `tms_app` per target (staging untuk Preview, production untuk Production).
