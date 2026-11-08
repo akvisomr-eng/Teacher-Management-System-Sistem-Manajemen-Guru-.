@@ -26,7 +26,7 @@ await check("public sign-in page", async () => {
 });
 
 await check("unauthenticated workspace is redirected to sign-in", async () => {
-  const { response, body } = await request("/workspace/reports");
+  const { response } = await request("/workspace/reports");
   assert.ok([302, 307].includes(response.status), `expected a sign-in redirect, received ${response.status}`);
   assert.match(response.headers.get("location") || "", /auth\/sign-in/);
 });
