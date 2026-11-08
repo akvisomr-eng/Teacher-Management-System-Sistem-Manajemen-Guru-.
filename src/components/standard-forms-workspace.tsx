@@ -6,7 +6,8 @@ import { ClipboardList, Save, RefreshCw, ShieldCheck } from "lucide-react";
 type Field = { key:string; label:string; type:"text"|"textarea"|"number"|"date"|"select"|"checkbox"; required?:boolean; options?:string[]; hint?:string };
 type Section = { title:string; description?:string; fields:Field[] };
 type Definition = { key:string; title:string; description:string; sections:Section[] };
-type RecordRow = { id:string; schema_key:string; schema_version:number; reference_version:string; title:string; status:string; record_data:Record<string,unknown>; created_at:string };
+type RecordRow = { id:string; schema_key:string; schema_version:number; reference_version:string; title:string; status:string; record_data:Record<string,unknown>; linked_entity_type?:string|null; linked_entity_id?:string|null; review_note?:string|null; created_at:string };
+type MasterOption = {id:string;full_name:string;employee_number?:string|null;student_number?:string|null};
 
 const definitions:Record<string,Definition[]> = {
  teachers:[{key:"gtk-personal-employment",title:"Biodata dan Riwayat Kepegawaian GTK",description:"Kelengkapan data pendidik dan tenaga kependidikan sebagai data pendukung profil GTK sekolah.",sections:[
@@ -61,6 +62,8 @@ export function StandardFormsWorkspace({module}:{module:keyof typeof definitions
  const [values,setValues]=useState<Record<string,string|boolean>>({});
  const [title,setTitle]=useState("");
  const [rows,setRows]=useState<RecordRow[]>([]);
+ const [masterOptions,setMasterOptions]=useState<MasterOption[]>([]);
+ const [linkedEntityId,setLinkedEntityId]=useState("");
  const [loading,setLoading]=useState(true);
  const [saving,setSaving]=useState(false);
  const [error,setError]=useState("");
@@ -68,7 +71,7 @@ export function StandardFormsWorkspace({module}:{module:keyof typeof definitions
  const current=useMemo(()=>forms.find(item=>item.key===selected)??forms[0],[forms,selected]);
  const load=useCallback(async()=>{
   setLoading(true);setError("");
-  try{const response=await fetch(`/api/standard-forms?module=${module}`,{cache:"no-store"});const result=await response.json();if(!response.ok)throw new Error(result.error??"Arsip formulir tidak dapat dimuat.");setRows(result.data??[]);}
+  try{const response=await fetch(`/api/standard-forms?module=${module}`,{cache:"no-store"});const result=await response.json();if(!response.ok)throw new Error(result.error??"Arsip formulir tidak dapat dimuat.");setRows(result.data??[]);setMasterOptions(result.masterOptions??[]);}
   catch(e){setError(e instanceof Error?e.message:"Gagal memuat arsip formulir.");}
   finally{setLoading(false);}
  },[module]);
@@ -76,7 +79,7 @@ export function StandardFormsWorkspace({module}:{module:keyof typeof definitions
   let active=true;
   fetch(`/api/standard-forms?module=${module}`,{cache:"no-store"})
    .then(async response=>{const result=await response.json();if(!response.ok)throw new Error(result.error??"Arsip formulir tidak dapat dimuat.");return result;})
-   .then(result=>{if(active)setRows(result.data??[]);})
+   .then(result=>{if(active){setRows(result.data??[]);setMasterOptions(result.masterOptions??[]);}})
    .catch(error=>{if(active)setError(error instanceof Error?error.message:"Gagal memuat arsip formulir.");})
    .finally(()=>{if(active)setLoading(false);});
   return()=>{active=false;};
@@ -88,11 +91,18 @@ export function StandardFormsWorkspace({module}:{module:keyof typeof definitions
   if(missing.length){setError("Lengkapi kolom wajib: "+missing.join(", "));setSaving(false);return;}
   const heading=title.trim()||String(values.fullName??values.documentTitle??values.planTitle??values.assessmentTitle??values.reportName??values.formTitle??current.title);
   try{
-   const response=await fetch("/api/standard-forms",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({moduleKey:module,schemaKey:current.key,schemaVersion:1,referenceVersion:"TMS-reference-profile-2026.11",title:heading,recordData:values})});
+   const response=await fetch("/api/standard-forms",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({moduleKey:module,schemaKey:current.key,schemaVersion:1,referenceVersion:"TMS-reference-profile-2026.11",title:heading,recordData:values,...(linkedEntityId?{linkedEntityType:module==="teachers"?"teacher":"student",linkedEntityId}:{})})});
    const result=await response.json();if(!response.ok)throw new Error(result.error??"Formulir gagal disimpan.");
-   setValues({});setTitle("");setNotice("Data formulir berhasil disimpan sebagai draf dan tercatat dalam audit sekolah.");await load();
+   setValues({});setTitle("");setLinkedEntityId("");setNotice("Data formulir berhasil disimpan sebagai draf dan tercatat dalam audit sekolah.");await load();
   }catch(e){setError(e instanceof Error?e.message:"Gagal menyimpan formulir.");}
   finally{setSaving(false);}
+ }
+ async function updateStatus(id:string,action:"submit"|"approve"|"reject"|"archive"){
+  setError("");setNotice("");
+  const reviewNote=action==="reject"?window.prompt("Alasan penolakan (wajib dicatat):")??"":"";
+  if(action==="reject"&&!reviewNote.trim())return;
+  try{const response=await fetch("/api/standard-forms",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({id,action,reviewNote})});const result=await response.json();if(!response.ok)throw new Error(result.error??"Status gagal diperbarui.");setNotice("Status arsip diperbarui: "+result.data.status);await load();}
+  catch(e){setError(e instanceof Error?e.message:"Gagal memperbarui status.");}
  }
  if(!current)return null;
  return <section className="registry-panel standard-forms-panel">
@@ -104,12 +114,13 @@ export function StandardFormsWorkspace({module}:{module:keyof typeof definitions
     <div className="standard-forms-intro"><small>FORMULIR ADMINISTRASI · {module.toUpperCase()}</small><h3>{current.title}</h3><p>{current.description}</p></div>
     <form onSubmit={save}>
      <label className="standard-record-title">Judul / identitas arsip<input value={title} onChange={e=>setTitle(e.target.value)} placeholder={current.title}/></label>
+     {(module==="teachers"||module==="students")&&<label className="standard-record-title">Hubungkan ke data induk {module==="teachers"?"GTK":"peserta didik"} (opsional)<select value={linkedEntityId} onChange={e=>setLinkedEntityId(e.target.value)}><option value="">Tidak dihubungkan</option>{masterOptions.map(option=><option key={option.id} value={option.id}>{option.full_name} · {module==="teachers"?option.employee_number??"tanpa nomor":option.student_number??"tanpa nomor"}</option>)}</select><small>Hubungan ini hanya menautkan arsip pendukung ke data induk sekolah yang dipilih; tidak menimpa data induk.</small></label>}
      {current.sections.map((section,index)=><fieldset className="standard-form-section" key={section.title}><legend>{index+1}. {section.title}</legend>{section.description&&<p>{section.description}</p>}<div className="standard-form-grid">{section.fields.map(field=><label key={field.key} className={field.type==="textarea"?"is-wide":""}>{field.label}{field.type==="textarea"?<textarea rows={3} value={String(values[field.key]??"")} onChange={e=>setField(field.key,e.target.value)} required={field.required}/>:field.type==="select"?<select value={String(values[field.key]??"")} onChange={e=>setField(field.key,e.target.value)} required={field.required}><option value="">Pilih...</option>{(field.options??[]).map(option=><option key={option}>{option}</option>)}</select>:field.type==="checkbox"?<input type="checkbox" checked={Boolean(values[field.key]??false)} onChange={e=>setField(field.key,e.target.checked)}/>:<input type={field.type} value={String(values[field.key]??"")} onChange={e=>setField(field.key,e.target.value)} required={field.required} min={field.type==="number"?0:undefined}/>}{field.hint&&<small>{field.hint}</small>}</label>)}</div></fieldset>)}
      {error&&<div className="registry-error" role="alert">{error}</div>}{notice&&<div className="registry-notice" role="status">{notice}</div>}
      <div className="standard-form-actions"><span>Versi skema 1 · Profil referensi TMS 2026.11</span><button type="submit" disabled={saving}><Save size={15}/>{saving?"Menyimpan...":"Simpan draf formulir"}</button></div>
     </form>
    </div>
   </div>
-  <div className="standard-records"><h3>Arsip formulir tersimpan ({rows.length})</h3>{loading?<p className="registry-empty">Memuat arsip...</p>:rows.length?<div className="registry-table-wrap"><table className="registry-table"><thead><tr><th>Judul</th><th>Template</th><th>Referensi</th><th>Status</th><th>Dibuat</th></tr></thead><tbody>{rows.map(row=><tr key={row.id}><td><strong>{row.title}</strong><small>{row.schema_key} · v{row.schema_version}</small></td><td>{forms.find(form=>form.key===row.schema_key)?.title??row.schema_key}</td><td>{row.reference_version}</td><td><span className="registry-status">{row.status}</span></td><td>{new Date(row.created_at).toLocaleDateString("id-ID")}</td></tr>)}</tbody></table></div>:<p className="registry-empty">Belum ada arsip formulir untuk modul ini.</p>}</div>
+  <div className="standard-records"><h3>Arsip formulir tersimpan ({rows.length})</h3>{loading?<p className="registry-empty">Memuat arsip...</p>:rows.length?<div className="registry-table-wrap"><table className="registry-table"><thead><tr><th>Judul</th><th>Template</th><th>Referensi</th><th>Status</th><th>Data induk</th><th>Dibuat</th><th>Alur</th></tr></thead><tbody>{rows.map(row=><tr key={row.id}><td><strong>{row.title}</strong><small>{row.schema_key} · v{row.schema_version}</small></td><td>{forms.find(form=>form.key===row.schema_key)?.title??row.schema_key}</td><td>{row.reference_version}</td><td><span className="registry-status">{row.status}</span>{row.review_note&&<small>{row.review_note}</small>}</td><td>{row.linked_entity_id?`${row.linked_entity_type}: ${row.linked_entity_id.slice(0,8)}…`:"—"}</td><td>{new Date(row.created_at).toLocaleDateString("id-ID")}</td><td><div className="registry-row-actions">{row.status==="draft"&&<button className="registry-toggle" onClick={()=>void updateStatus(row.id,"submit")}>Ajukan</button>}{row.status==="submitted"&&<><button className="registry-toggle" onClick={()=>void updateStatus(row.id,"approve")}>Setujui</button><button className="registry-toggle" onClick={()=>void updateStatus(row.id,"reject")}>Tolak</button></>}{(row.status==="approved"||row.status==="rejected")&&<button className="registry-toggle" onClick={()=>void updateStatus(row.id,"archive")}>Arsipkan</button>}</div></td></tr>)}</tbody></table></div>:<p className="registry-empty">Belum ada arsip formulir untuk modul ini.</p>}</div>
  </section>;
 }

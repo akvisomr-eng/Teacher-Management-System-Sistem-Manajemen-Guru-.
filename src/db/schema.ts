@@ -216,6 +216,9 @@ export const standardModuleRecords = pgTable("standard_module_records", {
   updatedBy: uuid("updated_by").references(() => users.id, { onDelete: "set null" }),
   reviewedBy: uuid("reviewed_by").references(() => users.id, { onDelete: "set null" }),
   reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+  reviewNote: text("review_note"),
+  linkedEntityType: varchar("linked_entity_type", { length: 20 }),
+  linkedEntityId: uuid("linked_entity_id"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow()
 }, (t) => [
