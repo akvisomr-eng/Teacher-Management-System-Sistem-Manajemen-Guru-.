@@ -66,7 +66,7 @@ export async function GET(request: Request) {
       `;
     } else if (type === "students") {
       data = await tx`
-        SELECT st.student_number, st.full_name, st.status,
+        SELECT st.student_number, st.full_name AS student_name, st.status,
                c.name AS class_name, c.grade_level, ay.name AS academic_year
         FROM students st
         LEFT JOIN student_enrollments e ON e.student_id = st.id AND e.tenant_id = st.tenant_id AND e.school_id = st.school_id AND e.status = 'active'
