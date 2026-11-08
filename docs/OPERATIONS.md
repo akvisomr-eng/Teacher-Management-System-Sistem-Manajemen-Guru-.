@@ -5,16 +5,17 @@ Gunakan dua branch Neon yang berbeda:
 - **Production**: branch `production` — data operasional sesungguhnya.
 - **Preview/staging**: branch `tms-staging` — pengujian fitur, migrasi, dan autentikasi.
 
-Jangan arahkan deployment preview ke database production.
+Semua deployment Preview memakai database staging. Deployment Production hanya memakai database production. Jangan pernah mengarahkan Preview ke database production.
 
 ## Environment variables
 Atur variabel di Vercel sesuai target deployment dan jangan pernah memasukkan nilainya ke repository atau percakapan:
 - `NEON_AUTH_BASE_URL`: URL Neon Auth untuk branch yang sesuai dengan target deployment.
-- `NEON_AUTH_COOKIE_SECRET`: secret acak minimal 32 karakter, disimpan sebagai Sensitive/Encrypted.
+- `NEON_AUTH_COOKIE_SECRET`: secret acak minimal 32 karakter, bertipe Sensitive, dan berbeda untuk Production, Preview, dan Development.
 - `DATABASE_URL`: connection string role `tms_app`, bukan `neondb_owner`.
+- `NEXT_PUBLIC_NEON_AUTH_URL`: endpoint publik Neon Auth untuk branch target.
 - `NEXT_PUBLIC_APP_URL`: origin aplikasi yang benar; variabel ini memang bersifat publik.
 
-Preview menggunakan connection string dan Auth URL dari `tms-staging`. Production menggunakan nilai dari branch `production`. Pastikan environment variable Production dan Preview tidak saling tertukar. Setelah mengubah environment variable, lakukan redeploy target terkait.
+Preview menggunakan connection string dan Auth URL dari `tms-staging`; Production menggunakan nilai dari branch `production`. Environment variable database dan Auth tidak boleh saling tertukar. Setiap perubahan environment variable memerlukan redeploy untuk diterapkan pada deployment yang sudah ada.
 
 ## Migrasi
 File SQL dijalankan berurutan:
@@ -31,26 +32,28 @@ Jalankan terlebih dahulu pada branch staging. Periksa tabel, constraint, RLS pol
 - Semua endpoint yang membaca atau mengubah data harus memeriksa session dan membership terlebih dahulu.
 - Jangan mengandalkan tenant ID dari browser sebagai bukti otorisasi.
 - RLS adalah lapisan pertahanan tambahan, bukan pengganti pemeriksaan role dan izin pada service layer.
-- Endpoint direktori guru/siswa hanya mengizinkan role pengelola sekolah yang telah diverifikasi; perubahan dicatat ke audit log.
+- API mengembalikan respons autentikasi terstruktur; route handler harus tetap melakukan pemeriksaan session, membership, role, tenant, dan sekolah.
+- Penambahan/perubahan direktori guru dan siswa serta master kelas/mapel dicatat ke audit log.
 - Data peserta didik adalah data pribadi. Batasi akses, minimalkan pengumpulan, dan tetapkan kebijakan retensi sebelum sekolah menggunakannya secara luas.
 
 ## Auth email
-Email/password dan verifikasi OTP diaktifkan pada Neon Auth. Shared SMTP hanya untuk uji awal; siapkan SMTP milik organisasi untuk penggunaan produksi dan verifikasi deliverability sebelum membuka pendaftaran umum.
+Email/password dan verifikasi OTP diaktifkan pada Neon Auth. Shared SMTP hanya untuk uji awal; siapkan SMTP milik organisasi untuk penggunaan produksi dan verifikasi deliverability sebelum membuka pendaftaran umum. Domain production dan preview yang digunakan harus tercatat di trusted-origin allowlist pada branch Neon Auth masing-masing.
 
 ## Release gates
 - CI: typecheck, lint, dependency audit, dan production build berhasil.
 - Preview: sign-up, verifikasi email, sign-in, sign-out, session refresh dan protected routes berhasil.
 - Onboarding: organisasi, sekolah, admin awal dan tahun akademik berhasil dibuat.
-- Registry: tambah, daftar, pencarian, perubahan status guru/siswa berhasil.
+- Registry: tambah, daftar, pencarian, dan perubahan status guru/siswa, kelas, dan mata pelajaran berhasil.
 - Security: dua tenant terpisah dan tidak dapat membaca/mengubah data satu sama lain; role tanpa izin ditolak.
 - Database: seluruh migrasi staging berhasil; production migration dilakukan setelah preview disetujui.
-- Deployment: GitHub repository terhubung ke Vercel, environment target diverifikasi, dan domain/trusted origin didaftarkan.
+- Deployment: environment target, domain, trusted origin, dan health monitoring diverifikasi.
 - Operasional: email pengiriman, backup/recovery, monitoring, kebijakan privasi, dukungan, dan prosedur insiden siap.
 
 ## Status terverifikasi per 8 November 2026
 - Foundation commit `5ca5a7029aa084134d8f76b481f1bffeffa573eb` telah lulus CI #104 dan deployment Vercel Production berstatus `READY`.
+- PR #2 (direktori guru/siswa, API tenant-scoped, audit log, dan dokumentasi) telah digabung ke `main`; CI #110 dan deployment Preview untuk commit fitur terakhir berhasil.
 - Branch Neon `tms-staging` dan `production` berstatus `ready`; migrasi 0001–0003 telah diterapkan pada keduanya.
-- Database awal memiliki 17 tabel aplikasi dan kebijakan RLS tenant-scoped. Pengujian isolasi tenant awal berhasil pada staging.
-- Environment `DATABASE_URL` Production dan Preview telah ditambahkan. Nilai aktual, Auth URL, cookie secret, email deliverability, dan smoke test browser harus tetap diverifikasi melalui deployment.
-- Modul direktori guru/siswa sedang dikembangkan terpisah melalui pull request; jangan menganggap workflow tersebut operasional di production sebelum PR lulus CI dan deployment diverifikasi.
-- Dashboard, autentikasi, dan onboarding merupakan fondasi yang telah dibangun; modul kurikulum, kelas, perencanaan ajar, jurnal, asesmen, rapor, komunikasi, AI, analitik, dan billing masih memerlukan implementasi serta pengujian tersendiri.
+- Database awal memiliki 17 tabel aplikasi dengan kebijakan RLS tenant-scoped. Runtime role `tms_app` tidak dapat membaca data sekolah/guru/siswa tanpa konteks tenant pada kedua branch.
+- Environment `DATABASE_URL` Production dan Preview memakai role `tms_app`; Preview diarahkan ke staging dan Production ke production.
+- Cookie secret Neon Auth telah dipisahkan untuk Production, Preview, dan Development; trusted origins production dan preview telah dikonfigurasi.
+- Pengelolaan kelas dan mata pelajaran sedang dikembangkan pada PR terpisah. Modul kurikulum, penugasan, perencanaan ajar, jurnal, asesmen, rapor, komunikasi, AI, analitik, dan billing masih memerlukan implementasi serta pengujian tersendiri.

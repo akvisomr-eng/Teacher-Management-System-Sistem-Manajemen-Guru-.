@@ -33,4 +33,4 @@ Variabel lingkungan dijelaskan pada `.env.example` dan `docs/OPERATIONS.md`. Jan
 - `docs/OPERATIONS.md`: staging, production, migrasi, dan release gates.
 
 ## Status rilis
-Foundation autentikasi, onboarding sekolah, dashboard, schema akademik awal, RLS, dan CI telah tersedia. Deployment foundation di Vercel berstatus `READY`. Pengembangan registry guru/siswa sedang berjalan pada branch fitur tersendiri. Modul akademik lain dan pengujian end-to-end harus diselesaikan sebelum sistem dapat dinyatakan siap operasional secara menyeluruh.
+Fondasi autentikasi, onboarding, dashboard, PostgreSQL RLS, serta direktori guru/siswa telah digabung ke `main`. Pengelolaan kelas dan mata pelajaran sedang dikembangkan pada PR berikutnya. Kurikulum, penugasan guru, perencanaan ajar, jurnal, asesmen/rapor, komunikasi, AI, analitik, billing, dan integrasi masih memerlukan implementasi serta pengujian sebelum seluruh platform dinyatakan siap operasional.
