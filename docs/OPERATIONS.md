@@ -71,3 +71,11 @@ Email/password dan verifikasi OTP aktif. Shared SMTP masih digunakan untuk uji a
 - Tidak ada runtime error yang terdeteksi pada rentang pemeriksaan terakhir 30 menit. Route workspace baru ter-build dan deployment READY; pengujian UI dan transaksi dengan sesi pengguna sekolah nyata masih diperlukan karena sesi autentikasi pengguna tidak tersedia untuk pengujian otomatis dari luar. Uji end-to-end sign-in, onboarding, dan transaksi sekolah dengan akun pengguna nyata tetap diperlukan.
 - Shared SMTP masih aktif. SMTP bermerek organisasi, uji autentikasi end-to-end, backup/recovery teruji, kebijakan privasi/retensi, dan prosedur insiden tetap menjadi release gate sebelum operasional komersial penuh.
 - Rapor, remedial/enrichment, komunikasi wali, AI, analitik lanjutan, integrasi, dan billing belum dinyatakan siap operasional.
+
+
+## Standard forms workflow (migration 0008)
+
+- Supporting form records can optionally link to a canonical teacher or student UUID. The API verifies that the linked entity belongs to the authenticated tenant and school; links do not overwrite master data.
+- Review lifecycle: `draft → submitted → approved/rejected → archived`. Every transition is recorded in `audit_logs`; reviewer, review time, and review note are stored on the record.
+- Migration `0008_standard_form_workflow_links.sql` adds optional polymorphic teacher/student link metadata and review note. Apply to staging, verify constraints/index/API, then request explicit approval before production migration.
+- The workflow is internal administrative approval, not an official Dapodik approval or synchronization.
