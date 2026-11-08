@@ -10,6 +10,8 @@ Teacher Desk is a teacher-facing companion application inside the existing TMS p
 - The server derives teacher, tenant, and school IDs from the authenticated session. Never trust a teacher ID, school ID, tenant ID, or role supplied by the browser.
 - Teacher permissions are owner-scoped. A teacher can read and write only their own personal workspace items and only teaching assignments explicitly assigned to them.
 - School managers retain their separate TMS workspace and cannot silently impersonate a teacher.
+- The school manager links an already registered account to the canonical teacher record at `/workspace/teachers/access`. The link operation checks manager authority, rejects an account with a non-teacher role in that school, and prevents one account from being assigned to two different teacher records in the same school.
+- A teacher must first register/sign in once through `/teacher/sign-in`; the school then links that exact email. This keeps identity creation separate from school authorization.
 
 ## Data architecture
 - One Neon project and one PostgreSQL database shared with TMS.
