@@ -111,7 +111,7 @@ export function ReportsWorkspace() {
           </tbody>
         </table>
       </div>
-      <p className="registry-footnote">Laporan dibatasi pada sekolah dan tenant yang sedang aktif. Guru hanya dapat mengakses rekap nilai dari penugasannya sendiri.</p>
+      <p className="registry-footnote">Laporan dibatasi pada sekolah dan tenant yang sedang aktif. Guru hanya melihat kelas, siswa, dan rekap nilai yang terkait dengan penugasannya.</p>
     </section>
   </main>;
 }
