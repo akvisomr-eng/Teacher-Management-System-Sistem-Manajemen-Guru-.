@@ -6,7 +6,6 @@ import { withAuthenticatedUser } from "@/db/connection";
 export const dynamic = "force-dynamic";
 
 type DbTx = TransactionSql<Record<string, never>>;
-type Resource = "teachers" | "students";
 const roles = new Set(["tenant_owner", "tenant_admin", "principal", "vice_principal", "school_operator"]);
 const resourceSchema = z.enum(["teachers", "students"]);
 const teacherCreate = z.object({
