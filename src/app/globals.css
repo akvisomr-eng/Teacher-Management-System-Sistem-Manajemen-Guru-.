@@ -48,3 +48,24 @@
 .curriculum-editor-actions{grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap;padding-top:4px}
 .curriculum-editor-actions .registry-toggle{display:inline-flex;align-items:center;gap:6px;padding:9px 11px}
 @media(max-width:560px){.curriculum-editor{grid-template-columns:1fr;padding:12px}.curriculum-editor>label:nth-child(n+3){grid-column:auto}.curriculum-editor-actions{grid-column:auto}.curriculum-editor-actions button{flex:1;justify-content:center}}
+
+
+/* Reports center */
+.reports-overview{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:18px}
+.reports-overview>div{background:#fff;border:1px solid #edf0f5;border-radius:12px;padding:15px 17px}
+.reports-overview small{display:block;color:#8b93a7;font-size:10px}
+.reports-overview strong{display:block;font:700 20px 'Plus Jakarta Sans';margin-top:5px}
+.reports-toolbar{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.reports-select-wrap{display:grid;gap:6px;min-width:220px}
+.reports-select-wrap label{font-size:10px;color:#667087;font-weight:700}
+.reports-select-wrap select{height:38px;border:1px solid #e4e7ef;border-radius:7px;background:#fff;padding:0 10px;font:11px 'DM Sans';color:#303a53}
+.reports-actions{display:flex;gap:7px;flex-wrap:wrap}
+.reports-actions .registry-toggle{display:inline-flex;align-items:center;gap:6px;padding:9px 11px}
+.reports-description{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:16px 0;color:#9299aa;font-size:10px}
+.reports-description strong{color:#303a53;font-size:11px}
+.reports-table-wrap{overflow:auto;max-height:65vh;border:1px solid #f0f1f5;border-radius:9px}
+.reports-table{min-width:760px}
+.reports-table th{position:sticky;top:0;background:#fafaff;z-index:1}
+.reports-table td{white-space:nowrap}
+@media(max-width:560px){.reports-overview{gap:7px}.reports-overview>div{padding:12px 10px}.reports-overview strong{font-size:17px}.reports-toolbar{align-items:stretch}.reports-select-wrap{width:100%}.reports-actions{display:grid;grid-template-columns:repeat(3,1fr)}.reports-actions button{justify-content:center;padding:8px 5px;font-size:8px}}
+@media print{body{background:#fff}.reports-shell{max-width:none;padding:0}.reports-shell .registry-back,.reports-shell .registry-refresh,.reports-shell .reports-actions,.reports-shell .registry-footnote{display:none!important}.reports-shell .registry-panel,.reports-shell .reports-overview>div{border:0;box-shadow:none;padding:6px 0}.reports-table-wrap{max-height:none;overflow:visible;border:0}.reports-table{min-width:0;font-size:8px}.reports-table th,.reports-table td{padding:5px 4px;font-size:8px;white-space:normal}.reports-table th{position:static}.reports-shell .registry-header{margin-bottom:12px}}
