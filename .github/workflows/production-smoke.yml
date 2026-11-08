@@ -1,0 +1,28 @@
+name: TMS Production Smoke
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "15 1 * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tms-production-smoke
+  cancel-in-progress: true
+
+jobs:
+  smoke:
+    name: Verify production availability and access controls
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Run production smoke checks
+        env:
+          TMS_PRODUCTION_URL: https://teacher-management-system-nine.vercel.app
+        run: node scripts/production-smoke.mjs
