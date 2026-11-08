@@ -22,23 +22,30 @@ type Profile = { id: string; email: string; full_name: string };
 async function withTeacher(work: (tx: DbTx, teacher: TeacherIdentity, profile: Profile) => Promise<Response>) {
   try {
     return await withAuthenticatedUser(async (tx, _user, profile) => {
+      const memberships = await tx`
+        SELECT tenant_id, school_id, role, scope
+        FROM memberships
+        WHERE user_id = ${profile.id} AND role = 'teacher' AND school_id IS NOT NULL
+        ORDER BY created_at ASC LIMIT 2
+      `;
+      if (memberships.length !== 1) {
+        return NextResponse.json({ error: memberships.length ? "Akun guru memiliki lebih dari satu penempatan aktif. Hubungi operator sekolah." : "Akun ini belum memiliki penempatan guru aktif. Hubungi operator sekolah." }, { status: 403 });
+      }
+      const membership = memberships[0];
+      await tx`SELECT set_config('app.tenant_id', ${membership.tenant_id}, true)`;
       const rows = await tx`
         SELECT t.id AS teacher_id, t.tenant_id, t.school_id, t.full_name,
-               m.role, m.scope, s.name AS school_name
+               ${membership.role}::varchar AS role, ${tx.json(membership.scope as never)}::jsonb AS scope, s.name AS school_name
         FROM teachers t
-        JOIN memberships m ON m.user_id = t.user_id
-          AND m.tenant_id = t.tenant_id AND m.school_id = t.school_id
         JOIN schools s ON s.id = t.school_id AND s.tenant_id = t.tenant_id
-        WHERE t.user_id = ${profile.id} AND m.role = 'teacher'
-          AND t.employment_status = 'active'
+        WHERE t.user_id = ${profile.id} AND t.tenant_id = ${membership.tenant_id}
+          AND t.school_id = ${membership.school_id} AND t.employment_status = 'active'
         ORDER BY t.created_at ASC LIMIT 2
       `;
       if (rows.length !== 1) {
-        return NextResponse.json({ error: rows.length ? "Akun guru memiliki lebih dari satu penempatan aktif. Hubungi operator sekolah." : "Akun ini belum ditautkan ke data induk guru oleh operator sekolah." }, { status: 403 });
+        return NextResponse.json({ error: "Akun guru belum ditautkan ke satu data induk guru aktif pada sekolah ini." }, { status: 403 });
       }
-      const teacher = rows[0];
-      await tx`SELECT set_config('app.tenant_id', ${teacher.tenant_id}, true)`;
-      return work(tx, teacher, profile);
+      return work(tx, rows[0], profile);
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Permintaan gagal.";
