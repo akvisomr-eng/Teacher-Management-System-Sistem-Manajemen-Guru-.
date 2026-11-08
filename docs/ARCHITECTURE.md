@@ -27,8 +27,9 @@
 
 ## Implemented baseline
 - Authenticated dashboard, school onboarding, academic year creation, Neon Auth, PostgreSQL RLS.
-- Teacher and student registry APIs and workspace pages are merged into `main`. The API checks session, school membership, manager role, tenant/school scope, validates input, and records writes in audit logs.
-- Class and subject master-data workflows are being delivered separately. They are not considered production-ready until CI, preview deployment, and authenticated smoke tests pass.
+- Teacher and student registry APIs and workspace pages are merged into `main`.
+- Class and subject master-data workflows are merged into `main`, including academic-year-bound classes and homeroom teacher assignment.
+- Teaching assignments and student enrollments are under active development. They validate the class/year pairing, active teacher/subject/student, tenant/school scope, duplicate enrollment, and audit changes.
 
 ## Security baseline
 - No public database credentials; `DATABASE_URL` is server-only.
