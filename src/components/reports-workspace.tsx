@@ -13,7 +13,7 @@ const reportOptions: { value: ReportType; label: string; description: string }[]
   { value: "gradebook", label: "Rekap nilai", description: "Nilai asesmen berdasarkan kelas, mata pelajaran, dan siswa." }
 ];
 const columnLabels: Record<string, string> = {
-  student_number: "NIS / NISN", full_name: "Nama guru", status: "Status", class_name: "Kelas",
+  student_number: "NIS / NISN", full_name: "Nama guru", student_name: "Nama siswa", status: "Status", class_name: "Kelas",
   grade_level: "Tingkat", academic_year: "Tahun ajaran", employee_number: "NIP / ID pegawai",
   employment_status: "Status kepegawaian", education: "Pendidikan", teaching_assignments: "Penugasan",
   classes_taught: "Kelas diampu", homeroom_teacher: "Wali kelas", student_count: "Jumlah siswa",
@@ -34,13 +34,11 @@ export function ReportsWorkspace() {
   const [generatedAt, setGeneratedAt] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [classId, setClassId] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true); setError("");
     try {
       const params = new URLSearchParams({ type });
-      if (classId && type === "gradebook") params.set("classId", classId);
       const response = await fetch(`/api/reports?${params.toString()}`, { cache: "no-store" });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error ?? "Laporan tidak dapat dimuat.");
@@ -48,19 +46,18 @@ export function ReportsWorkspace() {
       setGeneratedAt(result.generatedAt ?? new Date().toISOString());
     } catch (err) { setError(err instanceof Error ? err.message : "Gagal memuat laporan."); }
     finally { setLoading(false); }
-  }, [type, classId]);
+  }, [type]);
 
   useEffect(() => {
     let active = true;
     const params = new URLSearchParams({ type });
-    if (classId && type === "gradebook") params.set("classId", classId);
     fetch(`/api/reports?${params.toString()}`, { cache: "no-store" })
       .then(async response => { const result = await response.json(); if (!response.ok) throw new Error(result.error ?? "Laporan tidak dapat dimuat."); return result; })
       .then(result => { if (active) { setData(result.data ?? []); setGeneratedAt(result.generatedAt ?? new Date().toISOString()); } })
       .catch(err => { if (active) setError(err instanceof Error ? err.message : "Gagal memuat laporan."); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, [type, classId]);
+  }, [type]);
 
   const columns = data.length ? Object.keys(data[0]) : [];
   const current = reportOptions.find(option => option.value === type) ?? reportOptions[0];
