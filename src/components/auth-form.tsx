@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { Eye, EyeOff, GraduationCap, ShieldCheck } from "lucide-react";
 import { authClient } from "@/lib/auth/client";
 
@@ -11,7 +11,6 @@ type Props = { initialMode: Mode };
 
 export function AuthForm({ initialMode }: Props) {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [mode, setMode] = useState<Mode>(initialMode === "reset-password" ? "sign-in" : initialMode);
   const [step, setStep] = useState<Step>(initialMode === "reset-password" ? "reset" : "form");
   const [name, setName] = useState("");
@@ -39,7 +38,7 @@ export function AuthForm({ initialMode }: Props) {
         return;
       }
       if (step === "reset") {
-        const token = searchParams.get("token");
+        const token = new URLSearchParams(window.location.search).get("token");
         if (!token) throw new Error("Tautan reset tidak valid atau sudah kedaluwarsa. Silakan minta tautan baru.");
         const result = await authClient.resetPassword({ newPassword: password, token });
         if (result.error) throw new Error(result.error.message || "Kata sandi baru gagal disimpan.");
@@ -47,8 +46,6 @@ export function AuthForm({ initialMode }: Props) {
         setPassword("");
         setStep("form");
         setMode("sign-in");
-        router.replace("/auth/sign-in");
-        router.refresh();
         return;
       }
       if (step === "verify") {
