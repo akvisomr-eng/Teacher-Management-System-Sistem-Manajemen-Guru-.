@@ -26,7 +26,7 @@ Jalankan SQL secara berurutan:
 6. `drizzle/0006_student_registry_custom_forms.sql`
 7. `drizzle/0007_standard_module_records.sql`
 
-Terapkan terlebih dahulu pada staging. Periksa tabel, constraint, RLS policy, dan akses lintas tenant sebelum production. Migrasi bersifat additive; jangan menjalankan ulang skrip yang menambahkan constraint tanpa memeriksa statusnya. Migrasi 0007 membuat arsip formulir pendukung per modul dengan RLS, versi skema/referensi, status review, dan audit trail. Migrasi tersebut telah diuji pada branch staging; jangan menganggap production sudah menerapkannya sebelum release.
+Terapkan terlebih dahulu pada staging. Periksa tabel, constraint, RLS policy, dan akses lintas tenant sebelum production. Migrasi bersifat additive; jangan menjalankan ulang skrip yang menambahkan constraint tanpa memeriksa statusnya. Migrasi 0007 membuat arsip formulir pendukung per modul dengan RLS, versi skema/referensi, status review, dan audit trail. Migrasi 0007 telah diterapkan dan diverifikasi pada branch staging serta production.
 
 ## Database security
 - Runtime memakai role `tms_app`; jangan gunakan role admin/superuser sebagai `DATABASE_URL`.
@@ -63,10 +63,11 @@ Email/password dan verifikasi OTP aktif. Shared SMTP masih digunakan untuk uji a
 - Foundation, registry, master akademik, penugasan, penempatan siswa, perencanaan ajar, jurnal, asesmen, gradebook, Pusat Kurikulum, dan Pusat Laporan telah digabung ke `main`.
 - CI #126 (audit hardening) dan #128 (Pusat Kurikulum) berhasil: typecheck, lint, audit dependency produksi, dan production build.
 - Preview Pusat Kurikulum dan Pusat Laporan berstatus `READY`. Deployment Production untuk commit `20758d48f6d5cce983c7c821878f97433ea575b3` berstatus `READY`.
-- Neon `tms-staging` dan `production` berstatus ready. Kedua branch memiliki 17 tabel aplikasi dengan RLS aktif; migrasi 0001–0004 telah diterapkan.
+- Neon `tms-staging` dan `production` berstatus ready. Kedua branch memiliki 20 tabel aplikasi; tabel tenant-scoped dilindungi RLS. Migrasi 0001–0007 telah diterapkan.
 - Migrasi 0005 telah diterapkan pada staging dan production. Hak `tms_app` untuk audit log diverifikasi: SELECT/INSERT diizinkan; UPDATE/DELETE/TRUNCATE ditolak. RLS audit log hanya SELECT/INSERT.
+- PR #15 (formulir administrasi pendidikan) merged pada commit `bdb08e0984e1d67e78c8362477a49b3b3a530547`; CI #166 lulus (typecheck, lint, audit dependency, build, smoke check). Deployment Production Vercel berstatus READY. Migrasi 0007 telah diterapkan pada staging dan production; RLS aktif, hak tabel role `tms_app` tersedia, dan tanpa tenant context tidak ada baris yang terlihat.
 - Pembacaan tanpa tenant context mengembalikan nol baris pada tabel tenant-scoped di staging dan production.
 - Vercel memiliki `DATABASE_URL` role `tms_app` yang terpisah untuk Preview dan Production; Auth URL dan cookie secret juga dipisahkan. `NEXT_PUBLIC_APP_URL` Production menggunakan `teacher-management-system-nine.vercel.app`.
-- Tidak ada runtime error yang terdeteksi pada rentang pemeriksaan terakhir 30 menit. Uji end-to-end sign-in, onboarding, dan transaksi sekolah dengan akun pengguna nyata tetap diperlukan.
+- Tidak ada runtime error yang terdeteksi pada rentang pemeriksaan terakhir 30 menit. Route workspace baru ter-build dan deployment READY; pengujian UI dan transaksi dengan sesi pengguna sekolah nyata masih diperlukan karena sesi autentikasi pengguna tidak tersedia untuk pengujian otomatis dari luar. Uji end-to-end sign-in, onboarding, dan transaksi sekolah dengan akun pengguna nyata tetap diperlukan.
 - Shared SMTP masih aktif. SMTP bermerek organisasi, uji autentikasi end-to-end, backup/recovery teruji, kebijakan privasi/retensi, dan prosedur insiden tetap menjadi release gate sebelum operasional komersial penuh.
 - Rapor, remedial/enrichment, komunikasi wali, AI, analitik lanjutan, integrasi, dan billing belum dinyatakan siap operasional.
