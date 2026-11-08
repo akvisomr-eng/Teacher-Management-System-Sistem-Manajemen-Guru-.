@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import type { TransactionSql } from "postgres";
 import { withAuthenticatedUser } from "@/db/connection";
 
 export const dynamic = "force-dynamic";
+type DbTx = TransactionSql<Record<string, never>>;
 const allowedRoles = new Set(["tenant_owner","tenant_admin","principal","vice_principal","school_operator"]);
 const fieldSchema = z.object({
   id: z.string().min(1).max(80),
@@ -20,7 +22,7 @@ const createSchema = z.object({
 }).refine(v => new Set(v.fields.map(f=>f.key)).size === v.fields.length, "Nama kunci kolom tidak boleh duplikat.");
 const updateSchema = createSchema.extend({id:z.string().uuid(),status:z.enum(["draft","published","archived"]).optional()});
 
-async function withSchool(work:(tx:any,tenantId:string,schoolId:string,userId:string)=>Promise<Response>){
+async function withSchool(work:(tx:DbTx,tenantId:string,schoolId:string,userId:string)=>Promise<Response>){
   try{
     return await withAuthenticatedUser(async(tx,_user,profile)=>{
       const memberships=await tx`SELECT tenant_id,school_id,role FROM memberships WHERE user_id=${profile.id} AND school_id IS NOT NULL ORDER BY created_at ASC LIMIT 1`;
