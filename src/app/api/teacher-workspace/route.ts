@@ -45,7 +45,7 @@ async function withTeacher(work: (tx: DbTx, teacher: TeacherIdentity, profile: P
       if (rows.length !== 1) {
         return NextResponse.json({ error: "Akun guru belum ditautkan ke satu data induk guru aktif pada sekolah ini." }, { status: 403 });
       }
-      return work(tx, rows[0], profile);
+      return work(tx, rows[0] as TeacherIdentity, profile);
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Permintaan gagal.";
@@ -90,7 +90,7 @@ export async function POST(request: Request) {
           AND teacher_workspace_items.client_updated_at <= EXCLUDED.client_updated_at
         RETURNING id, updated_at
       `;
-      if (rows[0]) accepted.push(rows[0]);
+      if (rows[0]) accepted.push(rows[0] as { id: string; updated_at: string });
     }
     await tx`
       INSERT INTO audit_logs (tenant_id, school_id, actor_user_id, action, resource_type, metadata)
