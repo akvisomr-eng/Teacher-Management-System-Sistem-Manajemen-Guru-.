@@ -6,7 +6,7 @@ import { authClient } from "@/lib/auth/client";
 import {
   BookOpenCheck, CalendarDays, ChevronDown, GraduationCap,
   LayoutDashboard, Menu, Search, Settings2, ShieldCheck,
-  Users, X, ClipboardCheck, Sparkles, TrendingUp, Bell, CircleHelp
+  Users, X, ClipboardCheck, Sparkles, TrendingUp, Bell, CircleHelp, BarChart3
 } from "lucide-react";
 
 const nav = [
@@ -17,7 +17,8 @@ const nav = [
   { label: "Pusat Kurikulum", icon: BookOpenCheck, href: "/workspace/curriculum" },
   { label: "Penugasan", icon: ClipboardCheck, href: "/workspace/assignments" },
   { label: "Rencana & Jurnal", icon: BookOpenCheck, href: "/workspace/teaching" },
-  { label: "Asesmen & Nilai", icon: ClipboardCheck, href: "/workspace/assessments" }
+  { label: "Asesmen & Nilai", icon: ClipboardCheck, href: "/workspace/assessments" },
+  { label: "Pusat Laporan", icon: BarChart3, href: "/workspace/reports" }
 ] as const;
 
 
