@@ -33,6 +33,7 @@ export function RegistryWorkspace({ resource }: { resource: Resource }) {
   const [birthDate, setBirthDate] = useState("");
   const [profile, setProfile] = useState<Profile>(emptyProfile);
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true); setError("");
@@ -59,9 +60,17 @@ export function RegistryWorkspace({ resource }: { resource: Resource }) {
       const response = await fetch(`/api/registry/${resource}`, {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
       const result = await response.json();
       if (!response.ok) throw new Error(result.error ?? "Data gagal disimpan.");
-      setFullName("");setNumber("");setExtra("");setBirthDate("");setProfile(emptyProfile);setShowForm(false);await load();
+      setFullName("");setNumber("");setExtra("");setBirthDate("");setProfile(emptyProfile);setEditingId(null);setShowForm(false);await load();
     } catch(err) { setError(err instanceof Error ? err.message : "Gagal menyimpan data."); }
     finally { setSaving(false); }
+  }
+
+  function startEdit(row: Row) {
+    setEditingId(row.id);setFullName(row.full_name);setNumber(row.student_number??row.employee_number??"");setExtra(row.education??"");setBirthDate(row.birth_date?new Date(row.birth_date).toISOString().slice(0,10):"");
+    const raw=(row.profile??{}) as Record<string,unknown>;
+    const values=Object.fromEntries(Object.keys(emptyProfile).map(key=>[key,raw[key]===undefined?"":String(raw[key])]));
+    for(const key of ["hasKip","pkhRecipient","pipEligible"])values[key]=raw[key]===true?"true":raw[key]===false?"false":"";
+    setProfile({...emptyProfile,...values} as Profile);setShowForm(true);setError("");
   }
 
   async function toggleStatus(row: Row) {
@@ -79,7 +88,7 @@ export function RegistryWorkspace({ resource }: { resource: Resource }) {
     <section className="registry-panel"><div className="registry-panel-head"><div><h2>Direktori {isTeacher?"guru":"peserta didik"}</h2><p>Data dibatasi pada sekolah dan tenant yang Anda kelola.</p></div><div className="registry-toolbar"><button className="registry-refresh" onClick={()=>void load()} aria-label="Muat ulang"><RefreshCw size={16}/></button>{!isTeacher&&<button className="registry-add" onClick={()=>setShowForm(v=>!v)}><Plus size={16}/> {showForm?"Tutup formulir":"Tambah siswa"}</button>}</div></div>
       <div className="registry-search"><Search size={17}/><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Cari nama atau nomor identitas..."/></div>
       {error&&<div className="registry-error" role="alert">{error}</div>}
-      {(isTeacher||showForm)&&<form className="registry-form student-form" onSubmit={createRecord}>{isTeacher?<div className="student-form-grid"><label>Nama lengkap<input required minLength={2} maxLength={180} value={fullName} onChange={e=>setFullName(e.target.value)}/></label><label>Nomor pegawai<input value={number} onChange={e=>setNumber(e.target.value)}/></label><label>Pendidikan terakhir<input value={extra} onChange={e=>setExtra(e.target.value)}/></label></div>:<><div className="student-form-section"><h3>1. Identitas peserta didik</h3><div className="student-form-grid">
+      {(isTeacher||showForm)&&<form className="registry-form student-form" onSubmit={createRecord}>{isTeacher?<div className="student-form-grid"><label>Nama lengkap<input required minLength={2} maxLength={180} value={fullName} onChange={e=>setFullName(e.target.value)}/></label><label>Nomor pegawai<input value={number} onChange={e=>setNumber(e.target.value)}/></label><label>Pendidikan terakhir<input value={extra} onChange={e=>setExtra(e.target.value)}/></label></div>:<><div className="student-form-section"><h3>{editingId?"Ubah data peserta didik":"1. Identitas peserta didik"}</h3><div className="student-form-grid">
           <label>Nama lengkap sesuai dokumen<input required minLength={2} maxLength={180} value={fullName} onChange={e=>setFullName(e.target.value)}/></label>
           <label>NIS / NISN<input maxLength={50} value={number} onChange={e=>setNumber(e.target.value)} placeholder="Nomor induk sekolah / nasional"/></label>
           {field("Tempat lahir","birthPlace")}
@@ -111,8 +120,8 @@ export function RegistryWorkspace({ resource }: { resource: Resource }) {
           <label>Layak PIP<select value={profile.pipEligible} onChange={e=>setField("pipEligible",e.target.value)}><option value="">Belum diisi</option><option value="true">Ya</option><option value="false">Tidak</option></select></label>
           {isTeacher&&<><label>Nomor pegawai<input value={number} onChange={e=>setNumber(e.target.value)}/></label><label>Pendidikan terakhir<input value={extra} onChange={e=>setExtra(e.target.value)}/></label></>}
         </div></div>
-        <div className="student-form-actions"><small>Kolom identitas inti dilengkapi sesuai data yang tersedia. Data opsional dapat diperbarui kemudian dan wajib diverifikasi dengan dokumen sumber.</small><button type="submit" disabled={saving}><Save size={16}/>{saving?"Menyimpan...": "Simpan data peserta didik"}</button></div></>}</form>}
-      <div className="registry-table-wrap"><table className="registry-table"><thead><tr><th>Nama lengkap</th><th>{isTeacher?"Nomor pegawai":"NIS / NISN"}</th><th>{isTeacher?"Pendidikan":"Tanggal lahir"}</th><th>Status</th><th>Aksi</th></tr></thead><tbody>{loading?<tr><td colSpan={5} className="registry-empty">Memuat data...</td></tr>:filtered.length?filtered.map(row=><tr key={row.id}><td><strong>{row.full_name}</strong><small>Terdaftar {row.created_at?new Date(row.created_at).toLocaleDateString("id-ID"):"—"}</small></td><td>{row.employee_number??row.student_number??"—"}</td><td>{isTeacher?row.education??"—":row.birth_date?new Date(row.birth_date).toLocaleDateString("id-ID"):"—"}</td><td><span className={`registry-status ${row.status==="active"?"is-active":""}`}>{row.status}</span></td><td><button className="registry-toggle" onClick={()=>void toggleStatus(row)}>{row.status==="active"?"Nonaktifkan":"Aktifkan"}</button></td></tr>):<tr><td colSpan={5} className="registry-empty">Belum ada data. Tambahkan data pertama melalui formulir di atas.</td></tr>}</tbody></table></div>
+        <div className="student-form-actions"><small>Kolom identitas inti dilengkapi sesuai data yang tersedia. Data opsional dapat diperbarui kemudian dan wajib diverifikasi dengan dokumen sumber.</small><button type="submit" disabled={saving}><Save size={16}/>{saving?"Menyimpan...": "{editingId?"Simpan perubahan":"Simpan data peserta didik"}"}</button></div></>}</form>}
+      <div className="registry-table-wrap"><table className="registry-table"><thead><tr><th>Nama lengkap</th><th>{isTeacher?"Nomor pegawai":"NIS / NISN"}</th><th>{isTeacher?"Pendidikan":"Tanggal lahir"}</th><th>Status</th><th>Aksi</th></tr></thead><tbody>{loading?<tr><td colSpan={5} className="registry-empty">Memuat data...</td></tr>:filtered.length?filtered.map(row=><tr key={row.id}><td><strong>{row.full_name}</strong><small>Terdaftar {row.created_at?new Date(row.created_at).toLocaleDateString("id-ID"):"—"}</small></td><td>{row.employee_number??row.student_number??"—"}</td><td>{isTeacher?row.education??"—":row.birth_date?new Date(row.birth_date).toLocaleDateString("id-ID"):"—"}</td><td><span className={`registry-status ${row.status==="active"?"is-active":""}`}>{row.status}</span></td><td><div className="registry-row-actions"><button className="registry-toggle" onClick={()=>startEdit(row)}>Ubah</button><button className="registry-toggle" onClick={()=>void toggleStatus(row)}>{row.status==="active"?"Nonaktifkan":"Aktifkan"}</button></div></td></tr>):<tr><td colSpan={5} className="registry-empty">Belum ada data. Tambahkan data pertama melalui formulir di atas.</td></tr>}</tbody></table></div>
       <p className="registry-footnote">Data peserta didik mengikuti struktur referensi administrasi pendidikan nasional. Isian dan pemetaan Dapodik harus divalidasi terhadap versi referensi resmi yang berlaku sebelum sinkronisasi.</p>
     </section>
   </main>;
