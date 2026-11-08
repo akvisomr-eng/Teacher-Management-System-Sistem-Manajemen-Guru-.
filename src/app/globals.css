@@ -69,3 +69,19 @@
 .reports-table td{white-space:nowrap}
 @media(max-width:560px){.reports-overview{gap:7px}.reports-overview>div{padding:12px 10px}.reports-overview strong{font-size:17px}.reports-toolbar{align-items:stretch}.reports-select-wrap{width:100%}.reports-actions{display:grid;grid-template-columns:repeat(3,1fr)}.reports-actions button{justify-content:center;padding:8px 5px;font-size:8px}}
 @media print{body{background:#fff}.reports-shell{max-width:none;padding:0}.reports-shell .registry-back,.reports-shell .registry-refresh,.reports-shell .reports-actions,.reports-shell .registry-footnote{display:none!important}.reports-shell .registry-panel,.reports-shell .reports-overview>div{border:0;box-shadow:none;padding:6px 0}.reports-table-wrap{max-height:none;overflow:visible;border:0}.reports-table{min-width:0;font-size:8px}.reports-table th,.reports-table td{padding:5px 4px;font-size:8px;white-space:normal}.reports-table th{position:static}.reports-shell .registry-header{margin-bottom:12px}}
+
+
+/* Student registry: structured Indonesian school administration form */
+.registry-toolbar{display:flex;align-items:center;gap:8px}.registry-add{height:36px;padding:0 12px;border:0;border-radius:7px;background:#6254d9;color:#fff;font:700 10px 'DM Sans';display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+.student-form{display:block!important;padding:16px!important;background:#fbfbfe;border:1px solid #ececf5;border-radius:10px;margin:14px 0 18px}
+.student-form-section{padding:0 0 15px;margin:0 0 15px;border-bottom:1px solid #eceef4}
+.student-form-section h3{font:700 12px 'Plus Jakarta Sans';color:#303a53;margin:0 0 12px}
+.student-form-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:11px}
+.student-form-grid>label{display:grid;gap:6px;min-width:0;color:#667087;font-size:10px;font-weight:700}
+.student-form-grid input,.student-form-grid select{height:37px;width:100%;min-width:0;border:1px solid #e4e7ef;border-radius:7px;padding:0 10px;background:#fff;color:#303a53;font:11px 'DM Sans'}
+.student-form-actions{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.student-form-actions small{max-width:600px;color:#8b93a7;font-size:9px;line-height:1.6}
+.student-form-actions button{height:38px;padding:0 13px;border:0;border-radius:7px;background:#6254d9;color:#fff;font:700 10px 'DM Sans';display:inline-flex;align-items:center;gap:7px;cursor:pointer}
+.student-form-actions button:disabled{opacity:.55;cursor:not-allowed}
+@media(max-width:850px){.student-form-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){.student-form{padding:12px!important}.student-form-grid{grid-template-columns:1fr}.student-form-actions button{width:100%;justify-content:center}}
