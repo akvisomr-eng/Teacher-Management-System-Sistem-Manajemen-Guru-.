@@ -35,3 +35,11 @@
 5. Perubahan nilai setelah dipublikasikan harus memiliki alasan, pembuat perubahan, waktu, dan riwayat versi.
 6. AI tidak boleh menerbitkan nilai, rapor, keputusan disiplin, atau keputusan berisiko tinggi tanpa persetujuan manusia.
 7. Dukungan platform tidak otomatis mendapat akses isi data sensitif; akses break-glass harus sementara dan diaudit.
+
+
+## Implementasi awal yang sudah tersedia
+- Pengelolaan data master dan konfigurasi akademik dibatasi pada `tenant_owner`, `tenant_admin`, `principal`, `vice_principal`, dan `school_operator`.
+- Alur rencana ajar/jurnal mendukung role `teacher` dan `homeroom_teacher` dengan pembatasan ke profil guru, penugasan, tenant, dan sekolah miliknya.
+- Guru hanya dapat mengajukan rencana/jurnal; persetujuan dan peninjauan dilakukan oleh pengelola sekolah.
+- Akses guru memerlukan tautan `teachers.user_id` ke profil pengguna yang memiliki membership role guru pada sekolah tersebut. Alur undangan dan penautan akun guru masih merupakan pekerjaan lanjutan.
+- Daftar role di atas adalah target kebijakan produk. Permission namespace dan evaluasi permission granular masih perlu diselesaikan sebelum peluncuran multi-sekolah skala luas.
