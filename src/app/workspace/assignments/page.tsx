@@ -2,5 +2,5 @@ import { AcademicAssignmentsWorkspace } from "@/components/academic-assignments-
 import { StandardFormsWorkspace } from "@/components/standard-forms-workspace";
 export const dynamic = "force-dynamic";
 export default function AssignmentsPage() {
-  return <><StandardFormsWorkspace module="assignments" /><AssignmentsWorkspace /></>;
+  return <><StandardFormsWorkspace module="assignments" /><AcademicAssignmentsWorkspace /></>;
 }
