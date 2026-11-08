@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 
 type WorkItem = { id: string; itemType: string; title: string; content: { body: string }; schemaVersion: number; clientUpdatedAt: string; syncState: "local" | "synced" | "conflict" };
-type Identity = { teacherId: string; name: string; school: string };
+type Identity = { teacherId: string; name: string; school: string } | null;
 const DB_NAME = "tms-teacher-desk";
 const STORE = "work-items";
 const TYPES = [
@@ -103,7 +103,7 @@ export default function TeacherDesk({ identity }: { identity: Identity }) {
 
   return <main style={{minHeight:"100vh",background:"#f4f6fb",color:"#17233d",fontFamily:"Arial,sans-serif",padding:"28px",maxWidth:1100,margin:"auto"}}>
     <header style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:16,flexWrap:"wrap"}}>
-      <div><small style={{letterSpacing:2,color:"#6254d9",fontWeight:700}}>TMS • PERSONAL WORKSPACE</small><h1 style={{fontSize:30,margin:"8px 0"}}>Ruang Kerja Guru</h1><p style={{color:"#65708a",margin:0}}>{identity.name} · {identity.school}</p></div>
+      <div><small style={{letterSpacing:2,color:"#6254d9",fontWeight:700}}>TMS • PERSONAL WORKSPACE</small><h1 style={{fontSize:30,margin:"8px 0"}}>Ruang Kerja Guru</h1><p style={{color:"#65708a",margin:0}}>{identity ? `${identity.name} · ${identity.school}` : "Mode offline · data lokal perangkat"}</p></div>
       <div style={{display:"flex",gap:8,flexWrap:"wrap"}}><button onClick={exportData}>Ekspor / Flashdisk</button><label style={{border:"1px solid #d9ddec",borderRadius:8,padding:"10px 14px",background:"white",cursor:"pointer"}}>Impor paket<input type="file" accept=".json,application/json" hidden onChange={e=>void importData(e.target.files?.[0])}/></label><button onClick={()=>void sync()} disabled={!online||busy}>{busy?"Menyinkronkan…":"Sinkronkan"}</button></div>
     </header>
     <section style={{background:"white",borderRadius:14,padding:20,marginTop:24,border:"1px solid #e6eaf2"}}>
@@ -123,6 +123,6 @@ export default function TeacherDesk({ identity }: { identity: Identity }) {
         {items.length===0?<p style={{color:"#7b8499"}}>Belum ada dokumen. Mulai buat pekerjaan pribadi Anda.</p>:<div style={{display:"grid",gap:10}}>{items.map(item=><article key={item.id} style={{border:"1px solid #edf0f5",borderRadius:10,padding:13}}><div style={{display:"flex",justifyContent:"space-between",gap:8}}><b>{item.title}</b><small>{item.syncState==="synced"?"Tersinkron":item.syncState==="conflict"?"Perlu pemeriksaan":"Lokal"}</small></div><small style={{color:"#7b8499"}}>{TYPES.find(([v])=>v===item.itemType)?.[1]??item.itemType} · {new Date(item.clientUpdatedAt).toLocaleString("id-ID")}</small><p style={{whiteSpace:"pre-wrap",fontSize:13,color:"#46516a"}}>{item.content.body}</p></article>)}</div>}
       </div>
     </section>
-    <footer style={{marginTop:24,color:"#8790a3",fontSize:12}}>Teacher Desk terhubung ke database TMS yang sama. Data induk sekolah tetap dikelola melalui alur resmi TMS.</footer>
+    <footer style={{marginTop:24,color:"#8790a3",fontSize:12}}>Teacher Desk terhubung ke database TMS yang sama saat online. Data induk sekolah tetap dikelola melalui alur resmi TMS.</footer>
   </main>;
 }
