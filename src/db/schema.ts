@@ -225,3 +225,23 @@ export const standardModuleRecords = pgTable("standard_module_records", {
   index("standard_module_records_scope_idx").on(t.tenantId, t.schoolId, t.moduleKey, t.createdAt),
   index("standard_module_records_schema_idx").on(t.tenantId, t.schoolId, t.schemaKey, t.schemaVersion)
 ]);
+
+
+export const teacherWorkspaceItems = pgTable("teacher_workspace_items", {
+  id: uuid("id").primaryKey(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id, { onDelete: "cascade" }),
+  schoolId: uuid("school_id").notNull().references(() => schools.id, { onDelete: "cascade" }),
+  teacherId: uuid("teacher_id").notNull().references(() => teachers.id, { onDelete: "cascade" }),
+  ownerUserId: uuid("owner_user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  itemType: varchar("item_type", { length: 40 }).notNull(),
+  title: varchar("title", { length: 200 }).notNull(),
+  content: jsonb("content").$type<Record<string, unknown>>().notNull().default({}),
+  schemaVersion: integer("schema_version").notNull().default(1),
+  clientUpdatedAt: timestamp("client_updated_at", { withTimezone: true }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  archivedAt: timestamp("archived_at", { withTimezone: true })
+}, (t) => [
+  index("teacher_workspace_items_owner_idx").on(t.tenantId, t.schoolId, t.teacherId, t.ownerUserId, t.updatedAt),
+  index("teacher_workspace_items_sync_idx").on(t.tenantId, t.schoolId, t.ownerUserId, t.clientUpdatedAt)
+]);
