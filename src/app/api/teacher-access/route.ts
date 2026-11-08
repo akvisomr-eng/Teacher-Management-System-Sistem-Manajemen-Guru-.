@@ -53,12 +53,6 @@ export async function POST(request: Request) {
         SELECT teacher_id, account_email
         FROM public.tms_link_teacher_account(${tenantId}, ${schoolId}, ${parsed.data.teacherId}, ${parsed.data.email})
       `;
-      await tx`
-        INSERT INTO audit_logs(tenant_id, school_id, actor_user_id, action, resource_type, resource_id, metadata)
-        VALUES(${tenantId}, ${schoolId}, (SELECT id FROM users WHERE auth_user_id = tms_current_auth_user_id() LIMIT 1),
-          'teacher_access.linked_by_manager', 'teacher', ${parsed.data.teacherId},
-          ${tx.json({ email: parsed.data.email.toLowerCase() })})
-      `;
       return NextResponse.json({ data: rows[0] }, { status: 200 });
     } catch (error) {
       const message = error instanceof Error ? error.message : "";
