@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS custom_form_submissions (
   form_version integer NOT NULL,
   record_type varchar(80) NOT NULL,
   record_id uuid,
-  values jsonb NOT NULL DEFAULT '{}'::jsonb,
+  submission_data jsonb NOT NULL DEFAULT '{}'::jsonb,
   status varchar(24) NOT NULL DEFAULT 'submitted' CHECK (status IN ('draft','submitted','reviewed','rejected')),
   submitted_by uuid REFERENCES users(id) ON DELETE SET NULL,
   reviewed_by uuid REFERENCES users(id) ON DELETE SET NULL,
