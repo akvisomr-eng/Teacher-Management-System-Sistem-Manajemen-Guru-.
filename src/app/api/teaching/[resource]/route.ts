@@ -43,13 +43,13 @@ async function authorize(resource: string, work: Work) {
       if (!membership || (!managerRoles.has(membership.role) && !teacherRoles.has(membership.role))) {
         return NextResponse.json({ error: "Anda tidak memiliki izin mengelola aktivitas pembelajaran." }, { status: 403 });
       }
+      await tx`SELECT set_config('app.tenant_id', ${membership.tenant_id}, true)`;
       let teacherId: string | null = null;
       if (teacherRoles.has(membership.role)) {
         const teacherRows = await tx`SELECT id FROM teachers WHERE user_id = ${profile.id} AND tenant_id = ${membership.tenant_id} AND school_id = ${membership.school_id} AND employment_status = 'active' LIMIT 1`;
         teacherId = (teacherRows[0]?.id as string | undefined) ?? null;
         if (!teacherId) return NextResponse.json({ error: "Akun guru belum ditautkan ke profil guru sekolah." }, { status: 403 });
       }
-      await tx`SELECT set_config('app.tenant_id', ${membership.tenant_id}, true)`;
       return work(tx, membership.tenant_id, membership.school_id, profile.id, teacherId, membership.role);
     });
   } catch (error) {
