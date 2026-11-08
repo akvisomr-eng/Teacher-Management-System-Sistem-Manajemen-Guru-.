@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth/client";
 import {
-  Activity, BookOpenCheck, CalendarDays, ChevronDown, GraduationCap,
-  LayoutDashboard, Menu, MessageSquareText, Search, Settings2, ShieldCheck,
+  BookOpenCheck, CalendarDays, ChevronDown, GraduationCap,
+  LayoutDashboard, Menu, Search, Settings2, ShieldCheck,
   Users, X, ClipboardCheck, Sparkles, TrendingUp, Bell, CircleHelp
 } from "lucide-react";
 
