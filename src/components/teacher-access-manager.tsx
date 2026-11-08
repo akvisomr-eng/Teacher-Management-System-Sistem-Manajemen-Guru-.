@@ -22,7 +22,17 @@ export default function TeacherAccessManager() {
       setMessage(error instanceof Error ? error.message : "Gagal memuat daftar guru.");
     }
   }, []);
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    let active = true;
+    void fetch("/api/teacher-access", { cache: "no-store" }).then(async response => {
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error ?? "Tidak dapat memuat daftar guru.");
+      return data;
+    }).then(data => {
+      if (active) { setTeachers(data.teachers ?? []); setMessage("Pilih data guru dan tautkan akun pribadinya."); }
+    }).catch(error => { if (active) setMessage(error instanceof Error ? error.message : "Gagal memuat daftar guru."); });
+    return () => { active = false; };
+  }, []);
 
   async function linkAccount() {
     if (!teacherId || !email.trim()) { setMessage("Pilih guru dan isi email akun guru."); return; }
