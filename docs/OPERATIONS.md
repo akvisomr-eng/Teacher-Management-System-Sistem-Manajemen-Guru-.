@@ -47,6 +47,7 @@ Email/password dan verifikasi OTP diaktifkan pada Neon Auth. Shared SMTP hanya u
 - Registry: tambah, daftar, pencarian, dan perubahan status guru/siswa, kelas, dan mata pelajaran berhasil.
 - Academic operations: penugasan guru-mapel-kelas dan penempatan siswa harus lolos validasi tahun ajaran, sekolah, dan duplikasi.
 - Teaching workflows: rencana ajar dan jurnal mengajar harus lolos kontrol kepemilikan guru, alur review, serta audit log.
+- Assessment/gradebook: asesmen harus terikat pada penugasan dan nilai hanya dapat dimasukkan untuk siswa yang terdaftar pada kelas/tahun ajaran terkait.
 - Security: dua tenant terpisah dan tidak dapat membaca/mengubah data satu sama lain; role tanpa izin ditolak.
 - Database: seluruh migrasi staging berhasil; production migration dilakukan setelah preview disetujui.
 - Deployment: environment target, domain, trusted origin, dan health monitoring diverifikasi.
@@ -60,5 +61,5 @@ Email/password dan verifikasi OTP diaktifkan pada Neon Auth. Shared SMTP hanya u
 - Environment `DATABASE_URL` Preview menggunakan role `tms_app` pada staging; Production menggunakan role `tms_app` pada production.
 - Cookie secret Neon Auth telah dipisahkan untuk Production, Preview, dan Development; trusted origins production dan preview telah dikonfigurasi.
 - Endpoint `/api/health` mengembalikan HTTP 200 di Production; database berstatus `connected`, Auth `configured`, dan tidak ada runtime error yang terdeteksi pada rentang pemeriksaan 24 jam.
-- Perencanaan ajar dan jurnal mengajar sedang dikembangkan pada PR berikutnya. Kurikulum, asesmen, rapor, komunikasi, AI, analitik, dan billing masih memerlukan implementasi serta pengujian.
+- Pusat asesmen dan gradebook sedang dikembangkan pada PR berikutnya. Kurikulum terstruktur, rapor, remedial, komunikasi, AI, analitik, dan billing masih memerlukan implementasi serta pengujian.
 - SMTP bermerek milik organisasi, prosedur backup/recovery teruji, kebijakan privasi/retensi, dan uji autentikasi end-to-end dengan akun sekolah masih menjadi release gate sebelum operasional komersial penuh.
