@@ -14,7 +14,8 @@ const nav = [
   { label: "Data Guru", icon: Users, href: "/workspace/teachers" },
   { label: "Data Siswa", icon: GraduationCap, href: "/workspace/students" },
   { label: "Kelas & Mapel", icon: BookOpenCheck, href: "/workspace/academic" },
-  { label: "Penugasan", icon: ClipboardCheck, href: "/workspace/assignments" }
+  { label: "Penugasan", icon: ClipboardCheck, href: "/workspace/assignments" },
+  { label: "Rencana & Jurnal", icon: BookOpenCheck, href: "/workspace/teaching" }
 ] as const;
 
 
