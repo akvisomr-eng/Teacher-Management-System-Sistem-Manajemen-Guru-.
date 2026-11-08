@@ -54,7 +54,7 @@ export default function TeacherDesk({ identity }: { identity: Identity }) {
   useEffect(() => {
     const rememberedTeacher = identity?.teacherId || sessionStorage.getItem("tms-teacher-id");
     if (identity?.teacherId) sessionStorage.setItem("tms-teacher-id", identity.teacherId);
-    setLocalTeacherId(rememberedTeacher);
+    void Promise.resolve().then(() => setLocalTeacherId(rememberedTeacher));
     void refresh();
     const update = () => setOnline(navigator.onLine);
     update();
@@ -77,7 +77,7 @@ export default function TeacherDesk({ identity }: { identity: Identity }) {
       if (!dbName) { setMessage("Login sebagai guru untuk menghubungkan penyimpanan pribadi."); return; }
       const pending = (await localItems(dbName)).filter(x => x.syncState !== "synced");
       if (!pending.length) { setMessage("Semua dokumen lokal sudah tersinkron."); return; }
-      const response = await fetch("/api/teacher-workspace", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ items: pending.map(({ syncState, ...item }) => item) }) });
+      const response = await fetch("/api/teacher-workspace", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ items: pending.map(item => ({ id: item.id, itemType: item.itemType, title: item.title, content: item.content, schemaVersion: item.schemaVersion, clientUpdatedAt: item.clientUpdatedAt })) }) });
       if (!response.ok) throw new Error(response.status === 401 ? "Sesi login berakhir. Login kembali untuk sinkronisasi." : "Sinkronisasi gagal. Data lokal tetap aman.");
       const result = await response.json();
       const accepted = new Set<string>((result.items ?? []).map((x: {id:string}) => x.id));
