@@ -46,7 +46,7 @@ export function RegistryWorkspace({ resource }: { resource: Resource }) {
     finally { setLoading(false); }
   }, [resource]);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => { let active=true;fetch(`/api/registry/${resource}`,{cache:"no-store"}).then(async response=>{const result=await response.json();if(!response.ok)throw new Error(result.error??"Data tidak dapat dimuat.");if(active)setRows(result.data??[]);}).catch(err=>{if(active)setError(err instanceof Error?err.message:"Gagal memuat data.");}).finally(()=>{if(active)setLoading(false);});return()=>{active=false;};},[resource]);
   const filtered = useMemo(() => rows.filter(row => [row.full_name,row.employee_number,row.student_number].some(value => value?.toLowerCase().includes(query.toLowerCase()))), [rows,query]);
   function setField<K extends keyof Profile>(key: K, value: Profile[K]) { setProfile(current => ({...current,[key]:value})); }
 
