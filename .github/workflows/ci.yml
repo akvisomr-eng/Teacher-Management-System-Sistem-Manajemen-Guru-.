@@ -28,3 +28,7 @@ jobs:
       - name: Audit production dependencies
         run: npm audit --omit=dev --audit-level=high
       - run: npm run build
+      - name: Smoke-test current production release
+        env:
+          TMS_PRODUCTION_URL: https://teacher-management-system-nine.vercel.app
+        run: node scripts/production-smoke.mjs
