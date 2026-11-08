@@ -37,6 +37,15 @@ async function putLocal(name: string, item: WorkItem) {
     tx.onerror = () => reject(tx.error);
   });
 }
+async function clearLocal(name: string) {
+  const db = await openDb(name);
+  return new Promise<void>((resolve, reject) => {
+    const tx = db.transaction(STORE, "readwrite");
+    tx.objectStore(STORE).clear();
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
 
 export default function TeacherDesk({ identity }: { identity: Identity }) {
   const [items, setItems] = useState<WorkItem[]>([]);
@@ -115,6 +124,12 @@ export default function TeacherDesk({ identity }: { identity: Identity }) {
     finally { setBusy(false); }
   }
 
+  async function clearDeviceData() {
+    if (!dbName || !window.confirm("Hapus seluruh dokumen lokal pada perangkat ini? Salinan yang sudah tersinkron di TMS tidak akan dihapus.")) return;
+    await clearLocal(dbName); await refresh(); setEditingId(null); setTitle(""); setBody("");
+    setMessage("Dokumen lokal pada perangkat ini sudah dibersihkan. Salinan server tetap tersedia.");
+  }
+
   async function exportData() {
     if (!dbName) { setMessage("Login sebagai guru untuk mengekspor penyimpanan pribadi."); return; }
     const data = { format: "tms-teacher-desk", version: 1, exportedAt: new Date().toISOString(), teacher: identity ?? { teacherId: localTeacherId }, items: await localItems(dbName) };
@@ -142,7 +157,7 @@ export default function TeacherDesk({ identity }: { identity: Identity }) {
   return <main style={{minHeight:"100vh",background:"#f4f6fb",color:"#17233d",fontFamily:"Arial,sans-serif",padding:"28px",maxWidth:1100,margin:"auto"}}>
     <header style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:16,flexWrap:"wrap"}}>
       <div><small style={{letterSpacing:2,color:"#6254d9",fontWeight:700}}>TMS • PERSONAL WORKSPACE</small><h1 style={{fontSize:30,margin:"8px 0"}}>Ruang Kerja Guru</h1><p style={{color:"#65708a",margin:0}}>{identity ? `${identity.name} · ${identity.school}` : "Mode offline · data lokal perangkat"}</p></div>
-      <div style={{display:"flex",gap:8,flexWrap:"wrap"}}><button onClick={exportData}>Ekspor / Flashdisk</button><button onClick={()=>void pull()} disabled={!online||busy}>Ambil dari TMS</button><label style={{border:"1px solid #d9ddec",borderRadius:8,padding:"10px 14px",background:"white",cursor:"pointer"}}>Impor paket<input type="file" accept=".json,application/json" hidden onChange={e=>void importData(e.target.files?.[0])}/></label><button onClick={()=>void sync()} disabled={!online||busy}>{busy?"Menyinkronkan…":"Sinkronkan"}</button></div>
+      <div style={{display:"flex",gap:8,flexWrap:"wrap"}}><button onClick={exportData}>Ekspor / Flashdisk</button><button onClick={()=>void pull()} disabled={!online||busy}>Ambil dari TMS</button><button onClick={()=>void clearDeviceData()}>Bersihkan perangkat</button><label style={{border:"1px solid #d9ddec",borderRadius:8,padding:"10px 14px",background:"white",cursor:"pointer"}}>Impor paket<input type="file" accept=".json,application/json" hidden onChange={e=>void importData(e.target.files?.[0])}/></label><button onClick={()=>void sync()} disabled={!online||busy}>{busy?"Menyinkronkan…":"Sinkronkan"}</button></div>
     </header>
     <section style={{background:"white",borderRadius:14,padding:20,marginTop:24,border:"1px solid #e6eaf2"}}>
       <div style={{display:"flex",justifyContent:"space-between",gap:12,flexWrap:"wrap"}}><b>Status perangkat</b><span>{online?"● Online":"● Offline"}</span></div><p style={{color:"#65708a",fontSize:13}}>{message}</p>
