@@ -45,6 +45,7 @@ Email/password dan verifikasi OTP aktif. Shared SMTP masih digunakan untuk uji a
 - Registry: CRUD dan pencarian guru/siswa, kelas, mata pelajaran.
 - Academic operations: penugasan guru-mapel-kelas dan penempatan siswa lolos validasi tahun ajaran, sekolah, dan duplikasi.
 - Curriculum: draf, capaian pembelajaran, penerbitan, arsip, dan versi baru; versi terbit terkunci.
+- Reports: laporan guru, siswa, kelas, dan rekap nilai dibatasi role serta scope sekolah; ekspor CSV dan cetak berfungsi.
 - Teaching: kepemilikan guru, alur review, dan audit log.
 - Assessment/gradebook: asesmen terikat penugasan; nilai hanya untuk siswa terdaftar pada kelas/tahun ajaran.
 - Security: isolasi tenant, penolakan role tanpa izin, dan pengujian lintas sekolah.
@@ -52,13 +53,13 @@ Email/password dan verifikasi OTP aktif. Shared SMTP masih digunakan untuk uji a
 - Operasional: SMTP bermerek, backup/recovery teruji, monitoring, kebijakan privasi/retensi, dukungan, dan prosedur insiden.
 
 ## Status terverifikasi per 8 November 2026
-- Foundation, registry, master akademik, penugasan, penempatan siswa, perencanaan ajar, jurnal, asesmen, gradebook, dan Pusat Kurikulum telah digabung ke `main`.
+- Foundation, registry, master akademik, penugasan, penempatan siswa, perencanaan ajar, jurnal, asesmen, gradebook, Pusat Kurikulum, dan Pusat Laporan telah digabung ke `main`.
 - CI #126 (audit hardening) dan #128 (Pusat Kurikulum) berhasil: typecheck, lint, audit dependency produksi, dan production build.
-- Preview Pusat Kurikulum berstatus `READY`. Deployment Production untuk commit `3484615329b4691bd1cd37b8643c025e1de1945c` berstatus `READY`.
+- Preview Pusat Kurikulum dan Pusat Laporan berstatus `READY`. Deployment Production untuk commit `20758d48f6d5cce983c7c821878f97433ea575b3` berstatus `READY`.
 - Neon `tms-staging` dan `production` berstatus ready. Kedua branch memiliki 17 tabel aplikasi dengan RLS aktif; migrasi 0001–0004 telah diterapkan.
 - Migrasi 0005 telah diterapkan pada staging dan production. Hak `tms_app` untuk audit log diverifikasi: SELECT/INSERT diizinkan; UPDATE/DELETE/TRUNCATE ditolak. RLS audit log hanya SELECT/INSERT.
 - Pembacaan tanpa tenant context mengembalikan nol baris pada tabel tenant-scoped di staging dan production.
 - Vercel memiliki `DATABASE_URL` role `tms_app` yang terpisah untuk Preview dan Production; Auth URL dan cookie secret juga dipisahkan. `NEXT_PUBLIC_APP_URL` Production menggunakan `teacher-management-system-nine.vercel.app`.
-- Tidak ada runtime error yang terdeteksi pada rentang pemeriksaan 24 jam terakhir. Ini bukan pengganti uji fungsional end-to-end.
+- Tidak ada runtime error yang terdeteksi pada rentang pemeriksaan terakhir 30 menit. Ini bukan pengganti uji fungsional end-to-end; akses browser langsung untuk smoke test masih terhalang pada jalur pemeriksaan otomatis.
 - Shared SMTP masih aktif. SMTP bermerek organisasi, uji autentikasi end-to-end, backup/recovery teruji, kebijakan privasi/retensi, dan prosedur insiden tetap menjadi release gate sebelum operasional komersial penuh.
 - Rapor, remedial/enrichment, komunikasi wali, AI, analitik lanjutan, integrasi, dan billing belum dinyatakan siap operasional.
