@@ -23,8 +23,10 @@ Jalankan SQL secara berurutan:
 3. `drizzle/0003_academic_operations.sql`
 4. `drizzle/0004_academic_assignment_integrity.sql`
 5. `drizzle/0005_audit_log_immutability.sql`
+6. `drizzle/0006_student_registry_custom_forms.sql`
+7. `drizzle/0007_standard_module_records.sql`
 
-Terapkan terlebih dahulu pada staging. Periksa tabel, constraint, RLS policy, dan akses lintas tenant sebelum production. Migrasi bersifat additive; jangan menjalankan ulang skrip yang menambahkan constraint tanpa memeriksa statusnya.
+Terapkan terlebih dahulu pada staging. Periksa tabel, constraint, RLS policy, dan akses lintas tenant sebelum production. Migrasi bersifat additive; jangan menjalankan ulang skrip yang menambahkan constraint tanpa memeriksa statusnya. Migrasi 0007 membuat arsip formulir pendukung per modul dengan RLS, versi skema/referensi, status review, dan audit trail. Migrasi tersebut telah diuji pada branch staging; jangan menganggap production sudah menerapkannya sebelum release.
 
 ## Database security
 - Runtime memakai role `tms_app`; jangan gunakan role admin/superuser sebagai `DATABASE_URL`.
@@ -37,6 +39,11 @@ Terapkan terlebih dahulu pada staging. Periksa tabel, constraint, RLS policy, da
 
 ## Auth email
 Email/password dan verifikasi OTP aktif. Shared SMTP masih digunakan untuk uji awal; siapkan SMTP organisasi dan verifikasi deliverability sebelum pendaftaran umum. Domain production/preview harus tercatat pada trusted-origin allowlist branch Neon Auth masing-masing. Localhost dinonaktifkan pada Auth Production.
+
+## Formulir administrasi standar
+- Template sembilan menu menyimpan arsip pendukung melalui /api/standard-forms; akses saat ini hanya role pengelola sekolah.
+- Data formulir pendukung tidak otomatis menimpa tabel master. Pemetaan/approval ke master memerlukan implementasi dan pengujian terpisah.
+- Pilihan dan field template adalah profil awal TMS, bukan salinan resmi Dapodik. Verifikasi field-level terhadap versi Dapodik dan status peraturan wajib sebelum klaim kepatuhan.
 
 ## Release gates
 - CI: typecheck, lint, dependency audit, production build.
