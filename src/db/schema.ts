@@ -198,3 +198,27 @@ export const assessmentResults = pgTable("assessment_results", {
   gradedAt: timestamp("graded_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow()
 }, (t) => [uniqueIndex("assessment_results_student_uq").on(t.assessmentId, t.studentId), index("assessment_results_student_idx").on(t.tenantId, t.schoolId, t.studentId)]);
+
+
+export const standardModuleRecords = pgTable("standard_module_records", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id, { onDelete: "cascade" }),
+  schoolId: uuid("school_id").notNull().references(() => schools.id, { onDelete: "cascade" }),
+  moduleKey: varchar("module_key", { length: 40 }).notNull(),
+  schemaKey: varchar("schema_key", { length: 100 }).notNull(),
+  schemaVersion: integer("schema_version").notNull().default(1),
+  referenceVersion: varchar("reference_version", { length: 80 }).notNull().default("internal-v1"),
+  title: varchar("title", { length: 200 }).notNull(),
+  status: varchar("status", { length: 24 }).notNull().default("draft"),
+  recordData: jsonb("record_data").$type<Record<string, unknown>>().notNull().default({}),
+  sourceSystem: varchar("source_system", { length: 80 }).notNull().default("tms"),
+  createdBy: uuid("created_by").references(() => users.id, { onDelete: "set null" }),
+  updatedBy: uuid("updated_by").references(() => users.id, { onDelete: "set null" }),
+  reviewedBy: uuid("reviewed_by").references(() => users.id, { onDelete: "set null" }),
+  reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow()
+}, (t) => [
+  index("standard_module_records_scope_idx").on(t.tenantId, t.schoolId, t.moduleKey, t.createdAt),
+  index("standard_module_records_schema_idx").on(t.tenantId, t.schoolId, t.schemaKey, t.schemaVersion)
+]);
