@@ -29,9 +29,11 @@
 - Authenticated dashboard, school onboarding, academic year creation, Neon Auth, PostgreSQL RLS.
 - Teacher and student registry APIs and workspace pages are merged into `main`.
 - Class and subject master-data workflows are merged into `main`, including academic-year-bound classes and homeroom teacher assignment.
-- Teaching assignments and student enrollments are merged into `main`. They validate class/year pairing, active teacher/subject/student, tenant/school scope, duplicate assignment/enrollment, and audit changes.
-- Teaching plans and journals are merged into `main` with teacher ownership checks and manager review permissions.
-- Assessment and gradebook workflows are under active development, with assignment-scoped assessments, enrolled-student validation, maximum-score checks, and audit logging.
+- Teaching assignments and student enrollments validate class/year pairing, active teacher/subject/student, tenant/school scope, duplicate assignment/enrollment, and audit changes.
+- Teaching plans and journals include teacher ownership checks and manager review permissions.
+- Assessment and gradebook workflows include assignment-scoped assessments, enrolled-student validation, maximum-score checks, and audit logging.
+- Curriculum Center supports draft creation, structured learning outcomes, publication, archiving, and immutable published versions. Version creation uses a transaction advisory lock.
+- Runtime audit logs are append-only for `tms_app`; the runtime role can read and insert audit events but cannot update, delete, or truncate them.
 
 ## Security baseline
 - No public database credentials; `DATABASE_URL` is server-only.
@@ -47,6 +49,7 @@
 3. Tenant/school setup and registry
 4. Curriculum and academic operations
 5. Teaching workflow and assessment
-6. Parent/student experience
-7. AI assistive workflows
-8. Reports, integrations, billing and production hardening
+6. Report cards, remedial and enrichment
+7. Parent/student experience
+8. AI assistive workflows
+9. Reports, integrations, billing and production hardening
