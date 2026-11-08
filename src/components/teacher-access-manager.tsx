@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 type Teacher = { id: string; full_name: string; employee_number: string | null; account_linked: boolean };
 
@@ -11,7 +11,7 @@ export default function TeacherAccessManager() {
   const [message, setMessage] = useState("Memuat daftar guru…");
   const [busy, setBusy] = useState(false);
 
-  async function load() {
+  const load = useCallback(async () => {
     try {
       const response = await fetch("/api/teacher-access", { cache: "no-store" });
       const data = await response.json();
@@ -21,8 +21,8 @@ export default function TeacherAccessManager() {
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Gagal memuat daftar guru.");
     }
-  }
-  useEffect(() => { void load(); }, []);
+  }, []);
+  useEffect(() => { void load(); }, [load]);
 
   async function linkAccount() {
     if (!teacherId || !email.trim()) { setMessage("Pilih guru dan isi email akun guru."); return; }
