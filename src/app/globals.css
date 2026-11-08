@@ -111,3 +111,12 @@
 .forms-entry{display:grid;gap:12px;margin-top:14px}.forms-entry>label{display:grid;gap:6px;color:#667087;font-size:10px;font-weight:700}.forms-entry>label span{color:#b14b61;display:inline}.forms-entry input:not([type=checkbox]),.forms-entry select,.forms-entry textarea{width:100%;border:1px solid #e4e7ef;border-radius:7px;padding:9px 10px;background:#fff;color:#303a53;font:11px 'DM Sans'}.forms-entry input:not([type=checkbox]),.forms-entry select{height:38px}.forms-entry input[type=checkbox]{width:16px;height:16px}.forms-entry button{height:38px;display:inline-flex;align-items:center;justify-content:center;gap:7px;width:max-content;padding:0 14px}
 
 .registry-row-actions{display:flex;gap:5px;flex-wrap:wrap}.registry-row-actions .registry-toggle{white-space:nowrap}
+
+/* Authentication: password visibility and recovery */
+.auth-password-field{display:flex;align-items:center;position:relative;width:100%}
+.auth-password-field input{width:100%;padding-right:44px!important}
+.auth-password-toggle{position:absolute;right:5px;top:50%;transform:translateY(-50%);width:34px;height:32px;border:0;border-radius:6px;background:transparent;color:#7b8499;display:grid;place-items:center;cursor:pointer}
+.auth-password-toggle:hover{background:#f1f0ff;color:#6254d9}
+.auth-forgot{display:block;margin:11px 0 0 auto;padding:0;border:0;background:transparent;color:#6254d9;font:600 11px 'DM Sans';cursor:pointer}
+.auth-forgot:hover,.auth-switch button:hover{text-decoration:underline}
+.auth-forgot:focus-visible,.auth-password-toggle:focus-visible{outline:2px solid #6254d9;outline-offset:2px}
