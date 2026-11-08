@@ -7,6 +7,7 @@ export const dynamic = "force-dynamic";
 
 type DbTx = TransactionSql<Record<string, never>>;
 const managerRoles = new Set(["tenant_owner", "tenant_admin", "principal", "vice_principal", "school_operator"]);
+const teacherRoles = new Set(["teacher", "homeroom_teacher"]);
 const resourceSchema = z.enum(["plans", "journals"]);
 const planCreate = z.object({
   title: z.string().trim().min(3).max(200),
@@ -39,11 +40,11 @@ async function authorize(resource: string, work: Work) {
         ORDER BY created_at ASC LIMIT 1
       `;
       const membership = memberships[0] as { tenant_id: string; school_id: string; role: string } | undefined;
-      if (!membership || (!managerRoles.has(membership.role) && membership.role !== "teacher")) {
+      if (!membership || (!managerRoles.has(membership.role) && !teacherRoles.has(membership.role))) {
         return NextResponse.json({ error: "Anda tidak memiliki izin mengelola aktivitas pembelajaran." }, { status: 403 });
       }
       let teacherId: string | null = null;
-      if (membership.role === "teacher") {
+      if (teacherRoles.has(membership.role)) {
         const teacherRows = await tx`SELECT id FROM teachers WHERE user_id = ${profile.id} AND tenant_id = ${membership.tenant_id} AND school_id = ${membership.school_id} AND employment_status = 'active' LIMIT 1`;
         teacherId = (teacherRows[0]?.id as string | undefined) ?? null;
         if (!teacherId) return NextResponse.json({ error: "Akun guru belum ditautkan ke profil guru sekolah." }, { status: 403 });
