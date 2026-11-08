@@ -49,7 +49,27 @@ export function ReportsWorkspace() {
     finally { setLoading(false); }
   }, [type]);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    let active = true;
+    fetch(`/api/reports?type=${type}`, { cache: "no-store" })
+      .then(async response => {
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error ?? "Laporan tidak dapat dimuat.");
+        return result;
+      })
+      .then(result => {
+        if (active) {
+          setData(result.data ?? []);
+          setGeneratedAt(result.generatedAt ?? new Date().toISOString());
+          setError("");
+        }
+      })
+      .catch(err => {
+        if (active) setError(err instanceof Error ? err.message : "Gagal memuat laporan.");
+      })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, [type]);
 
   const columns = data.length ? Object.keys(data[0]).filter(key => !internalColumns.has(key)) : [];
   const current = reportOptions.find(option => option.value === type) ?? reportOptions[0];
