@@ -9,12 +9,20 @@ export default async function TeacherPage() {
   let identity: { teacherId: string; name: string; school: string } | null = null;
   try {
     identity = await withAuthenticatedUser(async (tx, _user, profile) => {
+      const memberships = await tx`
+        SELECT tenant_id, school_id FROM memberships
+        WHERE user_id = ${profile.id} AND role = 'teacher' AND school_id IS NOT NULL
+        ORDER BY created_at ASC LIMIT 2
+      `;
+      if (memberships.length !== 1) return null;
+      const membership = memberships[0];
+      await tx`SELECT set_config('app.tenant_id', ${membership.tenant_id}, true)`;
       const rows = await tx`
         SELECT t.id AS teacher_id, t.full_name, s.name AS school_name
         FROM teachers t
-        JOIN memberships m ON m.user_id = t.user_id AND m.tenant_id = t.tenant_id AND m.school_id = t.school_id
         JOIN schools s ON s.id = t.school_id AND s.tenant_id = t.tenant_id
-        WHERE t.user_id = ${profile.id} AND m.role = 'teacher' AND t.employment_status = 'active'
+        WHERE t.user_id = ${profile.id} AND t.tenant_id = ${membership.tenant_id}
+          AND t.school_id = ${membership.school_id} AND t.employment_status = 'active'
         ORDER BY t.created_at ASC LIMIT 2
       `;
       if (rows.length !== 1) return null;
