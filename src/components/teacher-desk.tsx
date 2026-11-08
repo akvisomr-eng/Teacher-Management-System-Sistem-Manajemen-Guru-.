@@ -145,7 +145,7 @@ export default function TeacherDesk({ identity }: { identity: Identity }) {
     try {
       const parsed = JSON.parse(await file.text());
       if (parsed.format !== "tms-teacher-desk" || parsed.version !== 1 || !Array.isArray(parsed.items) || parsed.items.length > 500) throw new Error("Format paket tidak dikenali atau jumlah data melebihi batas.");
-      if (parsed.teacher?.teacherId && parsed.teacher.teacherId !== localTeacherId) throw new Error("Paket ini berasal dari akun guru lain. Impor lintas akun tidak diizinkan.");
+      if (!parsed.teacher?.teacherId || parsed.teacher.teacherId !== localTeacherId) throw new Error("Identitas guru pada paket tidak cocok. Impor lintas akun tidak diizinkan.");
       for (const item of parsed.items) {
         if (typeof item.id !== "string" || typeof item.title !== "string" || typeof item.itemType !== "string" || !item.content || typeof item.content !== "object") throw new Error("Ada dokumen dengan struktur tidak valid.");
         await putLocal(dbName, { ...item, syncState: "local" });
