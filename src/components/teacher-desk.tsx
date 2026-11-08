@@ -12,24 +12,24 @@ const TYPES = [
   ["reflection", "Refleksi pembelajaran"], ["personal_note", "Catatan pribadi"]
 ];
 
-function openDb(): Promise<IDBDatabase> {
+function openDb(name: string): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, 1);
+    const request = indexedDB.open(name, 1);
     request.onupgradeneeded = () => request.result.createObjectStore(STORE, { keyPath: "id" });
     request.onsuccess = () => resolve(request.result);
     request.onerror = () => reject(request.error);
   });
 }
-async function localItems(): Promise<WorkItem[]> {
-  const db = await openDb();
+async function localItems(name: string): Promise<WorkItem[]> {
+  const db = await openDb(name);
   return new Promise((resolve, reject) => {
     const request = db.transaction(STORE).objectStore(STORE).getAll();
     request.onsuccess = () => resolve(request.result as WorkItem[]);
     request.onerror = () => reject(request.error);
   });
 }
-async function putLocal(item: WorkItem) {
-  const db = await openDb();
+async function putLocal(name: string, item: WorkItem) {
+  const db = await openDb(name);
   return new Promise<void>((resolve, reject) => {
     const tx = db.transaction(STORE, "readwrite");
     tx.objectStore(STORE).put(item);
@@ -40,6 +40,8 @@ async function putLocal(item: WorkItem) {
 
 export default function TeacherDesk({ identity }: { identity: Identity }) {
   const [items, setItems] = useState<WorkItem[]>([]);
+  const [localTeacherId, setLocalTeacherId] = useState<string | null>(identity?.teacherId ?? null);
+  const dbName = localTeacherId ? `${DB_NAME}:${localTeacherId}` : null;
   const [title, setTitle] = useState("");
   const [itemType, setItemType] = useState("lesson_plan");
   const [body, setBody] = useState("");
@@ -47,8 +49,11 @@ export default function TeacherDesk({ identity }: { identity: Identity }) {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("Data kerja tersimpan di perangkat ini sampai Anda memilih sinkronisasi.");
 
-  const refresh = useCallback(async () => setItems(await localItems()), []);
+  const refresh = useCallback(async () => { if (!dbName) { setItems([]); return; } setItems(await localItems(dbName)); }, [dbName]);
   useEffect(() => {
+    const rememberedTeacher = identity?.teacherId || sessionStorage.getItem("tms-teacher-id");
+    if (identity?.teacherId) sessionStorage.setItem("tms-teacher-id", identity.teacherId);
+    setLocalTeacherId(rememberedTeacher);
     void refresh();
     const update = () => setOnline(navigator.onLine);
     update();
@@ -56,24 +61,26 @@ export default function TeacherDesk({ identity }: { identity: Identity }) {
     window.addEventListener("offline", update);
     if ("serviceWorker" in navigator) void navigator.serviceWorker.register("/teacher-sw.js").catch(() => undefined);
     return () => { window.removeEventListener("online", update); window.removeEventListener("offline", update); };
-  }, [refresh]);
+  }, [refresh, identity?.teacherId]);
 
   async function save() {
+    if (!dbName) { setMessage("Login online sekali sebagai guru untuk membuka penyimpanan pribadi pada perangkat ini."); return; }
     if (!title.trim()) { setMessage("Isi judul dokumen terlebih dahulu."); return; }
     const item: WorkItem = { id: crypto.randomUUID(), itemType, title: title.trim(), content: { body }, schemaVersion: 1, clientUpdatedAt: new Date().toISOString(), syncState: "local" };
-    await putLocal(item); await refresh(); setTitle(""); setBody(""); setMessage("Tersimpan di perangkat. Anda dapat melanjutkan tanpa internet.");
+    await putLocal(dbName, item); await refresh(); setTitle(""); setBody(""); setMessage("Tersimpan di perangkat. Anda dapat melanjutkan tanpa internet.");
   }
 
   async function sync() {
     setBusy(true);
     try {
-      const pending = (await localItems()).filter(x => x.syncState !== "synced");
+      if (!dbName) { setMessage("Login sebagai guru untuk menghubungkan penyimpanan pribadi."); return; }
+      const pending = (await localItems(dbName)).filter(x => x.syncState !== "synced");
       if (!pending.length) { setMessage("Semua dokumen lokal sudah tersinkron."); return; }
       const response = await fetch("/api/teacher-workspace", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ items: pending.map(({ syncState, ...item }) => item) }) });
       if (!response.ok) throw new Error(response.status === 401 ? "Sesi login berakhir. Login kembali untuk sinkronisasi." : "Sinkronisasi gagal. Data lokal tetap aman.");
       const result = await response.json();
       const accepted = new Set<string>((result.items ?? []).map((x: {id:string}) => x.id));
-      for (const item of pending) await putLocal({ ...item, syncState: accepted.has(item.id) ? "synced" : "conflict" });
+      for (const item of pending) await putLocal(dbName, { ...item, syncState: accepted.has(item.id) ? "synced" : "conflict" });
       await refresh();
       setMessage(`${result.accepted} dari ${result.received} dokumen diterima server. Konflik ditandai untuk pemeriksaan, bukan ditimpa diam-diam.`);
     } catch (error) { setMessage(error instanceof Error ? error.message : "Tidak dapat terhubung ke server."); }
@@ -81,7 +88,8 @@ export default function TeacherDesk({ identity }: { identity: Identity }) {
   }
 
   async function exportData() {
-    const data = { format: "tms-teacher-desk", version: 1, exportedAt: new Date().toISOString(), teacher: identity, items: await localItems() };
+    if (!dbName) { setMessage("Login sebagai guru untuk mengekspor penyimpanan pribadi."); return; }
+    const data = { format: "tms-teacher-desk", version: 1, exportedAt: new Date().toISOString(), teacher: identity ?? { teacherId: localTeacherId }, items: await localItems(dbName) };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob); const a = document.createElement("a");
     a.href = url; a.download = `tms-teacher-desk-${new Date().toISOString().slice(0,10)}.json`; a.click(); URL.revokeObjectURL(url);
@@ -90,12 +98,14 @@ export default function TeacherDesk({ identity }: { identity: Identity }) {
 
   async function importData(file?: File) {
     if (!file) return;
+    if (!dbName || !localTeacherId) { setMessage("Login online sekali sebagai guru sebelum mengimpor paket ke ruang pribadi."); return; }
     try {
       const parsed = JSON.parse(await file.text());
       if (parsed.format !== "tms-teacher-desk" || parsed.version !== 1 || !Array.isArray(parsed.items) || parsed.items.length > 500) throw new Error("Format paket tidak dikenali atau jumlah data melebihi batas.");
+      if (parsed.teacher?.teacherId && parsed.teacher.teacherId !== localTeacherId) throw new Error("Paket ini berasal dari akun guru lain. Impor lintas akun tidak diizinkan.");
       for (const item of parsed.items) {
         if (typeof item.id !== "string" || typeof item.title !== "string" || typeof item.itemType !== "string" || !item.content || typeof item.content !== "object") throw new Error("Ada dokumen dengan struktur tidak valid.");
-        await putLocal({ ...item, syncState: "local" });
+        await putLocal(dbName, { ...item, syncState: "local" });
       }
       await refresh(); setMessage(`${parsed.items.length} dokumen diimpor sebagai draf lokal. Periksa isinya sebelum sinkronisasi.`);
     } catch (error) { setMessage(error instanceof Error ? error.message : "Impor gagal."); }
