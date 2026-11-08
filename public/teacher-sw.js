@@ -10,9 +10,11 @@ self.addEventListener("fetch", event => {
   const request = event.request;
   const url = new URL(request.url);
   if (request.method !== "GET" || url.origin !== self.location.origin) return;
-  if (url.pathname.startsWith("/api/") || url.pathname.startsWith("/auth/") || url.pathname === "/teacher") return;
+  if (url.pathname.startsWith("/api/") || url.pathname.startsWith("/auth/")) return;
   if (request.mode === "navigate") {
-    event.respondWith(fetch(request).catch(() => caches.match(FALLBACK)));
+    if (url.pathname === "/teacher" || url.pathname.startsWith("/teacher/")) {
+      event.respondWith(fetch(request).catch(() => caches.match(FALLBACK)));
+    }
     return;
   }
   if (url.pathname.startsWith("/_next/static/")) {
