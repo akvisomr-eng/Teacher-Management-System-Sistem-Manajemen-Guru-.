@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { TransactionSql } from "postgres";
 import { z } from "zod";
+import type { TransactionSql } from "postgres";
 import { withAuthenticatedUser } from "@/db/connection";
 
 export const dynamic = "force-dynamic";
@@ -14,12 +15,21 @@ const teacherCreate = z.object({
   education: z.string().trim().max(80).optional().default("")
 });
 const studentProfileSchema = z.object({
+  citizenship: z.string().trim().max(40).optional().default("WNI"),
+  noKitas: z.string().trim().max(30).optional().default(""),
+  birthCertificateNumber: z.string().trim().max(80).optional().default(""),
   birthPlace: z.string().trim().max(100).optional().default(""),
   gender: z.enum(["L", "P", ""]).optional().default(""),
   religion: z.string().trim().max(40).optional().default(""),
   nik: z.string().trim().max(16).optional().default(""),
   familyCardNumber: z.string().trim().max(16).optional().default(""),
   address: z.string().trim().max(500).optional().default(""),
+  rt: z.string().trim().max(5).optional().default(""),
+  rw: z.string().trim().max(5).optional().default(""),
+  hamlet: z.string().trim().max(100).optional().default(""),
+  residenceType: z.string().trim().max(60).optional().default(""),
+  latitude: z.string().trim().max(30).optional().default(""),
+  longitude: z.string().trim().max(30).optional().default(""),
   province: z.string().trim().max(100).optional().default(""),
   city: z.string().trim().max(100).optional().default(""),
   district: z.string().trim().max(100).optional().default(""),
@@ -28,17 +38,35 @@ const studentProfileSchema = z.object({
   fatherName: z.string().trim().max(180).optional().default(""),
   fatherNik: z.string().trim().max(16).optional().default(""),
   fatherPhone: z.string().trim().max(30).optional().default(""),
+  fatherEducation: z.string().trim().max(80).optional().default(""),
+  fatherOccupation: z.string().trim().max(100).optional().default(""),
+  fatherIncomeRange: z.string().trim().max(60).optional().default(""),
   motherName: z.string().trim().max(180).optional().default(""),
   motherNik: z.string().trim().max(16).optional().default(""),
   motherPhone: z.string().trim().max(30).optional().default(""),
+  motherEducation: z.string().trim().max(80).optional().default(""),
+  motherOccupation: z.string().trim().max(100).optional().default(""),
+  motherIncomeRange: z.string().trim().max(60).optional().default(""),
   guardianName: z.string().trim().max(180).optional().default(""),
   guardianRelation: z.string().trim().max(60).optional().default(""),
   guardianPhone: z.string().trim().max(30).optional().default(""),
+  guardianEducation: z.string().trim().max(80).optional().default(""),
+  guardianOccupation: z.string().trim().max(100).optional().default(""),
+  guardianIncomeRange: z.string().trim().max(60).optional().default(""),
   previousSchool: z.string().trim().max(180).optional().default(""),
   admissionDate: z.string().date().optional().or(z.literal("")),
   childOrder: z.number().int().min(1).max(30).nullable().optional(),
   siblingsCount: z.number().int().min(0).max(30).nullable().optional(),
-  transportMode: z.string().trim().max(80).optional().default("")
+  transportMode: z.string().trim().max(80).optional().default(""),
+  hasKip: z.boolean().optional(),
+  kipNumber: z.string().trim().max(50).optional().default(""),
+  kksNumber: z.string().trim().max(50).optional().default(""),
+  kpsNumber: z.string().trim().max(50).optional().default(""),
+  pkhRecipient: z.boolean().optional(),
+  pipEligible: z.boolean().optional(),
+  specialNeeds: z.string().trim().max(160).optional().default(""),
+  contactPhone: z.string().trim().max(30).optional().default(""),
+  contactEmail: z.string().trim().email().max(254).or(z.literal("")).optional().default("")
 });
 const studentCreate = z.object({
   fullName: z.string().trim().min(2).max(180),
