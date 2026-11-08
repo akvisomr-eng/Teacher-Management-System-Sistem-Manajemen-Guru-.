@@ -1,16 +1,19 @@
 # Teacher Management System (TMS)
 
-Sistem Manajemen Guru berbasis SaaS untuk satuan pendidikan di Indonesia.
+Sistem Manajemen Guru berbasis SaaS multi-tenant untuk satuan pendidikan di Indonesia.
 
-## Fondasi saat ini
-- Next.js App Router dengan dashboard responsif berbahasa Indonesia.
-- Neon Managed Auth untuk login, registrasi, dan verifikasi email OTP.
-- Onboarding organisasi/sekolah, administrator awal, dan tahun akademik.
-- Multi-tenant schema dengan PostgreSQL RLS dan role runtime least-privilege.
-- Domain akademik awal: guru, siswa, kelas, mapel, penugasan, jurnal, asesmen, hasil asesmen, kurikulum, perangkat ajar, dan audit log.
+## Cakupan sasaran
+PAUD, SD, SMP, SMA/SMK, SLB, Madrasah Aliyah, dan pendidikan kesetaraan. Platform dirancang modular agar dapat digunakan sekolah secara mandiri maupun dalam organisasi/yayasan multi-sekolah.
 
-## Jenjang sasaran
-PAUD, SD, SMP, SMA/SMK, SLB, Madrasah Aliyah, dan pendidikan kesetaraan.
+## Fondasi teknis
+- Next.js App Router, TypeScript, React, dan Tailwind/CSS.
+- Neon Managed Auth untuk autentikasi.
+- Neon Postgres dengan Drizzle, SQL migrations, row-level security, dan runtime database role least-privilege.
+- Vercel untuk deployment.
+- Tenant/school scope, membership-based authorization, dan audit log.
+
+## Modul domain
+Platform & tenant administration, manajemen sekolah, identitas dan akses, direktori guru/siswa, tahun akademik, kelas, mata pelajaran, kurikulum, perencanaan ajar, jurnal mengajar, asesmen, rapor, remedial/enrichment, portofolio siswa, komunikasi wali, pengembangan guru, AI teaching assistant, analitik, integrasi, dan billing.
 
 ## Development
 ```bash
@@ -30,4 +33,4 @@ Variabel lingkungan dijelaskan pada `.env.example` dan `docs/OPERATIONS.md`. Jan
 - `docs/OPERATIONS.md`: staging, production, migrasi, dan release gates.
 
 ## Status rilis
-Fondasi aplikasi, autentikasi, onboarding, dan schema akademik awal berada pada PR draft. Migrasi database 0001–0003 sudah diterapkan pada branch Neon staging dan production; pengujian RLS lintas tenant berhasil di staging. CI dan preview deployment masih menjadi release gate, dan environment DATABASE_URL Vercel belum diisi.
+Foundation autentikasi, onboarding sekolah, dashboard, schema akademik awal, RLS, dan CI telah tersedia. Deployment foundation di Vercel berstatus `READY`. Pengembangan registry guru/siswa sedang berjalan pada branch fitur tersendiri. Modul akademik lain dan pengujian end-to-end harus diselesaikan sebelum sistem dapat dinyatakan siap operasional secara menyeluruh.

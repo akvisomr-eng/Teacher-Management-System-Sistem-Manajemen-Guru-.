@@ -8,13 +8,13 @@ Gunakan dua branch Neon yang berbeda:
 Jangan arahkan deployment preview ke database production.
 
 ## Environment variables
-Set seluruh variabel di Vercel sebagai encrypted/sensitive dan jangan commit nilainya:
+Atur variabel di Vercel sesuai target deployment dan jangan pernah memasukkan nilainya ke repository atau percakapan:
 - `NEON_AUTH_BASE_URL`: URL Neon Auth untuk branch yang sesuai dengan target deployment.
-- `NEON_AUTH_COOKIE_SECRET`: secret acak minimal 32 karakter.
+- `NEON_AUTH_COOKIE_SECRET`: secret acak minimal 32 karakter, disimpan sebagai Sensitive/Encrypted.
 - `DATABASE_URL`: connection string role `tms_app`, bukan `neondb_owner`.
-- `NEXT_PUBLIC_APP_URL`: origin aplikasi yang benar.
+- `NEXT_PUBLIC_APP_URL`: origin aplikasi yang benar; variabel ini memang bersifat publik.
 
-Preview menggunakan connection string dan Auth URL dari `tms-staging`. Production menggunakan nilai dari branch `production`.
+Preview menggunakan connection string dan Auth URL dari `tms-staging`. Production menggunakan nilai dari branch `production`. Pastikan environment variable Production dan Preview tidak saling tertukar. Setelah mengubah environment variable, lakukan redeploy target terkait.
 
 ## Migrasi
 File SQL dijalankan berurutan:
@@ -31,20 +31,26 @@ Jalankan terlebih dahulu pada branch staging. Periksa tabel, constraint, RLS pol
 - Semua endpoint yang membaca atau mengubah data harus memeriksa session dan membership terlebih dahulu.
 - Jangan mengandalkan tenant ID dari browser sebagai bukti otorisasi.
 - RLS adalah lapisan pertahanan tambahan, bukan pengganti pemeriksaan role dan izin pada service layer.
+- Endpoint direktori guru/siswa hanya mengizinkan role pengelola sekolah yang telah diverifikasi; perubahan dicatat ke audit log.
+- Data peserta didik adalah data pribadi. Batasi akses, minimalkan pengumpulan, dan tetapkan kebijakan retensi sebelum sekolah menggunakannya secara luas.
 
 ## Auth email
 Email/password dan verifikasi OTP diaktifkan pada Neon Auth. Shared SMTP hanya untuk uji awal; siapkan SMTP milik organisasi untuk penggunaan produksi dan verifikasi deliverability sebelum membuka pendaftaran umum.
 
 ## Release gates
-- CI: typecheck, lint, build berhasil.
+- CI: typecheck, lint, dependency audit, dan production build berhasil.
 - Preview: sign-up, verifikasi email, sign-in, sign-out, session refresh dan protected routes berhasil.
 - Onboarding: organisasi, sekolah, admin awal dan tahun akademik berhasil dibuat.
-- Security: dua tenant terpisah dan tidak dapat membaca/mengubah data satu sama lain.
+- Registry: tambah, daftar, pencarian, perubahan status guru/siswa berhasil.
+- Security: dua tenant terpisah dan tidak dapat membaca/mengubah data satu sama lain; role tanpa izin ditolak.
 - Database: seluruh migrasi staging berhasil; production migration dilakukan setelah preview disetujui.
 - Deployment: GitHub repository terhubung ke Vercel, environment target diverifikasi, dan domain/trusted origin didaftarkan.
+- Operasional: email pengiriman, backup/recovery, monitoring, kebijakan privasi, dukungan, dan prosedur insiden siap.
 
-## Snapshot implementasi 7 November 2026
-- Migrasi 0001–0003 sudah diterapkan pada branch `tms-staging` dan `production` setelah berhasil diuji pada staging.
-- Kedua branch memiliki 17 tabel aplikasi awal dan 18 kebijakan RLS.
-- Role `tms_app` diuji: tanpa konteks tenant tidak dapat membaca data sekolah/siswa.
-- Environment Vercel masih memerlukan `DATABASE_URL` role `tms_app` per target (staging untuk Preview, production untuk Production).
+## Status terverifikasi per 8 November 2026
+- Foundation commit `5ca5a7029aa084134d8f76b481f1bffeffa573eb` telah lulus CI #104 dan deployment Vercel Production berstatus `READY`.
+- Branch Neon `tms-staging` dan `production` berstatus `ready`; migrasi 0001–0003 telah diterapkan pada keduanya.
+- Database awal memiliki 17 tabel aplikasi dan kebijakan RLS tenant-scoped. Pengujian isolasi tenant awal berhasil pada staging.
+- Environment `DATABASE_URL` Production dan Preview telah ditambahkan. Nilai aktual, Auth URL, cookie secret, email deliverability, dan smoke test browser harus tetap diverifikasi melalui deployment.
+- Modul direktori guru/siswa sedang dikembangkan terpisah melalui pull request; jangan menganggap workflow tersebut operasional di production sebelum PR lulus CI dan deployment diverifikasi.
+- Dashboard, autentikasi, dan onboarding merupakan fondasi yang telah dibangun; modul kurikulum, kelas, perencanaan ajar, jurnal, asesmen, rapor, komunikasi, AI, analitik, dan billing masih memerlukan implementasi serta pengujian tersendiri.

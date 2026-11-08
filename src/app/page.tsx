@@ -4,21 +4,16 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth/client";
 import {
-  Activity, BookOpenCheck, CalendarDays, ChevronDown, GraduationCap,
-  LayoutDashboard, Menu, MessageSquareText, Search, Settings2, ShieldCheck,
+  BookOpenCheck, CalendarDays, ChevronDown, GraduationCap,
+  LayoutDashboard, Menu, Search, Settings2, ShieldCheck,
   Users, X, ClipboardCheck, Sparkles, TrendingUp, Bell, CircleHelp
 } from "lucide-react";
 
 const nav = [
-  { label: "Ringkasan", icon: LayoutDashboard, active: true },
-  { label: "Data Guru", icon: Users },
-  { label: "Data Siswa", icon: GraduationCap },
-  { label: "Kurikulum", icon: BookOpenCheck },
-  { label: "Perencanaan Ajar", icon: CalendarDays },
-  { label: "Jurnal Mengajar", icon: ClipboardCheck },
-  { label: "Asesmen & Rapor", icon: Activity },
-  { label: "Komunikasi", icon: MessageSquareText }
-];
+  { label: "Ringkasan", icon: LayoutDashboard, href: "/" },
+  { label: "Data Guru", icon: Users, href: "/workspace/teachers" },
+  { label: "Data Siswa", icon: GraduationCap, href: "/workspace/students" }
+] as const;
 
 
 
@@ -76,7 +71,7 @@ export default function Home() {
         <div className="brand"><div className="brand-mark"><GraduationCap size={22}/></div><div><b>TMS<span>+</span></b><small>MANAGEMENT SYSTEM</small></div><button className="close-menu" onClick={() => setMenuOpen(false)} aria-label="Tutup menu"><X size={18}/></button></div>
         <div className="school-switch"><div className="school-avatar">SN</div><div className="school-name"><b>{summary?.school.schoolName ?? "Workspace sekolah"}</b><small>{summary?.school.tenantName ?? "Organisasi"}</small></div><ChevronDown size={16}/></div>
         <div className="nav-caption">MENU UTAMA</div>
-        <nav>{nav.map(item => <button key={item.label} className={`nav-item ${activeNav === item.label ? "selected" : ""}`} onClick={() => {setActiveNav(item.label);setMenuOpen(false);}}><item.icon size={18}/><span>{item.label}</span>{item.label === "Asesmen & Rapor" && <i>3</i>}</button>)}</nav>
+        <nav>{nav.map(item => <button key={item.label} className={`nav-item ${activeNav === item.label ? "selected" : ""}`} onClick={() => {setActiveNav(item.label);setMenuOpen(false);router.push(item.href);}}><item.icon size={18}/><span>{item.label}</span></button>)}</nav>
         <div className="sidebar-bottom"><div className="nav-caption">PREFERENSI</div><button className="nav-item" onClick={() => setActiveNav("Pengaturan")}><Settings2 size={18}/><span>Pengaturan</span></button><div className="help-card"><div className="help-icon"><CircleHelp size={18}/></div><b>Butuh bantuan?</b><p>Pusat panduan penggunaan TMS.</p><button onClick={() => setActiveNav("Pusat Bantuan")}>Buka pusat bantuan <span>→</span></button></div><div className="profile"><div className="profile-avatar">{(session?.user?.name ?? "A").slice(0,2).toUpperCase()}</div><div><b>{session?.user?.name ?? session?.user?.email ?? "Pengguna"}</b><small>{summary?.school.role ?? "Memuat peran"}</small></div><button className="signout-button" title="Keluar" aria-label="Keluar" onClick={async () => { await authClient.signOut(); router.replace("/auth/sign-in"); router.refresh(); }}>Keluar</button></div></div>
       </aside>
       {menuOpen && <button className="scrim" aria-label="Tutup navigasi" onClick={() => setMenuOpen(false)}/>}
