@@ -22,6 +22,7 @@ File SQL dijalankan berurutan:
 1. `drizzle/0001_tms_foundation.sql`
 2. `drizzle/0002_tenant_rls.sql`
 3. `drizzle/0003_academic_operations.sql`
+4. `drizzle/0004_academic_assignment_integrity.sql`
 
 Jalankan terlebih dahulu pada branch staging. Periksa tabel, constraint, RLS policy, dan uji akses lintas tenant sebelum menerapkan ke production. Migrasi bersifat additive; jangan menjalankan ulang skrip yang menambahkan constraint tanpa memeriksa statusnya.
 
@@ -44,6 +45,7 @@ Email/password dan verifikasi OTP diaktifkan pada Neon Auth. Shared SMTP hanya u
 - Preview: sign-up, verifikasi email, sign-in, sign-out, session refresh dan protected routes berhasil.
 - Onboarding: organisasi, sekolah, admin awal dan tahun akademik berhasil dibuat.
 - Registry: tambah, daftar, pencarian, dan perubahan status guru/siswa, kelas, dan mata pelajaran berhasil.
+- Academic operations: penugasan guru-mapel-kelas dan penempatan siswa harus lolos validasi tahun ajaran, sekolah, dan duplikasi.
 - Security: dua tenant terpisah dan tidak dapat membaca/mengubah data satu sama lain; role tanpa izin ditolak.
 - Database: seluruh migrasi staging berhasil; production migration dilakukan setelah preview disetujui.
 - Deployment: environment target, domain, trusted origin, dan health monitoring diverifikasi.
