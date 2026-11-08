@@ -58,7 +58,7 @@ export function ReportsWorkspace() {
     if (!data.length) return;
     const csv = [columns.map(key => columnLabels[key] ?? key).join(","), ...data.map(row => columns.map(key => {
       const raw = formatCell(key, row[key]);
-      const value = /^[\\t\\r\\n ]*[=+@-]/.test(raw) ? "'" + raw : raw;
+      const value = /^[\t\r\n ]*[=+@-]/.test(raw) ? "'" + raw : raw;
       return `"${value.replace(/"/g, '""')}"`;
     }).join(","))].join("\r\n");
     const blob = new Blob(["\uFEFF", csv], { type: "text/csv;charset=utf-8" });
