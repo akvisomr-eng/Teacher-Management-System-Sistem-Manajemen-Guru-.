@@ -54,7 +54,7 @@ Email/password dan verifikasi OTP aktif. Shared SMTP masih digunakan untuk uji a
 ## Status terverifikasi per 8 November 2026
 - Foundation, registry, master akademik, penugasan, penempatan siswa, perencanaan ajar, jurnal, asesmen, gradebook, dan Pusat Kurikulum telah digabung ke `main`.
 - CI #126 (audit hardening) dan #128 (Pusat Kurikulum) berhasil: typecheck, lint, audit dependency produksi, dan production build.
-- Preview Pusat Kurikulum berstatus `READY`. Deployment Production untuk commit `3484615329b4691bd1cd37b8643c025e1de1945c` sedang diproses pada saat pembaruan ini.
+- Preview Pusat Kurikulum berstatus `READY`. Deployment Production untuk commit `3484615329b4691bd1cd37b8643c025e1de1945c` berstatus `READY`.
 - Neon `tms-staging` dan `production` berstatus ready. Kedua branch memiliki 17 tabel aplikasi dengan RLS aktif; migrasi 0001–0004 telah diterapkan.
 - Migrasi 0005 telah diterapkan pada staging dan production. Hak `tms_app` untuk audit log diverifikasi: SELECT/INSERT diizinkan; UPDATE/DELETE/TRUNCATE ditolak. RLS audit log hanya SELECT/INSERT.
 - Pembacaan tanpa tenant context mengembalikan nol baris pada tabel tenant-scoped di staging dan production.
