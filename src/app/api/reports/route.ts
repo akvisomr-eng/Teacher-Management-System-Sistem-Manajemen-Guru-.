@@ -69,8 +69,13 @@ export async function GET(request: Request) {
         SELECT st.student_number, st.full_name AS student_name, st.status,
                c.name AS class_name, c.grade_level, ay.name AS academic_year
         FROM students st
-        LEFT JOIN student_enrollments e ON e.student_id = st.id AND e.tenant_id = st.tenant_id AND e.school_id = st.school_id AND e.status = 'active'
-          AND (${academicYearId}::uuid IS NULL OR e.academic_year_id = ${academicYearId}::uuid)
+        LEFT JOIN LATERAL (
+          SELECT e.* FROM student_enrollments e
+          WHERE e.student_id = st.id AND e.tenant_id = st.tenant_id AND e.school_id = st.school_id
+            AND e.status = 'active'
+            AND (${academicYearId}::uuid IS NULL OR e.academic_year_id = ${academicYearId}::uuid)
+          ORDER BY e.created_at DESC LIMIT 1
+        ) e ON TRUE
         LEFT JOIN classes c ON c.id = e.class_id AND c.tenant_id = e.tenant_id AND c.school_id = e.school_id
         LEFT JOIN academic_years ay ON ay.id = e.academic_year_id AND ay.tenant_id = e.tenant_id AND ay.school_id = e.school_id
         WHERE st.tenant_id = ${tenantId} AND st.school_id = ${schoolId}
