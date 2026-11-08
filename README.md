@@ -19,6 +19,7 @@ PAUD, SD, SMP, SMA/SMK, SLB, Madrasah Aliyah, dan pendidikan kesetaraan. Platfor
 - Perencanaan ajar dan jurnal mengajar.
 - Pusat asesmen dan gradebook.
 - Pusat Kurikulum dengan draf, penerbitan, arsip, dan versi kurikulum yang tidak dapat diubah setelah diterbitkan.
+- Pusat Laporan untuk direktori guru, daftar siswa, rombongan belajar, dan rekap nilai dengan ekspor CSV serta cetak.
 
 Modul rapor, remedial/enrichment, komunikasi wali, pengembangan guru, AI teaching assistant, analitik lanjutan, integrasi, dan billing masih memerlukan implementasi dan pengujian.
 
