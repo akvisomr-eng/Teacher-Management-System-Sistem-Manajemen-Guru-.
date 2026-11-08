@@ -46,7 +46,23 @@ export function CurriculumWorkspace() {
     finally { setLoading(false); }
   }, []);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    let active = true;
+    fetch("/api/curriculum", { cache: "no-store" })
+      .then(async response => {
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error ?? "Data kurikulum tidak dapat dimuat.");
+        return result;
+      })
+      .then(result => {
+        if (!active) return;
+        const data = (result.data ?? []).map((row: Curriculum) => ({ ...row, definition: asDefinition(row.definition) })) as Curriculum[];
+        setItems(data);
+      })
+      .catch(err => { if (active) setError(err instanceof Error ? err.message : "Gagal memuat kurikulum."); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, []);
 
   function selectItem(item: Curriculum) {
     const definition = asDefinition(item.definition);
@@ -101,7 +117,7 @@ export function CurriculumWorkspace() {
     try {
       const response = await fetch("/api/curriculum", {
         method: "PATCH", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: selected.id, action: "update", name, framework, definition: makeDefinition() })
+        body: JSON.stringify({ id: selected.id, action: "update", definition: makeDefinition() })
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error ?? "Perubahan kurikulum gagal disimpan.");
@@ -118,7 +134,7 @@ export function CurriculumWorkspace() {
       if (action === "publish") {
         const saveResponse = await fetch("/api/curriculum", {
           method: "PATCH", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ id: selected.id, action: "update", name, framework, definition: makeDefinition() })
+          body: JSON.stringify({ id: selected.id, action: "update", definition: makeDefinition() })
         });
         const saveResult = await saveResponse.json();
         if (!saveResponse.ok) throw new Error(saveResult.error ?? "Draf gagal disimpan sebelum diterbitkan.");
@@ -180,8 +196,8 @@ export function CurriculumWorkspace() {
       </> : <>
         <div className="curriculum-editor-meta"><span className={`registry-status ${selected.status === "published" ? "is-active" : ""}`}>{selected.status === "published" ? "Diterbitkan" : selected.status === "archived" ? "Diarsipkan" : "Draf"}</span><span>Versi {selected.version}</span><span>{selected.framework}</span></div>
         <div className="curriculum-editor">
-          <label>Nama kurikulum<input disabled={selected.status !== "draft"} maxLength={160} value={name} onChange={event => setName(event.target.value)}/></label>
-          <label>Kerangka / acuan<input disabled={selected.status !== "draft"} maxLength={100} value={framework} onChange={event => setFramework(event.target.value)}/></label>
+          <label>Nama kurikulum<input disabled maxLength={160} value={name} onChange={event => setName(event.target.value)}/></label>
+          <label>Kerangka / acuan<input disabled maxLength={100} value={framework} onChange={event => setFramework(event.target.value)}/></label>
           <label>Deskripsi dan ruang lingkup<textarea disabled={selected.status !== "draft"} rows={4} maxLength={5000} value={description} onChange={event => setDescription(event.target.value)} placeholder="Jelaskan karakteristik dan ruang lingkup kurikulum..."/></label>
           <label>Capaian pembelajaran <small>Masukkan satu capaian per baris. Kode CP dibuat otomatis.</small><textarea disabled={selected.status !== "draft"} rows={8} maxLength={30000} value={outcomesText} onChange={event => setOutcomesText(event.target.value)} placeholder={"Memahami konsep dasar...\nMenerapkan pengetahuan dalam konteks...\nMerefleksikan proses belajar..."}/></label>
           <label>Prinsip asesmen<textarea disabled={selected.status !== "draft"} rows={4} maxLength={5000} value={assessmentPrinciples} onChange={event => setAssessmentPrinciples(event.target.value)} placeholder="Tuliskan prinsip penilaian, umpan balik, dan bukti belajar..."/></label>
