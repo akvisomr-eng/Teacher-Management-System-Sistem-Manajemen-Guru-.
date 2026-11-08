@@ -163,7 +163,7 @@ export async function PATCH(request: Request, { params }: Context) {
       rows = await tx`UPDATE subjects SET name = COALESCE(${changes.name ?? null}, name), code = CASE WHEN ${changes.code !== undefined} THEN NULLIF(${changes.code ?? ""}, '') ELSE code END, category = CASE WHEN ${changes.category !== undefined} THEN NULLIF(${changes.category ?? ""}, '') ELSE category END, is_active = COALESCE(${changes.isActive ?? null}, is_active) WHERE id = ${id} AND tenant_id = ${tenantId} AND school_id = ${schoolId} RETURNING id, code, name, category, is_active, created_at`;
     }
     if (!rows.length) return NextResponse.json({ error: "Data tidak ditemukan." }, { status: 404 });
-    const resourceType = resource.slice(0, -1);
+    const resourceType = resource === "teachers" ? "teacher" : resource === "students" ? "student" : resource === "classes" ? "class" : "subject";
     await tx`INSERT INTO audit_logs (tenant_id, school_id, actor_user_id, action, resource_type, resource_id) VALUES (${tenantId}, ${schoolId}, ${userId}, ${resourceType + ".updated"}, ${resourceType}, ${id})`;
     return NextResponse.json({ data: rows[0] });
   });
