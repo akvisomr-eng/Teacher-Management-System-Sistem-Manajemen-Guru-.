@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import type { TransactionSql } from "postgres";
 import { z } from "zod";
 import { withAuthenticatedUser } from "@/db/connection";
 
@@ -14,7 +15,11 @@ const itemSchema = z.object({
 });
 const syncSchema = z.object({ items: z.array(itemSchema).min(1).max(100) });
 
-async function withTeacher(work: (tx: any, teacher: any, profile: any) => Promise<Response>) {
+type DbTx = TransactionSql<Record<string, never>>;
+type TeacherIdentity = { teacher_id: string; tenant_id: string; school_id: string; full_name: string; role: string; scope: Record<string, unknown>; school_name: string };
+type Profile = { id: string; email: string; full_name: string };
+
+async function withTeacher(work: (tx: DbTx, teacher: TeacherIdentity, profile: Profile) => Promise<Response>) {
   try {
     return await withAuthenticatedUser(async (tx, _user, profile) => {
       const rows = await tx`
@@ -59,7 +64,7 @@ export async function POST(request: Request) {
   const parsed = syncSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Paket sinkronisasi tidak valid." }, { status: 400 });
   return withTeacher(async (tx, teacher, profile) => {
-    const accepted = [];
+    const accepted: Array<{ id: string; updated_at: string }> = [];
     for (const item of parsed.data.items) {
       const rows = await tx`
         INSERT INTO teacher_workspace_items
