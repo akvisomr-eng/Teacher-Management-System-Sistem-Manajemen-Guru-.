@@ -19,7 +19,6 @@ export function RegistryWorkspace({ resource }: { resource: Resource }) {
   const [extra, setExtra] = useState("");
 
   const load = useCallback(async () => {
-    setLoading(true); setError("");
     try {
       const response = await fetch(`/api/registry/${resource}`, { cache: "no-store" });
       const result = await response.json();
