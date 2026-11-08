@@ -60,6 +60,6 @@ Email/password dan verifikasi OTP aktif. Shared SMTP masih digunakan untuk uji a
 - Migrasi 0005 telah diterapkan pada staging dan production. Hak `tms_app` untuk audit log diverifikasi: SELECT/INSERT diizinkan; UPDATE/DELETE/TRUNCATE ditolak. RLS audit log hanya SELECT/INSERT.
 - Pembacaan tanpa tenant context mengembalikan nol baris pada tabel tenant-scoped di staging dan production.
 - Vercel memiliki `DATABASE_URL` role `tms_app` yang terpisah untuk Preview dan Production; Auth URL dan cookie secret juga dipisahkan. `NEXT_PUBLIC_APP_URL` Production menggunakan `teacher-management-system-nine.vercel.app`.
-- Tidak ada runtime error yang terdeteksi pada rentang pemeriksaan terakhir 30 menit. Ini bukan pengganti uji fungsional end-to-end; akses browser langsung untuk smoke test masih terhalang pada jalur pemeriksaan otomatis.
+- Tidak ada runtime error yang terdeteksi pada rentang pemeriksaan terakhir 30 menit. Uji end-to-end sign-in, onboarding, dan transaksi sekolah dengan akun pengguna nyata tetap diperlukan.
 - Shared SMTP masih aktif. SMTP bermerek organisasi, uji autentikasi end-to-end, backup/recovery teruji, kebijakan privasi/retensi, dan prosedur insiden tetap menjadi release gate sebelum operasional komersial penuh.
 - Rapor, remedial/enrichment, komunikasi wali, AI, analitik lanjutan, integrasi, dan billing belum dinyatakan siap operasional.
