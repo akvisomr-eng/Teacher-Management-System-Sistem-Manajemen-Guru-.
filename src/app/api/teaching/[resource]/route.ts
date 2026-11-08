@@ -68,7 +68,7 @@ export async function GET(_request: Request, { params }: Context) {
       const teachers = managerRoles.has(role)
         ? await tx`SELECT id, full_name FROM teachers WHERE tenant_id = ${tenantId} AND school_id = ${schoolId} AND employment_status = 'active' ORDER BY full_name`
         : [];
-      return NextResponse.json({ data, options: { teachers } });
+      return NextResponse.json({ data, options: { teachers }, permissions: { canReview: managerRoles.has(role) } });
     }
     const [data, assignments] = await Promise.all([
       teacherId
@@ -78,7 +78,7 @@ export async function GET(_request: Request, { params }: Context) {
         ? tx`SELECT a.id, c.name AS class_name, s.name AS subject_name FROM teaching_assignments a JOIN classes c ON c.id = a.class_id AND c.tenant_id = a.tenant_id AND c.school_id = a.school_id JOIN subjects s ON s.id = a.subject_id AND s.tenant_id = a.tenant_id AND s.school_id = a.school_id WHERE a.tenant_id = ${tenantId} AND a.school_id = ${schoolId} AND a.teacher_id = ${teacherId} ORDER BY c.name, s.name`
         : tx`SELECT a.id, c.name AS class_name, s.name AS subject_name, t.full_name AS teacher_name FROM teaching_assignments a JOIN classes c ON c.id = a.class_id AND c.tenant_id = a.tenant_id AND c.school_id = a.school_id JOIN subjects s ON s.id = a.subject_id AND s.tenant_id = a.tenant_id AND s.school_id = a.school_id JOIN teachers t ON t.id = a.teacher_id AND t.tenant_id = a.tenant_id AND t.school_id = a.school_id WHERE a.tenant_id = ${tenantId} AND a.school_id = ${schoolId} ORDER BY c.name, s.name`
     ]);
-    return NextResponse.json({ data, options: { assignments } });
+    return NextResponse.json({ data, options: { assignments }, permissions: { canReview: managerRoles.has(role) } });
   });
 }
 
