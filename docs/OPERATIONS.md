@@ -22,6 +22,7 @@ File SQL dijalankan berurutan:
 1. `drizzle/0001_tms_foundation.sql`
 2. `drizzle/0002_tenant_rls.sql`
 3. `drizzle/0003_academic_operations.sql`
+4. `drizzle/0004_academic_assignment_integrity.sql`
 
 Jalankan terlebih dahulu pada branch staging. Periksa tabel, constraint, RLS policy, dan uji akses lintas tenant sebelum menerapkan ke production. Migrasi bersifat additive; jangan menjalankan ulang skrip yang menambahkan constraint tanpa memeriksa statusnya.
 
@@ -44,16 +45,18 @@ Email/password dan verifikasi OTP diaktifkan pada Neon Auth. Shared SMTP hanya u
 - Preview: sign-up, verifikasi email, sign-in, sign-out, session refresh dan protected routes berhasil.
 - Onboarding: organisasi, sekolah, admin awal dan tahun akademik berhasil dibuat.
 - Registry: tambah, daftar, pencarian, dan perubahan status guru/siswa, kelas, dan mata pelajaran berhasil.
+- Academic operations: penugasan guru-mapel-kelas dan penempatan siswa harus lolos validasi tahun ajaran, sekolah, dan duplikasi.
 - Security: dua tenant terpisah dan tidak dapat membaca/mengubah data satu sama lain; role tanpa izin ditolak.
 - Database: seluruh migrasi staging berhasil; production migration dilakukan setelah preview disetujui.
 - Deployment: environment target, domain, trusted origin, dan health monitoring diverifikasi.
 - Operasional: email pengiriman, backup/recovery, monitoring, kebijakan privasi, dukungan, dan prosedur insiden siap.
 
 ## Status terverifikasi per 8 November 2026
-- Foundation commit `5ca5a7029aa084134d8f76b481f1bffeffa573eb` telah lulus CI #104 dan deployment Vercel Production berstatus `READY`.
-- PR #2 (direktori guru/siswa, API tenant-scoped, audit log, dan dokumentasi) telah digabung ke `main`; CI #110 dan deployment Preview untuk commit fitur terakhir berhasil.
-- Branch Neon `tms-staging` dan `production` berstatus `ready`; migrasi 0001–0003 telah diterapkan pada keduanya.
-- Database awal memiliki 17 tabel aplikasi dengan kebijakan RLS tenant-scoped. Runtime role `tms_app` tidak dapat membaca data sekolah/guru/siswa tanpa konteks tenant pada kedua branch.
-- Environment `DATABASE_URL` Production dan Preview memakai role `tms_app`; Preview diarahkan ke staging dan Production ke production.
+- Foundation, direktori guru/siswa, dan master kelas/mapel telah digabung ke `main`. CI #104, #110, #113 serta deployment Production untuk commit `a64f22c` dan `3acfa80` berstatus berhasil/READY.
+- Preview deployment untuk PR #2 dan PR #3 berstatus `READY`; endpoint `/api/health` mengembalikan HTTP 200 dengan database `connected` dan auth `configured` pada Preview serta Production.
+- Branch Neon `tms-staging` dan `production` berstatus `ready`; migrasi 0001–0003 telah diterapkan pada keduanya. Indeks tambahan migrasi 0004 telah diterapkan pada staging dan production.
+- Database memiliki 17 tabel aplikasi dengan kebijakan RLS tenant-scoped. Runtime role `tms_app` tidak dapat membaca data sekolah, guru, siswa, kelas, mata pelajaran, atau tahun akademik tanpa konteks tenant pada staging dan production.
+- Environment `DATABASE_URL` Preview menggunakan role `tms_app` pada staging; Production menggunakan role `tms_app` pada production.
 - Cookie secret Neon Auth telah dipisahkan untuk Production, Preview, dan Development; trusted origins production dan preview telah dikonfigurasi.
-- Pengelolaan kelas dan mata pelajaran sedang dikembangkan pada PR terpisah. Modul kurikulum, penugasan, perencanaan ajar, jurnal, asesmen, rapor, komunikasi, AI, analitik, dan billing masih memerlukan implementasi serta pengujian tersendiri.
+- Penugasan guru-mapel-kelas dan penempatan siswa sedang dikembangkan pada PR berikutnya. Kurikulum, perencanaan ajar, jurnal, asesmen, rapor, komunikasi, AI, analitik, dan billing masih memerlukan implementasi serta pengujian.
+- SMTP bermerek milik organisasi, prosedur backup/recovery teruji, kebijakan privasi/retensi, dan uji autentikasi end-to-end dengan akun sekolah masih menjadi release gate sebelum operasional komersial penuh.

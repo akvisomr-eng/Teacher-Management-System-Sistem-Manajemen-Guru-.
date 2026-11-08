@@ -33,4 +33,4 @@ Variabel lingkungan dijelaskan pada `.env.example` dan `docs/OPERATIONS.md`. Jan
 - `docs/OPERATIONS.md`: staging, production, migrasi, dan release gates.
 
 ## Status rilis
-Fondasi autentikasi, onboarding, dashboard, PostgreSQL RLS, serta direktori guru/siswa telah digabung ke `main`. Pengelolaan kelas dan mata pelajaran sedang dikembangkan pada PR berikutnya. Kurikulum, penugasan guru, perencanaan ajar, jurnal, asesmen/rapor, komunikasi, AI, analitik, billing, dan integrasi masih memerlukan implementasi serta pengujian sebelum seluruh platform dinyatakan siap operasional.
+Fondasi autentikasi, onboarding, dashboard, PostgreSQL RLS, direktori guru/siswa, master kelas, dan mata pelajaran telah digabung ke `main`. Penugasan guru dan penempatan siswa dalam kelas sedang dikembangkan pada PR berikutnya. Kurikulum, rencana ajar, jurnal, asesmen/rapor, komunikasi, AI, analitik, billing, dan integrasi masih memerlukan implementasi serta pengujian sebelum seluruh platform dinyatakan siap operasional.
