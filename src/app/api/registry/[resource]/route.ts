@@ -44,7 +44,7 @@ const studentCreate = z.object({
   fullName: z.string().trim().min(2).max(180),
   studentNumber: z.string().trim().max(50).optional().default(""),
   birthDate: z.string().date().optional().or(z.literal("")),
-  profile: studentProfileSchema.optional().default({})
+  profile: studentProfileSchema.partial().default({})
 });
 const classCreate = z.object({
   name: z.string().trim().min(1).max(100),
@@ -64,7 +64,7 @@ const updateSchema = z.object({
   education: z.string().trim().max(80).optional(),
   studentNumber: z.string().trim().max(50).optional(),
   birthDate: z.string().date().optional().or(z.literal("")),
-  profile: studentProfileSchema.optional(),
+  profile: studentProfileSchema.partial().optional(),
   status: z.string().trim().min(1).max(30).optional(),
   name: z.string().trim().min(1).max(140).optional(),
   gradeLevel: z.string().trim().min(1).max(50).optional(),
