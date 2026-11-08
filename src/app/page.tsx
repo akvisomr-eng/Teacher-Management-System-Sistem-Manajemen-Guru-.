@@ -13,7 +13,7 @@ const nav = [
   { label: "Ringkasan", icon: LayoutDashboard, href: "/" },
   { label: "Data Guru", icon: Users, href: "/workspace/teachers" },
   { label: "Data Siswa", icon: GraduationCap, href: "/workspace/students" }
-];
+] as const;
 
 
 
