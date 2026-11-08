@@ -88,9 +88,9 @@ export async function POST(request: Request, { params }: Context) {
   if (resource === "plans") {
     const parsed = planCreate.safeParse(body);
     if (!parsed.success) return NextResponse.json({ error: "Judul rencana ajar wajib diisi dengan benar." }, { status: 400 });
-    return authorize(resource, async (tx, tenantId, schoolId, userId, teacherId, role) => {
+    return authorize(resource, async (tx, tenantId, schoolId, userId, teacherId, _role) => {
       const data = parsed.data;
-      const targetTeacherId = teacherId ?? data.teacherId || null;
+      const targetTeacherId = teacherId ?? (data.teacherId || null);
       if (targetTeacherId) {
         const teacherRows = await tx`SELECT id FROM teachers WHERE id = ${targetTeacherId} AND tenant_id = ${tenantId} AND school_id = ${schoolId} AND employment_status = 'active' LIMIT 1`;
         if (!teacherRows.length) return NextResponse.json({ error: "Guru yang dipilih tidak terdaftar pada sekolah ini." }, { status: 400 });
