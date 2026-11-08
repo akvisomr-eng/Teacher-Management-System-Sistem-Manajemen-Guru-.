@@ -6,14 +6,21 @@ Sistem Manajemen Guru berbasis SaaS multi-tenant untuk satuan pendidikan di Indo
 PAUD, SD, SMP, SMA/SMK, SLB, Madrasah Aliyah, dan pendidikan kesetaraan. Platform dirancang modular agar dapat digunakan sekolah secara mandiri maupun dalam organisasi/yayasan multi-sekolah.
 
 ## Fondasi teknis
-- Next.js App Router, TypeScript, React, dan Tailwind/CSS.
+- Next.js App Router, TypeScript, React, dan CSS responsif.
 - Neon Managed Auth untuk autentikasi.
 - Neon Postgres dengan Drizzle, SQL migrations, row-level security, dan runtime database role least-privilege.
 - Vercel untuk deployment.
-- Tenant/school scope, membership-based authorization, dan audit log.
+- Tenant/school scope, membership-based authorization, dan audit log append-only untuk role runtime.
 
-## Modul domain
-Platform & tenant administration, manajemen sekolah, identitas dan akses, direktori guru/siswa, tahun akademik, kelas, mata pelajaran, kurikulum, perencanaan ajar, jurnal mengajar, asesmen, rapor, remedial/enrichment, portofolio siswa, komunikasi wali, pengembangan guru, AI teaching assistant, analitik, integrasi, dan billing.
+## Modul yang telah tersedia pada aplikasi
+- Autentikasi, onboarding organisasi/sekolah, dan dashboard.
+- Direktori guru dan siswa.
+- Tahun ajaran, kelas, mata pelajaran, penugasan guru, dan penempatan siswa.
+- Perencanaan ajar dan jurnal mengajar.
+- Pusat asesmen dan gradebook.
+- Pusat Kurikulum dengan draf, penerbitan, arsip, dan versi kurikulum yang tidak dapat diubah setelah diterbitkan.
+
+Modul rapor, remedial/enrichment, komunikasi wali, pengembangan guru, AI teaching assistant, analitik lanjutan, integrasi, dan billing masih memerlukan implementasi dan pengujian.
 
 ## Development
 ```bash
@@ -33,4 +40,4 @@ Variabel lingkungan dijelaskan pada `.env.example` dan `docs/OPERATIONS.md`. Jan
 - `docs/OPERATIONS.md`: staging, production, migrasi, dan release gates.
 
 ## Status rilis
-Fondasi autentikasi, onboarding, dashboard, PostgreSQL RLS, direktori guru/siswa, master kelas, dan mata pelajaran telah digabung ke `main`. Penugasan guru dan penempatan siswa dalam kelas telah digabung ke `main`. Perencanaan ajar dan jurnal mengajar telah digabung ke `main`. Pusat asesmen dan gradebook sedang dikembangkan pada PR berikutnya. Kurikulum terstruktur, rapor, komunikasi, AI, analitik, billing, dan integrasi masih memerlukan implementasi serta pengujian sebelum seluruh platform dinyatakan siap operasional.
+Fondasi aplikasi telah digabung ke `main` dan dipublikasikan pada Vercel. CI menjalankan typecheck, lint, audit dependency produksi, dan production build. Pusat Kurikulum telah lolos CI dan Preview deployment; deployment Production untuk rilis kurikulum sedang diproses pada saat pembaruan dokumen ini. Status `READY` pada Vercel tidak dengan sendirinya membuktikan seluruh alur bisnis telah diuji end-to-end. Lihat `docs/OPERATIONS.md` untuk status infrastruktur dan release gates yang masih terbuka.
