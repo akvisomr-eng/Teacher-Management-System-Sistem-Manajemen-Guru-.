@@ -1,9 +1,12 @@
 import { NextResponse } from "next/server";
+import type { TransactionSql } from "postgres";
 import { z } from "zod";
 import { withAuthenticatedUser } from "@/db/connection";
 
 export const dynamic = "force-dynamic";
 
+type DbTx = TransactionSql<Record<string, never>>;
+type Resource = "teachers" | "students";
 const roles = new Set(["tenant_owner", "tenant_admin", "principal", "vice_principal", "school_operator"]);
 const resourceSchema = z.enum(["teachers", "students"]);
 const teacherCreate = z.object({
@@ -27,10 +30,12 @@ const updateSchema = z.object({
 }).refine((data) => Object.keys(data).some((key) => key !== "id"), "Tidak ada perubahan.");
 
 type Context = { params: Promise<{ resource: string }> };
+type Work = (tx: DbTx, tenantId: string, schoolId: string, userId: string) => Promise<Response>;
 
-async function authorize(resource: string, work: (tx: any, tenantId: string, schoolId: string, userId: string) => Promise<Response>) {
-  const parsed = resourceSchema.safeParse(resource);
-  if (!parsed.success) return NextResponse.json({ error: "Modul tidak ditemukan." }, { status: 404 });
+async function authorize(resource: string, work: Work) {
+  if (!resourceSchema.safeParse(resource).success) {
+    return NextResponse.json({ error: "Modul tidak ditemukan." }, { status: 404 });
+  }
   try {
     return await withAuthenticatedUser(async (tx, _user, profile) => {
       const memberships = await tx`
@@ -64,24 +69,36 @@ export async function GET(_request: Request, { params }: Context) {
 
 export async function POST(request: Request, { params }: Context) {
   const { resource } = await params;
-  const body = await request.json().catch(() => null);
-  const parsed = resource === "teachers" ? teacherCreate.safeParse(body) : resource === "students" ? studentCreate.safeParse(body) : null;
-  if (!parsed || !parsed.success) return NextResponse.json({ error: "Data tidak valid. Periksa nama dan kolom yang wajib diisi." }, { status: 400 });
-  return authorize(resource, async (tx, tenantId, schoolId, userId) => {
-    const data = parsed.data;
-    const rows = resource === "teachers"
-      ? await tx`INSERT INTO teachers (tenant_id, school_id, full_name, employee_number, education) VALUES (${tenantId}, ${schoolId}, ${data.fullName}, ${data.employeeNumber || null}, ${data.education || null}) RETURNING id, full_name, employee_number, education, employment_status AS status, created_at`
-      : await tx`INSERT INTO students (tenant_id, school_id, full_name, student_number, birth_date) VALUES (${tenantId}, ${schoolId}, ${data.fullName}, ${data.studentNumber || null}, ${data.birthDate ? new Date(data.birthDate).toISOString() : null}) RETURNING id, full_name, student_number, birth_date, status, created_at`;
-    await tx`INSERT INTO audit_logs (tenant_id, school_id, actor_user_id, action, resource_type, resource_id) VALUES (${tenantId}, ${schoolId}, ${userId}, ${resource.slice(0, -1)}.created, ${resource.slice(0, -1)}, ${rows[0].id})`;
-    return NextResponse.json({ data: rows[0] }, { status: 201 });
-  });
+  const body: unknown = await request.json().catch(() => null);
+  if (resource === "teachers") {
+    const parsed = teacherCreate.safeParse(body);
+    if (!parsed.success) return NextResponse.json({ error: "Data guru tidak valid. Nama lengkap wajib diisi." }, { status: 400 });
+    return authorize(resource, async (tx, tenantId, schoolId, userId) => {
+      const data = parsed.data;
+      const rows = await tx`INSERT INTO teachers (tenant_id, school_id, full_name, employee_number, education) VALUES (${tenantId}, ${schoolId}, ${data.fullName}, ${data.employeeNumber || null}, ${data.education || null}) RETURNING id, full_name, employee_number, education, employment_status AS status, created_at`;
+      await tx`INSERT INTO audit_logs (tenant_id, school_id, actor_user_id, action, resource_type, resource_id) VALUES (${tenantId}, ${schoolId}, ${userId}, 'teacher.created', 'teacher', ${rows[0].id})`;
+      return NextResponse.json({ data: rows[0] }, { status: 201 });
+    });
+  }
+  if (resource === "students") {
+    const parsed = studentCreate.safeParse(body);
+    if (!parsed.success) return NextResponse.json({ error: "Data siswa tidak valid. Nama lengkap wajib diisi." }, { status: 400 });
+    return authorize(resource, async (tx, tenantId, schoolId, userId) => {
+      const data = parsed.data;
+      const rows = await tx`INSERT INTO students (tenant_id, school_id, full_name, student_number, birth_date) VALUES (${tenantId}, ${schoolId}, ${data.fullName}, ${data.studentNumber || null}, ${data.birthDate ? new Date(data.birthDate).toISOString() : null}) RETURNING id, full_name, student_number, birth_date, status, created_at`;
+      await tx`INSERT INTO audit_logs (tenant_id, school_id, actor_user_id, action, resource_type, resource_id) VALUES (${tenantId}, ${schoolId}, ${userId}, 'student.created', 'student', ${rows[0].id})`;
+      return NextResponse.json({ data: rows[0] }, { status: 201 });
+    });
+  }
+  return NextResponse.json({ error: "Modul tidak ditemukan." }, { status: 404 });
 }
 
 export async function PATCH(request: Request, { params }: Context) {
   const { resource } = await params;
-  const body = await request.json().catch(() => null);
+  if (!resourceSchema.safeParse(resource).success) return NextResponse.json({ error: "Modul tidak ditemukan." }, { status: 404 });
+  const body: unknown = await request.json().catch(() => null);
   const parsed = updateSchema.safeParse(body);
-  if (!parsed.success || !resourceSchema.safeParse(resource).success) return NextResponse.json({ error: "Perubahan data tidak valid." }, { status: 400 });
+  if (!parsed.success) return NextResponse.json({ error: "Perubahan data tidak valid." }, { status: 400 });
   const { id, ...changes } = parsed.data;
   return authorize(resource, async (tx, tenantId, schoolId, userId) => {
     let rows;
@@ -95,7 +112,7 @@ export async function PATCH(request: Request, { params }: Context) {
       rows = await tx`UPDATE students SET full_name = COALESCE(${changes.fullName ?? null}, full_name), student_number = CASE WHEN ${changes.studentNumber !== undefined} THEN NULLIF(${changes.studentNumber ?? ""}, '') ELSE student_number END, birth_date = CASE WHEN ${changes.birthDate !== undefined} THEN ${changes.birthDate ? new Date(changes.birthDate).toISOString() : null}::timestamptz ELSE birth_date END, status = COALESCE(${status ?? null}, status) WHERE id = ${id} AND tenant_id = ${tenantId} AND school_id = ${schoolId} RETURNING id, full_name, student_number, birth_date, status, created_at`;
     }
     if (!rows.length) return NextResponse.json({ error: "Data tidak ditemukan." }, { status: 404 });
-    await tx`INSERT INTO audit_logs (tenant_id, school_id, actor_user_id, action, resource_type, resource_id) VALUES (${tenantId}, ${schoolId}, ${userId}, ${resource.slice(0, -1)}.updated, ${resource.slice(0, -1)}, ${id})`;
+    await tx`INSERT INTO audit_logs (tenant_id, school_id, actor_user_id, action, resource_type, resource_id) VALUES (${tenantId}, ${schoolId}, ${userId}, ${resource === "teachers" ? "teacher.updated" : "student.updated"}, ${resource === "teachers" ? "teacher" : "student"}, ${id})`;
     return NextResponse.json({ data: rows[0] });
   });
 }
