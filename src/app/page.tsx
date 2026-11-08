@@ -14,6 +14,7 @@ const nav = [
   { label: "Data Guru", icon: Users, href: "/workspace/teachers" },
   { label: "Data Siswa", icon: GraduationCap, href: "/workspace/students" },
   { label: "Kelas & Mapel", icon: BookOpenCheck, href: "/workspace/academic" },
+  { label: "Pusat Kurikulum", icon: BookOpenCheck, href: "/workspace/curriculum" },
   { label: "Penugasan", icon: ClipboardCheck, href: "/workspace/assignments" },
   { label: "Rencana & Jurnal", icon: BookOpenCheck, href: "/workspace/teaching" },
   { label: "Asesmen & Nilai", icon: ClipboardCheck, href: "/workspace/assessments" }

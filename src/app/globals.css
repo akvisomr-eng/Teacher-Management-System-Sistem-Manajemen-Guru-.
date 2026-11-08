@@ -33,3 +33,18 @@
 /* Assessment and gradebook workspace */
 .gradebook-actions{display:flex;align-items:center;gap:6px;flex-wrap:wrap}.gradebook-actions .registry-toggle{white-space:nowrap}.gradebook-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:4px 0 18px}.gradebook-summary>div{border:1px solid #edf0f5;border-radius:9px;padding:12px 14px;background:#fbfbfe}.gradebook-summary small{display:block;color:#9098aa;font-size:9px}.gradebook-summary strong{display:block;color:#303a53;font:700 13px 'Plus Jakarta Sans';margin-top:5px}.gradebook-table input{width:100%;min-width:90px;height:34px;border:1px solid #e4e7ef;border-radius:6px;padding:0 8px;font:11px 'DM Sans';color:#303a53}.gradebook-table input:disabled{background:#f4f5f8;color:#9ba2b1}.gradebook-table td:last-child{white-space:nowrap}.gradebook-table .registry-toggle{display:inline-flex;align-items:center;gap:5px}
 @media(max-width:560px){.gradebook-summary{gap:6px}.gradebook-summary>div{padding:10px 9px}.gradebook-summary strong{font-size:11px}}
+
+
+/* Curriculum center */
+.registry-notice{padding:10px 12px;background:#effaf5;color:#287c5d;border:1px solid #d7f1e5;border-radius:8px;font-size:10px;line-height:1.5;margin:14px 0}
+.curriculum-editor-meta{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:18px 0 14px;color:#8a92a5;font-size:10px}
+.curriculum-editor{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;background:#f8f8fc;border:1px solid #f0f0f5;padding:16px;border-radius:10px}
+.curriculum-editor>label{display:grid;gap:7px;color:#667087;font-size:10px;font-weight:700;min-width:0}
+.curriculum-editor>label:nth-child(n+3){grid-column:1/-1}
+.curriculum-editor label small{font-size:9px;font-weight:400;color:#9299aa}
+.curriculum-editor input,.curriculum-editor textarea{width:100%;border:1px solid #e4e7ef;border-radius:7px;padding:10px;background:#fff;font:11px/1.6 'DM Sans';min-width:0;color:#303a53;resize:vertical}
+.curriculum-editor input{height:38px;padding-top:0;padding-bottom:0}
+.curriculum-editor input:disabled,.curriculum-editor textarea:disabled{background:#f1f2f6;color:#8e96a8}
+.curriculum-editor-actions{grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap;padding-top:4px}
+.curriculum-editor-actions .registry-toggle{display:inline-flex;align-items:center;gap:6px;padding:9px 11px}
+@media(max-width:560px){.curriculum-editor{grid-template-columns:1fr;padding:12px}.curriculum-editor>label:nth-child(n+3){grid-column:auto}.curriculum-editor-actions{grid-column:auto}.curriculum-editor-actions button{flex:1;justify-content:center}}
