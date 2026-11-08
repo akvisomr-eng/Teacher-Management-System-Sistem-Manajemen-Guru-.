@@ -10,7 +10,7 @@ const managerRoles = new Set(["tenant_owner", "tenant_admin", "principal", "vice
 const teacherRoles = new Set(["teacher", "homeroom_teacher"]);
 const reportTypeSchema = z.enum(["teachers", "students", "classes", "gradebook"]);
 
-type Work = (tx: DbTx, tenantId: string, schoolId: string, teacherId: string | null) => Promise<Response>;
+type Work = (tx: DbTx, tenantId: string, schoolId: string, userId: string, teacherId: string | null) => Promise<Response>;
 
 async function authorize(work: Work) {
   try {
@@ -27,7 +27,7 @@ async function authorize(work: Work) {
         teacherId = (rows[0]?.id as string | undefined) ?? null;
         if (!teacherId) return NextResponse.json({ error: "Akun guru belum ditautkan ke profil guru sekolah." }, { status: 403 });
       }
-      return work(tx, membership.tenant_id, membership.school_id, teacherId);
+      return work(tx, membership.tenant_id, membership.school_id, profile.id, teacherId);
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Permintaan gagal.";
@@ -46,7 +46,7 @@ export async function GET(request: Request) {
   if (classId && !z.string().uuid().safeParse(classId).success) return NextResponse.json({ error: "ID kelas tidak valid." }, { status: 400 });
   if (academicYearId && !z.string().uuid().safeParse(academicYearId).success) return NextResponse.json({ error: "ID tahun ajaran tidak valid." }, { status: 400 });
 
-  return authorize(async (tx, tenantId, schoolId, teacherId) => {
+  return authorize(async (tx, tenantId, schoolId, userId, teacherId) => {
     if (teacherId && type !== "gradebook") {
       return NextResponse.json({ error: "Guru hanya dapat melihat laporan nilai untuk penugasannya sendiri." }, { status: 403 });
     }
@@ -116,6 +116,7 @@ export async function GET(request: Request) {
       `;
     }
 
+    await tx`INSERT INTO audit_logs (tenant_id, school_id, actor_user_id, action, resource_type, resource_id, metadata) VALUES (${tenantId}, ${schoolId}, ${userId}, 'report.generated', 'report', ${type}, ${tx.json({ count: data.length, classId, academicYearId })})`;
     return NextResponse.json({
       reportType: type,
       generatedAt: new Date().toISOString(),
