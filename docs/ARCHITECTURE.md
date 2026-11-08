@@ -29,7 +29,8 @@
 - Authenticated dashboard, school onboarding, academic year creation, Neon Auth, PostgreSQL RLS.
 - Teacher and student registry APIs and workspace pages are merged into `main`.
 - Class and subject master-data workflows are merged into `main`, including academic-year-bound classes and homeroom teacher assignment.
-- Teaching assignments and student enrollments are under active development. They validate the class/year pairing, active teacher/subject/student, tenant/school scope, duplicate enrollment, and audit changes.
+- Teaching assignments and student enrollments are merged into `main`. They validate class/year pairing, active teacher/subject/student, tenant/school scope, duplicate assignment/enrollment, and audit changes.
+- Teaching plans and journals are under active development with teacher ownership checks and manager review permissions.
 
 ## Security baseline
 - No public database credentials; `DATABASE_URL` is server-only.
