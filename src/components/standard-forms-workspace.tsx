@@ -56,7 +56,7 @@ const definitions:Record<string,Definition[]> = {
 };
 
 export function StandardFormsWorkspace({module}:{module:keyof typeof definitions}){
- const forms=definitions[module]??[];
+ const forms=definitions[module];
  const [selected,setSelected]=useState(forms[0]?.key??"");
  const [values,setValues]=useState<Record<string,string|boolean>>({});
  const [title,setTitle]=useState("");
@@ -72,7 +72,15 @@ export function StandardFormsWorkspace({module}:{module:keyof typeof definitions
   catch(e){setError(e instanceof Error?e.message:"Gagal memuat arsip formulir.");}
   finally{setLoading(false);}
  },[module]);
- useEffect(()=>{void load();},[load]);
+ useEffect(()=>{
+  let active=true;
+  fetch(`/api/standard-forms?module=${module}`,{cache:"no-store"})
+   .then(async response=>{const result=await response.json();if(!response.ok)throw new Error(result.error??"Arsip formulir tidak dapat dimuat.");return result;})
+   .then(result=>{if(active)setRows(result.data??[]);})
+   .catch(error=>{if(active)setError(error instanceof Error?error.message:"Gagal memuat arsip formulir.");})
+   .finally(()=>{if(active)setLoading(false);});
+  return()=>{active=false;};
+ },[module]);
  function setField(key:string,value:string|boolean){setValues(old=>({...old,[key]:value}));}
  async function save(event:React.FormEvent<HTMLFormElement>){
   event.preventDefault();if(!current)return;setSaving(true);setError("");setNotice("");
