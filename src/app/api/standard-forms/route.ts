@@ -47,7 +47,7 @@ export async function POST(request:Request){
   if(!parsed.success) return NextResponse.json({error:parsed.error.issues[0]?.message??"Data formulir tidak valid."},{status:400});
   return withSchool(async(tx,tenantId,schoolId,userId)=>{
     const d=parsed.data;
-    const rows=await tx`INSERT INTO standard_module_records(tenant_id,school_id,module_key,schema_key,schema_version,reference_version,title,record_data,created_by,updated_by) VALUES(${tenantId},${schoolId},${d.moduleKey},${d.schemaKey},${d.schemaVersion},${d.referenceVersion},${d.title},${tx.json(d.recordData)},${userId},${userId}) RETURNING id,module_key,schema_key,schema_version,reference_version,title,status,record_data,created_at,updated_at`;
+    const rows=await tx`INSERT INTO standard_module_records(tenant_id,school_id,module_key,schema_key,schema_version,reference_version,title,record_data,created_by,updated_by) VALUES(${tenantId},${schoolId},${d.moduleKey},${d.schemaKey},${d.schemaVersion},${d.referenceVersion},${d.title},${tx.json(d.recordData as never)},${userId},${userId}) RETURNING id,module_key,schema_key,schema_version,reference_version,title,status,record_data,created_at,updated_at`;
     await tx`INSERT INTO audit_logs(tenant_id,school_id,actor_user_id,action,resource_type,resource_id,metadata) VALUES(${tenantId},${schoolId},${userId},'standard_form_record.created','standard_module_record',${rows[0].id},${tx.json({moduleKey:d.moduleKey,schemaKey:d.schemaKey,schemaVersion:d.schemaVersion,referenceVersion:d.referenceVersion})})`;
     return NextResponse.json({data:rows[0]},{status:201});
   });
