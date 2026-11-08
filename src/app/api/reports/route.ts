@@ -47,8 +47,8 @@ export async function GET(request: Request) {
   if (academicYearId && !z.string().uuid().safeParse(academicYearId).success) return NextResponse.json({ error: "ID tahun ajaran tidak valid." }, { status: 400 });
 
   return authorize(async (tx, tenantId, schoolId, userId, teacherId) => {
-    if (teacherId && type !== "gradebook") {
-      return NextResponse.json({ error: "Guru hanya dapat melihat laporan nilai untuk penugasannya sendiri." }, { status: 403 });
+    if (teacherId && type === "teachers") {
+      return NextResponse.json({ error: "Direktori seluruh guru hanya tersedia untuk pengelola sekolah." }, { status: 403 });
     }
 
     let data: unknown[];
@@ -74,6 +74,11 @@ export async function GET(request: Request) {
           WHERE e.student_id = st.id AND e.tenant_id = st.tenant_id AND e.school_id = st.school_id
             AND e.status = 'active'
             AND (${academicYearId}::uuid IS NULL OR e.academic_year_id = ${academicYearId}::uuid)
+            AND (${teacherId}::uuid IS NULL OR EXISTS (
+              SELECT 1 FROM teaching_assignments ta
+              WHERE ta.class_id = e.class_id AND ta.academic_year_id = e.academic_year_id
+                AND ta.teacher_id = ${teacherId}::uuid AND ta.tenant_id = e.tenant_id AND ta.school_id = e.school_id
+            ))
           ORDER BY e.created_at DESC LIMIT 1
         ) e ON TRUE
         LEFT JOIN classes c ON c.id = e.class_id AND c.tenant_id = e.tenant_id AND c.school_id = e.school_id
@@ -93,6 +98,11 @@ export async function GET(request: Request) {
         LEFT JOIN student_enrollments e ON e.class_id = c.id AND e.tenant_id = c.tenant_id AND e.school_id = c.school_id
         WHERE c.tenant_id = ${tenantId} AND c.school_id = ${schoolId}
           AND (${academicYearId}::uuid IS NULL OR c.academic_year_id = ${academicYearId}::uuid)
+          AND (${teacherId}::uuid IS NULL OR EXISTS (
+            SELECT 1 FROM teaching_assignments ta
+            WHERE ta.class_id = c.id AND ta.academic_year_id = c.academic_year_id
+              AND ta.teacher_id = ${teacherId}::uuid AND ta.tenant_id = c.tenant_id AND ta.school_id = c.school_id
+          ))
         GROUP BY c.id, ay.name, t.full_name
         ORDER BY c.grade_level, c.name
       `;
