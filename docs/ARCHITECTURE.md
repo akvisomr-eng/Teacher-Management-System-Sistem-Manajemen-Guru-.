@@ -30,7 +30,8 @@
 - Teacher and student registry APIs and workspace pages are merged into `main`.
 - Class and subject master-data workflows are merged into `main`, including academic-year-bound classes and homeroom teacher assignment.
 - Teaching assignments and student enrollments are merged into `main`. They validate class/year pairing, active teacher/subject/student, tenant/school scope, duplicate assignment/enrollment, and audit changes.
-- Teaching plans and journals are under active development with teacher ownership checks and manager review permissions.
+- Teaching plans and journals are merged into `main` with teacher ownership checks and manager review permissions.
+- Assessment and gradebook workflows are under active development, with assignment-scoped assessments, enrolled-student validation, maximum-score checks, and audit logging.
 
 ## Security baseline
 - No public database credentials; `DATABASE_URL` is server-only.
