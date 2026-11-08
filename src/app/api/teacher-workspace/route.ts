@@ -9,11 +9,11 @@ const itemSchema = z.object({
   id: z.string().uuid(),
   itemType: z.enum(["lesson_plan","teaching_journal","learning_material","assessment_draft","reflection","personal_note"]),
   title: z.string().trim().min(1).max(200),
-  content: z.record(z.string(), z.unknown()),
+  content: z.record(z.string(), z.unknown()).refine(value => JSON.stringify(value).length <= 100_000, "Ukuran dokumen melebihi batas 100 KB."),
   schemaVersion: z.number().int().min(1).max(100),
   clientUpdatedAt: z.string().datetime()
 });
-const syncSchema = z.object({ items: z.array(itemSchema).min(1).max(100) });
+const syncSchema = z.object({ items: z.array(itemSchema).min(1).max(25) });
 
 type DbTx = TransactionSql<Record<string, never>>;
 type TeacherIdentity = { teacher_id: string; tenant_id: string; school_id: string; full_name: string; role: string; scope: Record<string, unknown>; school_name: string };
