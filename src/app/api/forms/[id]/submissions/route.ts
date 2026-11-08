@@ -1,5 +1,4 @@
 import {NextResponse} from "next/server";
-import {z} from "zod";
 import type {TransactionSql} from "postgres";
 import {withAuthenticatedUser} from "@/db/connection";
 export const dynamic="force-dynamic";
