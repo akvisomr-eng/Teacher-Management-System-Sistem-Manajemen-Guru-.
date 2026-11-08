@@ -55,13 +55,14 @@ export default function TeacherDesk({ identity }: { identity: Identity }) {
     const rememberedTeacher = identity?.teacherId || sessionStorage.getItem("tms-teacher-id");
     if (identity?.teacherId) sessionStorage.setItem("tms-teacher-id", identity.teacherId);
     void Promise.resolve().then(() => setLocalTeacherId(rememberedTeacher));
-    if (dbName) { let active = true; void localItems(dbName).then(next => { if (active) setItems(next); }); }
+    let active = true;
+    if (dbName) void localItems(dbName).then(next => { if (active) setItems(next); });
     const update = () => setOnline(navigator.onLine);
     update();
     window.addEventListener("online", update);
     window.addEventListener("offline", update);
     if ("serviceWorker" in navigator) void navigator.serviceWorker.register("/teacher-sw.js").catch(() => undefined);
-    return () => { window.removeEventListener("online", update); window.removeEventListener("offline", update); };
+    return () => { active = false; window.removeEventListener("online", update); window.removeEventListener("offline", update); };
   }, [dbName, identity?.teacherId]);
 
   async function save() {
