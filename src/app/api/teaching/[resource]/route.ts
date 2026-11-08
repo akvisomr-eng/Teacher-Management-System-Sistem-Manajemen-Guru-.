@@ -89,7 +89,7 @@ export async function POST(request: Request, { params }: Context) {
   if (resource === "plans") {
     const parsed = planCreate.safeParse(body);
     if (!parsed.success) return NextResponse.json({ error: "Judul rencana ajar wajib diisi dengan benar." }, { status: 400 });
-    return authorize(resource, async (tx, tenantId, schoolId, userId, teacherId, _role) => {
+    return authorize(resource, async (tx, tenantId, schoolId, userId, teacherId) => {
       const data = parsed.data;
       const targetTeacherId = teacherId ?? (data.teacherId || null);
       if (targetTeacherId) {
