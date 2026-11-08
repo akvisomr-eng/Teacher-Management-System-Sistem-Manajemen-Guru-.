@@ -1,65 +1,64 @@
 # Operasional dan Deployment
 
 ## Lingkungan
-Gunakan dua branch Neon yang berbeda:
-- **Production**: branch `production` — data operasional sesungguhnya.
-- **Preview/staging**: branch `tms-staging` — pengujian fitur, migrasi, dan autentikasi.
+- **Production**: Neon branch `production` untuk data operasional.
+- **Preview/staging**: Neon branch `tms-staging` untuk pengujian fitur, migrasi, dan autentikasi.
 
 Semua deployment Preview memakai database staging. Deployment Production hanya memakai database production. Jangan pernah mengarahkan Preview ke database production.
 
 ## Environment variables
-Atur variabel di Vercel sesuai target deployment dan jangan pernah memasukkan nilainya ke repository atau percakapan:
-- `NEON_AUTH_BASE_URL`: URL Neon Auth untuk branch yang sesuai dengan target deployment.
-- `NEON_AUTH_COOKIE_SECRET`: secret acak minimal 32 karakter, bertipe Sensitive, dan berbeda untuk Production, Preview, dan Development.
+Atur di Vercel sesuai target dan jangan pernah memasukkan nilainya ke repository atau percakapan:
+- `NEON_AUTH_BASE_URL`: endpoint Neon Auth sesuai branch.
+- `NEON_AUTH_COOKIE_SECRET`: secret acak minimal 32 karakter, bertipe Sensitive, berbeda untuk Production, Preview, dan Development.
 - `DATABASE_URL`: connection string role `tms_app`, bukan `neondb_owner`.
-- `NEXT_PUBLIC_NEON_AUTH_URL`: endpoint publik Neon Auth untuk branch target.
-- `NEXT_PUBLIC_APP_URL`: origin aplikasi yang benar; variabel ini memang bersifat publik.
+- `NEXT_PUBLIC_NEON_AUTH_URL`: endpoint publik Neon Auth sesuai branch.
+- `NEXT_PUBLIC_APP_URL`: origin aplikasi yang benar.
 
-Preview menggunakan connection string dan Auth URL dari `tms-staging`; Production menggunakan nilai dari branch `production`. Environment variable database dan Auth tidak boleh saling tertukar. Setiap perubahan environment variable memerlukan redeploy untuk diterapkan pada deployment yang sudah ada.
+Preview memakai connection string dan Auth URL dari `tms-staging`; Production memakai nilai dari branch `production`. Setiap perubahan environment variable memerlukan redeploy.
 
 ## Migrasi
-File SQL dijalankan berurutan:
+Jalankan SQL secara berurutan:
 1. `drizzle/0001_tms_foundation.sql`
 2. `drizzle/0002_tenant_rls.sql`
 3. `drizzle/0003_academic_operations.sql`
 4. `drizzle/0004_academic_assignment_integrity.sql`
+5. `drizzle/0005_audit_log_immutability.sql`
 
-Jalankan terlebih dahulu pada branch staging. Periksa tabel, constraint, RLS policy, dan uji akses lintas tenant sebelum menerapkan ke production. Migrasi bersifat additive; jangan menjalankan ulang skrip yang menambahkan constraint tanpa memeriksa statusnya.
+Terapkan terlebih dahulu pada staging. Periksa tabel, constraint, RLS policy, dan akses lintas tenant sebelum production. Migrasi bersifat additive; jangan menjalankan ulang skrip yang menambahkan constraint tanpa memeriksa statusnya.
 
 ## Database security
-- Runtime aplikasi harus memakai role `tms_app` dengan akses read/write terbatas.
-- Jangan memakai role admin/superuser sebagai `DATABASE_URL` runtime.
+- Runtime memakai role `tms_app`; jangan gunakan role admin/superuser sebagai `DATABASE_URL`.
 - Set `app.auth_user_id` dan `app.tenant_id` di dalam transaksi server.
-- Semua endpoint yang membaca atau mengubah data harus memeriksa session dan membership terlebih dahulu.
-- Jangan mengandalkan tenant ID dari browser sebagai bukti otorisasi.
-- RLS adalah lapisan pertahanan tambahan, bukan pengganti pemeriksaan role dan izin pada service layer.
-- API mengembalikan respons autentikasi terstruktur; route handler harus tetap melakukan pemeriksaan session, membership, role, tenant, dan sekolah.
-- Penambahan/perubahan direktori guru dan siswa serta master kelas/mapel dicatat ke audit log.
-- Data peserta didik adalah data pribadi. Batasi akses, minimalkan pengumpulan, dan tetapkan kebijakan retensi sebelum sekolah menggunakannya secara luas.
+- Semua endpoint wajib memeriksa session, membership, role, tenant, dan sekolah.
+- Jangan mempercayai tenant ID dari browser.
+- RLS adalah pertahanan tambahan, bukan pengganti pemeriksaan izin pada service layer.
+- Audit log append-only untuk `tms_app`: hanya SELECT dan INSERT; UPDATE, DELETE, dan TRUNCATE dicabut. Kebijakan RLS audit log hanya SELECT dan INSERT pada tenant aktif.
+- Data peserta didik adalah data pribadi. Batasi akses, minimalkan pengumpulan, dan tetapkan kebijakan retensi.
 
 ## Auth email
-Email/password dan verifikasi OTP diaktifkan pada Neon Auth. Shared SMTP hanya untuk uji awal; siapkan SMTP milik organisasi untuk penggunaan produksi dan verifikasi deliverability sebelum membuka pendaftaran umum. Domain production dan preview yang digunakan harus tercatat di trusted-origin allowlist pada branch Neon Auth masing-masing.
+Email/password dan verifikasi OTP aktif. Shared SMTP masih digunakan untuk uji awal; siapkan SMTP organisasi dan verifikasi deliverability sebelum pendaftaran umum. Domain production/preview harus tercatat pada trusted-origin allowlist branch Neon Auth masing-masing. Localhost dinonaktifkan pada Auth Production.
 
 ## Release gates
-- CI: typecheck, lint, dependency audit, dan production build berhasil.
-- Preview: sign-up, verifikasi email, sign-in, sign-out, session refresh dan protected routes berhasil.
-- Onboarding: organisasi, sekolah, admin awal dan tahun akademik berhasil dibuat.
-- Registry: tambah, daftar, pencarian, dan perubahan status guru/siswa, kelas, dan mata pelajaran berhasil.
-- Academic operations: penugasan guru-mapel-kelas dan penempatan siswa harus lolos validasi tahun ajaran, sekolah, dan duplikasi.
-- Teaching workflows: rencana ajar dan jurnal mengajar harus lolos kontrol kepemilikan guru, alur review, serta audit log.
-- Assessment/gradebook: asesmen harus terikat pada penugasan dan nilai hanya dapat dimasukkan untuk siswa yang terdaftar pada kelas/tahun ajaran terkait.
-- Security: dua tenant terpisah dan tidak dapat membaca/mengubah data satu sama lain; role tanpa izin ditolak.
-- Database: seluruh migrasi staging berhasil; production migration dilakukan setelah preview disetujui.
-- Deployment: environment target, domain, trusted origin, dan health monitoring diverifikasi.
-- Operasional: email pengiriman, backup/recovery, monitoring, kebijakan privasi, dukungan, dan prosedur insiden siap.
+- CI: typecheck, lint, dependency audit, production build.
+- Preview: sign-up, verifikasi email, sign-in/out, session refresh, dan protected routes.
+- Onboarding: organisasi, sekolah, admin awal, dan tahun akademik.
+- Registry: CRUD dan pencarian guru/siswa, kelas, mata pelajaran.
+- Academic operations: penugasan guru-mapel-kelas dan penempatan siswa lolos validasi tahun ajaran, sekolah, dan duplikasi.
+- Curriculum: draf, capaian pembelajaran, penerbitan, arsip, dan versi baru; versi terbit terkunci.
+- Teaching: kepemilikan guru, alur review, dan audit log.
+- Assessment/gradebook: asesmen terikat penugasan; nilai hanya untuk siswa terdaftar pada kelas/tahun ajaran.
+- Security: isolasi tenant, penolakan role tanpa izin, dan pengujian lintas sekolah.
+- Deployment: environment, domain, trusted origin, dan health monitoring.
+- Operasional: SMTP bermerek, backup/recovery teruji, monitoring, kebijakan privasi/retensi, dukungan, dan prosedur insiden.
 
 ## Status terverifikasi per 8 November 2026
-- Foundation, direktori guru/siswa, dan master kelas/mapel telah digabung ke `main`. CI #104, #110, #113 serta deployment Production untuk commit `a64f22c` dan `3acfa80` berstatus berhasil/READY.
-- Preview deployment untuk PR #2 dan PR #3 berstatus `READY`; endpoint `/api/health` mengembalikan HTTP 200 dengan database `connected` dan auth `configured` pada Preview serta Production.
-- Branch Neon `tms-staging` dan `production` berstatus `ready`; migrasi 0001–0003 telah diterapkan pada keduanya. Indeks tambahan migrasi 0004 telah diterapkan pada staging dan production.
-- Database memiliki 17 tabel aplikasi dengan kebijakan RLS tenant-scoped. Runtime role `tms_app` tidak dapat membaca data sekolah, guru, siswa, kelas, mata pelajaran, atau tahun akademik tanpa konteks tenant pada staging dan production.
-- Environment `DATABASE_URL` Preview menggunakan role `tms_app` pada staging; Production menggunakan role `tms_app` pada production.
-- Cookie secret Neon Auth telah dipisahkan untuk Production, Preview, dan Development; trusted origins production dan preview telah dikonfigurasi.
-- Endpoint `/api/health` mengembalikan HTTP 200 di Production; database berstatus `connected`, Auth `configured`, dan tidak ada runtime error yang terdeteksi pada rentang pemeriksaan 24 jam.
-- Pusat asesmen dan gradebook sedang dikembangkan pada PR berikutnya. Kurikulum terstruktur, rapor, remedial, komunikasi, AI, analitik, dan billing masih memerlukan implementasi serta pengujian.
-- SMTP bermerek milik organisasi, prosedur backup/recovery teruji, kebijakan privasi/retensi, dan uji autentikasi end-to-end dengan akun sekolah masih menjadi release gate sebelum operasional komersial penuh.
+- Foundation, registry, master akademik, penugasan, penempatan siswa, perencanaan ajar, jurnal, asesmen, gradebook, dan Pusat Kurikulum telah digabung ke `main`.
+- CI #126 (audit hardening) dan #128 (Pusat Kurikulum) berhasil: typecheck, lint, audit dependency produksi, dan production build.
+- Preview Pusat Kurikulum berstatus `READY`. Deployment Production untuk commit `3484615329b4691bd1cd37b8643c025e1de1945c` sedang diproses pada saat pembaruan ini.
+- Neon `tms-staging` dan `production` berstatus ready. Kedua branch memiliki 17 tabel aplikasi dengan RLS aktif; migrasi 0001–0004 telah diterapkan.
+- Migrasi 0005 telah diterapkan pada staging dan production. Hak `tms_app` untuk audit log diverifikasi: SELECT/INSERT diizinkan; UPDATE/DELETE/TRUNCATE ditolak. RLS audit log hanya SELECT/INSERT.
+- Pembacaan tanpa tenant context mengembalikan nol baris pada tabel tenant-scoped di staging dan production.
+- Vercel memiliki `DATABASE_URL` role `tms_app` yang terpisah untuk Preview dan Production; Auth URL dan cookie secret juga dipisahkan. `NEXT_PUBLIC_APP_URL` Production menggunakan `teacher-management-system-nine.vercel.app`.
+- Tidak ada runtime error yang terdeteksi pada rentang pemeriksaan 24 jam terakhir. Ini bukan pengganti uji fungsional end-to-end.
+- Shared SMTP masih aktif. SMTP bermerek organisasi, uji autentikasi end-to-end, backup/recovery teruji, kebijakan privasi/retensi, dan prosedur insiden tetap menjadi release gate sebelum operasional komersial penuh.
+- Rapor, remedial/enrichment, komunikasi wali, AI, analitik lanjutan, integrasi, dan billing belum dinyatakan siap operasional.
