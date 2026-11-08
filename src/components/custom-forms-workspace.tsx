@@ -10,7 +10,7 @@ const newField=():Field=>({id:crypto.randomUUID(),key:"field_"+Math.random().toS
 export function CustomFormsWorkspace(){
  const [forms,setForms]=useState<Form[]>([]),[name,setName]=useState(""),[description,setDescription]=useState(""),[moduleKey,setModuleKey]=useState("students"),[fields,setFields]=useState<Field[]>([newField()]),[editing,setEditing]=useState<string|null>(null),[busy,setBusy]=useState(false),[error,setError]=useState(""),[message,setMessage]=useState("");
  async function load(){const r=await fetch("/api/forms",{cache:"no-store"});const d=await r.json();if(!r.ok)throw new Error(d.error||"Gagal memuat formulir");setForms(d.data||[]);}
- useEffect(()=>{void load().catch(e=>setError(e.message));},[]);
+ useEffect(()=>{let active=true;fetch("/api/forms",{cache:"no-store"}).then(async r=>{const d=await r.json();if(!r.ok)throw new Error(d.error||"Gagal memuat formulir");if(active)setForms(d.data||[]);}).catch(e=>{if(active)setError(e instanceof Error?e.message:"Gagal memuat formulir");});return()=>{active=false;};},[]);
  function reset(){setName("");setDescription("");setModuleKey("students");setFields([newField()]);setEditing(null);}
  function edit(f:Form){setEditing(f.id);setName(f.name);setDescription(f.description||"");setModuleKey(f.module_key);setFields(f.fields||[]);setMessage("");}
  function changeField(id:string,patch:Partial<Field>){setFields(current=>current.map(f=>f.id===id?{...f,...patch}:f));}
