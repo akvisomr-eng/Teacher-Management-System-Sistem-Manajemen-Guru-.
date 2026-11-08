@@ -33,10 +33,8 @@ const createSchema = z.object({
 const updateSchema = z.object({
   id: z.string().uuid(),
   action: z.enum(["update", "publish", "archive"]),
-  name: z.string().trim().min(3).max(160).optional(),
-  framework: z.string().trim().min(2).max(100).optional(),
   definition: definitionSchema.optional()
-}).refine(value => value.action !== "update" || value.name !== undefined || value.framework !== undefined || value.definition !== undefined, "Tidak ada perubahan untuk disimpan.");
+}).refine(value => value.action !== "update" || value.definition !== undefined, "Tidak ada perubahan untuk disimpan.");
 
 type Work = (tx: DbTx, tenantId: string, schoolId: string, userId: string) => Promise<Response>;
 
@@ -137,9 +135,7 @@ export async function PATCH(request: Request) {
       const definition = input.definition ?? currentDefinition.data;
       const rows = await tx`
         UPDATE curriculum_versions
-        SET name = ${input.name ?? current.name},
-            framework = ${input.framework ?? current.framework},
-            definition = ${tx.json(definition)}
+        SET definition = ${tx.json(definition)}
         WHERE id = ${input.id} AND tenant_id = ${tenantId} AND school_id = ${schoolId} AND status = 'draft'
         RETURNING id, name, framework, version, status, definition, created_at
       `;
