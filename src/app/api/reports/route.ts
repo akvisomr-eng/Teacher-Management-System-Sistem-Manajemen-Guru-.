@@ -54,7 +54,7 @@ export async function GET(request: Request) {
     let data: readonly (object | undefined)[];
     if (type === "teachers") {
       data = await tx`
-        SELECT t.employee_number, t.full_name, t.employment_status, t.education,
+        SELECT t.id AS row_id, t.employee_number, t.full_name, t.employment_status, t.education,
                COUNT(DISTINCT a.id)::int AS teaching_assignments,
                COUNT(DISTINCT c.id)::int AS classes_taught
         FROM teachers t
@@ -66,7 +66,7 @@ export async function GET(request: Request) {
       `;
     } else if (type === "students") {
       data = await tx`
-        SELECT st.student_number, st.full_name AS student_name, st.status,
+        SELECT st.id AS row_id, st.student_number, st.full_name AS student_name, st.status,
                c.name AS class_name, c.grade_level, ay.name AS academic_year
         FROM students st
         LEFT JOIN LATERAL (
@@ -88,7 +88,7 @@ export async function GET(request: Request) {
       `;
     } else if (type === "classes") {
       data = await tx`
-        SELECT c.name AS class_name, c.grade_level, ay.name AS academic_year,
+        SELECT c.id AS row_id, c.name AS class_name, c.grade_level, ay.name AS academic_year,
                t.full_name AS homeroom_teacher,
                COUNT(e.id) FILTER (WHERE e.status = 'active')::int AS student_count,
                c.status
@@ -108,7 +108,7 @@ export async function GET(request: Request) {
       `;
     } else {
       data = await tx`
-        SELECT c.name AS class_name, c.grade_level, s.name AS subject_name,
+        SELECT r.id AS row_id, c.name AS class_name, c.grade_level, s.name AS subject_name,
                t.full_name AS teacher_name, a.title AS assessment_title,
                a.assessment_type, st.student_number, st.full_name AS student_name,
                r.score, a.max_score,
