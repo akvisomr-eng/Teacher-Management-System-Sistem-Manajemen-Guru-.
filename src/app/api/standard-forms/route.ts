@@ -68,14 +68,14 @@ export async function PATCH(request:Request){
   if(!parsed.success)return NextResponse.json({error:parsed.error.issues[0]?.message??"Aksi tidak valid."},{status:400});
   return withSchool(async(tx,tenantId,schoolId,userId)=>{
     const d=parsed.data;
-    const current=await tx\`SELECT id,status,module_key FROM standard_module_records WHERE id=${d.id} AND tenant_id=${tenantId} AND school_id=${schoolId} FOR UPDATE\`;
+    const current=await tx`SELECT id,status,module_key FROM standard_module_records WHERE id=${d.id} AND tenant_id=${tenantId} AND school_id=${schoolId} FOR UPDATE`;
     if(!current.length)return NextResponse.json({error:"Arsip formulir tidak ditemukan."},{status:404});
     const status=String(current[0].status);
     const allowed=d.action==="submit"?status==="draft":d.action==="approve"||d.action==="reject"?status==="submitted":status==="approved"||status==="rejected";
     if(!allowed)return NextResponse.json({error:"Perubahan status tidak sesuai alur. Draf dapat diajukan; pengajuan dapat disetujui/ditolak; arsip final dapat diarsipkan."},{status:409});
     const next=d.action==="submit"?"submitted":d.action==="approve"?"approved":d.action==="reject"?"rejected":"archived";
-    const rows=await tx\`UPDATE standard_module_records SET status=${next},review_note=${d.reviewNote||null},reviewed_by=CASE WHEN ${d.action==="approve"||d.action==="reject"} THEN ${userId}::uuid ELSE reviewed_by END,reviewed_at=CASE WHEN ${d.action==="approve"||d.action==="reject"} THEN now() ELSE reviewed_at END,updated_by=${userId} WHERE id=${d.id} AND tenant_id=${tenantId} AND school_id=${schoolId} RETURNING id,status,review_note,reviewed_by,reviewed_at,updated_at\`;
-    await tx\`INSERT INTO audit_logs(tenant_id,school_id,actor_user_id,action,resource_type,resource_id,metadata) VALUES(${tenantId},${schoolId},${userId},${"standard_form_record."+d.action},'standard_module_record',${d.id},${tx.json({from:status,to:next,note:d.reviewNote})})\`;
+    const rows=await tx`UPDATE standard_module_records SET status=${next},review_note=${d.reviewNote||null},reviewed_by=CASE WHEN ${d.action==="approve"||d.action==="reject"} THEN ${userId}::uuid ELSE reviewed_by END,reviewed_at=CASE WHEN ${d.action==="approve"||d.action==="reject"} THEN now() ELSE reviewed_at END,updated_by=${userId} WHERE id=${d.id} AND tenant_id=${tenantId} AND school_id=${schoolId} RETURNING id,status,review_note,reviewed_by,reviewed_at,updated_at`;
+    await tx`INSERT INTO audit_logs(tenant_id,school_id,actor_user_id,action,resource_type,resource_id,metadata) VALUES(${tenantId},${schoolId},${userId},${"standard_form_record."+d.action},'standard_module_record',${d.id},${tx.json({from:status,to:next,note:d.reviewNote})})`;
     return NextResponse.json({data:rows[0]});
   });
 }
