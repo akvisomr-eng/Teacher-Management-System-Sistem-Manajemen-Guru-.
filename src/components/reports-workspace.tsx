@@ -12,6 +12,7 @@ const reportOptions: { value: ReportType; label: string; description: string }[]
   { value: "classes", label: "Rombongan belajar", description: "Kelas, wali kelas, tahun ajaran, dan jumlah siswa." },
   { value: "gradebook", label: "Rekap nilai", description: "Nilai asesmen berdasarkan kelas, mata pelajaran, dan siswa." }
 ];
+const internalColumns = new Set(["row_id"]);
 const columnLabels: Record<string, string> = {
   student_number: "NIS / NISN", full_name: "Nama guru", student_name: "Nama siswa", status: "Status", class_name: "Kelas",
   grade_level: "Tingkat", academic_year: "Tahun ajaran", employee_number: "NIP / ID pegawai",
@@ -48,25 +49,16 @@ export function ReportsWorkspace() {
     finally { setLoading(false); }
   }, [type]);
 
-  useEffect(() => {
-    let active = true;
-    const params = new URLSearchParams({ type });
-    fetch(`/api/reports?${params.toString()}`, { cache: "no-store" })
-      .then(async response => { const result = await response.json(); if (!response.ok) throw new Error(result.error ?? "Laporan tidak dapat dimuat."); return result; })
-      .then(result => { if (active) { setData(result.data ?? []); setGeneratedAt(result.generatedAt ?? new Date().toISOString()); } })
-      .catch(err => { if (active) setError(err instanceof Error ? err.message : "Gagal memuat laporan."); })
-      .finally(() => { if (active) setLoading(false); });
-    return () => { active = false; };
-  }, [type]);
+  useEffect(() => { void load(); }, [load]);
 
-  const columns = data.length ? Object.keys(data[0]) : [];
+  const columns = data.length ? Object.keys(data[0]).filter(key => !internalColumns.has(key)) : [];
   const current = reportOptions.find(option => option.value === type) ?? reportOptions[0];
 
   function exportCsv() {
     if (!data.length) return;
     const csv = [columns.map(key => columnLabels[key] ?? key).join(","), ...data.map(row => columns.map(key => {
       const raw = formatCell(key, row[key]);
-      const value = /^[=+@-]/.test(raw) ? "'" + raw : raw;
+      const value = /^[\\t\\r\\n ]*[=+@-]/.test(raw) ? "'" + raw : raw;
       return `"${value.replace(/"/g, '""')}"`;
     }).join(","))].join("\r\n");
     const blob = new Blob(["\uFEFF", csv], { type: "text/csv;charset=utf-8" });
@@ -106,7 +98,7 @@ export function ReportsWorkspace() {
           <thead><tr>{columns.map(key => <th key={key}>{columnLabels[key] ?? key}</th>)}</tr></thead>
           <tbody>
             {loading ? <tr><td colSpan={Math.max(columns.length, 1)} className="registry-empty">Memuat laporan...</td></tr>
-              : data.length ? data.map((row, index) => <tr key={String(row.student_number ?? row.employee_number ?? row.student_name ?? index)}>{columns.map(key => <td key={key}>{formatCell(key, row[key])}</td>)}</tr>)
+              : data.length ? data.map((row, index) => <tr key={String(row.row_id ?? row.student_number ?? row.employee_number ?? row.student_name ?? index)}>{columns.map(key => <td key={key}>{formatCell(key, row[key])}</td>)}</tr>)
               : <tr><td colSpan={Math.max(columns.length, 1)} className="registry-empty">Belum ada data untuk laporan ini.</td></tr>}
           </tbody>
         </table>
