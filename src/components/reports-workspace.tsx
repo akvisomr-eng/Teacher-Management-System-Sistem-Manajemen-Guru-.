@@ -18,7 +18,7 @@ const columnLabels: Record<string, string> = {
   employment_status: "Status kepegawaian", education: "Pendidikan", teaching_assignments: "Penugasan",
   classes_taught: "Kelas diampu", homeroom_teacher: "Wali kelas", student_count: "Jumlah siswa",
   subject_name: "Mata pelajaran", teacher_name: "Guru", assessment_title: "Asesmen",
-  assessment_type: "Jenis asesmen", student_name: "Nama siswa", score: "Nilai",
+  assessment_type: "Jenis asesmen", score: "Nilai",
   max_score: "Nilai maksimum", percentage: "Persentase", feedback: "Umpan balik", graded_at: "Tanggal penilaian"
 };
 const formatCell = (key: string, value: string | number | null) => {
