@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { withAuthenticatedUser } from "@/db/connection";
 import TeacherDesk from "@/components/teacher-desk";
@@ -36,7 +35,7 @@ export default async function TeacherPage() {
     return <main style={{maxWidth:640,margin:"12vh auto",padding:32,fontFamily:"sans-serif",background:"#fff",borderRadius:18}}>
       <h1>Ruang Kerja Guru</h1>
       <p>Akun ini belum memiliki penautan identitas guru yang aktif. Minta operator sekolah menautkan akun pribadi Anda ke data induk guru.</p>
-      <Link href="/workspace">Kembali ke TMS</Link>
+      <a href="/workspace/teachers">Kembali ke TMS</a>
     </main>;
   }
   return <TeacherDesk identity={identity} />;
