@@ -33,6 +33,7 @@
 - Teaching plans and journals include teacher ownership checks and manager review permissions.
 - Assessment and gradebook workflows include assignment-scoped assessments, enrolled-student validation, maximum-score checks, and audit logging.
 - Curriculum Center supports draft creation, structured learning outcomes, publication, archiving, and immutable published versions. Version creation uses a transaction advisory lock.
+- Reports Center provides tenant/school-scoped teacher, student, class, and gradebook reports, print layout, CSV export, teacher assignment scoping, and audit logging.
 - Runtime audit logs are append-only for `tms_app`; the runtime role can read and insert audit events but cannot update, delete, or truncate them.
 
 ## Security baseline
