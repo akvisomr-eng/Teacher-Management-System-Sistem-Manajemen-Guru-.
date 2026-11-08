@@ -51,7 +51,7 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Direktori seluruh guru hanya tersedia untuk pengelola sekolah." }, { status: 403 });
     }
 
-    let data: unknown[];
+    let data: readonly (object | undefined)[];
     if (type === "teachers") {
       data = await tx`
         SELECT t.employee_number, t.full_name, t.employment_status, t.education,
