@@ -13,6 +13,7 @@ const nav = [
   { label: "Ringkasan", icon: LayoutDashboard, href: "/" },
   { label: "Data Guru", icon: Users, href: "/workspace/teachers" },
   { label: "Data Siswa", icon: GraduationCap, href: "/workspace/students" },
+  { label: "Formulir Kustom", icon: Settings2, href: "/workspace/forms" },
   { label: "Kelas & Mapel", icon: BookOpenCheck, href: "/workspace/academic" },
   { label: "Pusat Kurikulum", icon: BookOpenCheck, href: "/workspace/curriculum" },
   { label: "Penugasan", icon: ClipboardCheck, href: "/workspace/assignments" },
@@ -77,7 +78,7 @@ export default function Home() {
         <div className="brand"><div className="brand-mark"><GraduationCap size={22}/></div><div><b>TMS<span>+</span></b><small>MANAGEMENT SYSTEM</small></div><button className="close-menu" onClick={() => setMenuOpen(false)} aria-label="Tutup menu"><X size={18}/></button></div>
         <div className="school-switch"><div className="school-avatar">SN</div><div className="school-name"><b>{summary?.school.schoolName ?? "Workspace sekolah"}</b><small>{summary?.school.tenantName ?? "Organisasi"}</small></div><ChevronDown size={16}/></div>
         <div className="nav-caption">MENU UTAMA</div>
-        <nav>{nav.map(item => <button key={item.label} className={`nav-item ${activeNav === item.label ? "selected" : ""}`} onClick={() => {setActiveNav(item.label);setMenuOpen(false);router.push(item.href);}}><item.icon size={18}/><span>{item.label}</span></button>)}</nav>
+        <nav>{nav.filter(item => item.label !== "Formulir Kustom" || ["tenant_owner","tenant_admin","principal","vice_principal","school_operator"].includes(summary?.school.role ?? "")).map(item => <button key={item.label} className={`nav-item ${activeNav === item.label ? "selected" : ""}`} onClick={() => {setActiveNav(item.label);setMenuOpen(false);router.push(item.href);}}><item.icon size={18}/><span>{item.label}</span></button>)}</nav>
         <div className="sidebar-bottom"><div className="nav-caption">PREFERENSI</div><button className="nav-item" onClick={() => setActiveNav("Pengaturan")}><Settings2 size={18}/><span>Pengaturan</span></button><div className="help-card"><div className="help-icon"><CircleHelp size={18}/></div><b>Butuh bantuan?</b><p>Pusat panduan penggunaan TMS.</p><button onClick={() => setActiveNav("Pusat Bantuan")}>Buka pusat bantuan <span>→</span></button></div><div className="profile"><div className="profile-avatar">{(session?.user?.name ?? "A").slice(0,2).toUpperCase()}</div><div><b>{session?.user?.name ?? session?.user?.email ?? "Pengguna"}</b><small>{summary?.school.role ?? "Memuat peran"}</small></div><button className="signout-button" title="Keluar" aria-label="Keluar" onClick={async () => { await authClient.signOut(); router.replace("/auth/sign-in"); router.refresh(); }}>Keluar</button></div></div>
       </aside>
       {menuOpen && <button className="scrim" aria-label="Tutup navigasi" onClick={() => setMenuOpen(false)}/>}

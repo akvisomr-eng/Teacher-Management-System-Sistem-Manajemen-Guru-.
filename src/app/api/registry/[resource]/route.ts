@@ -13,10 +13,65 @@ const teacherCreate = z.object({
   employeeNumber: z.string().trim().max(50).optional().default(""),
   education: z.string().trim().max(80).optional().default("")
 });
+const studentProfileSchema = z.object({
+  citizenship: z.string().trim().max(40).optional().default("WNI"),
+  noKitas: z.string().trim().max(30).optional().default(""),
+  birthCertificateNumber: z.string().trim().max(80).optional().default(""),
+  birthPlace: z.string().trim().max(100).optional().default(""),
+  gender: z.enum(["L", "P", ""]).optional().default(""),
+  religion: z.string().trim().max(40).optional().default(""),
+  nik: z.string().trim().max(16).optional().default(""),
+  familyCardNumber: z.string().trim().max(16).optional().default(""),
+  address: z.string().trim().max(500).optional().default(""),
+  rt: z.string().trim().max(5).optional().default(""),
+  rw: z.string().trim().max(5).optional().default(""),
+  hamlet: z.string().trim().max(100).optional().default(""),
+  residenceType: z.string().trim().max(60).optional().default(""),
+  latitude: z.string().trim().max(30).optional().default(""),
+  longitude: z.string().trim().max(30).optional().default(""),
+  province: z.string().trim().max(100).optional().default(""),
+  city: z.string().trim().max(100).optional().default(""),
+  district: z.string().trim().max(100).optional().default(""),
+  village: z.string().trim().max(100).optional().default(""),
+  postalCode: z.string().trim().max(10).optional().default(""),
+  fatherName: z.string().trim().max(180).optional().default(""),
+  fatherNik: z.string().trim().max(16).optional().default(""),
+  fatherPhone: z.string().trim().max(30).optional().default(""),
+  fatherEducation: z.string().trim().max(80).optional().default(""),
+  fatherOccupation: z.string().trim().max(100).optional().default(""),
+  fatherIncomeRange: z.string().trim().max(60).optional().default(""),
+  motherName: z.string().trim().max(180).optional().default(""),
+  motherNik: z.string().trim().max(16).optional().default(""),
+  motherPhone: z.string().trim().max(30).optional().default(""),
+  motherEducation: z.string().trim().max(80).optional().default(""),
+  motherOccupation: z.string().trim().max(100).optional().default(""),
+  motherIncomeRange: z.string().trim().max(60).optional().default(""),
+  guardianName: z.string().trim().max(180).optional().default(""),
+  guardianRelation: z.string().trim().max(60).optional().default(""),
+  guardianPhone: z.string().trim().max(30).optional().default(""),
+  guardianEducation: z.string().trim().max(80).optional().default(""),
+  guardianOccupation: z.string().trim().max(100).optional().default(""),
+  guardianIncomeRange: z.string().trim().max(60).optional().default(""),
+  previousSchool: z.string().trim().max(180).optional().default(""),
+  admissionDate: z.string().date().optional().or(z.literal("")),
+  childOrder: z.number().int().min(1).max(30).nullable().optional(),
+  siblingsCount: z.number().int().min(0).max(30).nullable().optional(),
+  transportMode: z.string().trim().max(80).optional().default(""),
+  hasKip: z.boolean().optional(),
+  kipNumber: z.string().trim().max(50).optional().default(""),
+  kksNumber: z.string().trim().max(50).optional().default(""),
+  kpsNumber: z.string().trim().max(50).optional().default(""),
+  pkhRecipient: z.boolean().optional(),
+  pipEligible: z.boolean().optional(),
+  specialNeeds: z.string().trim().max(160).optional().default(""),
+  contactPhone: z.string().trim().max(30).optional().default(""),
+  contactEmail: z.string().trim().email().max(254).or(z.literal("")).optional().default("")
+});
 const studentCreate = z.object({
   fullName: z.string().trim().min(2).max(180),
   studentNumber: z.string().trim().max(50).optional().default(""),
-  birthDate: z.string().date().optional().or(z.literal(""))
+  birthDate: z.string().date().optional().or(z.literal("")),
+  profile: studentProfileSchema.partial().default({})
 });
 const classCreate = z.object({
   name: z.string().trim().min(1).max(100),
@@ -36,6 +91,7 @@ const updateSchema = z.object({
   education: z.string().trim().max(80).optional(),
   studentNumber: z.string().trim().max(50).optional(),
   birthDate: z.string().date().optional().or(z.literal("")),
+  profile: studentProfileSchema.partial().optional(),
   status: z.string().trim().min(1).max(30).optional(),
   name: z.string().trim().min(1).max(140).optional(),
   gradeLevel: z.string().trim().min(1).max(50).optional(),
@@ -77,7 +133,7 @@ export async function GET(_request: Request, { params }: Context) {
       return NextResponse.json({ data: rows });
     }
     if (resource === "students") {
-      const rows = await tx`SELECT id, full_name, student_number, birth_date, status, created_at FROM students WHERE tenant_id = ${tenantId} AND school_id = ${schoolId} ORDER BY full_name ASC LIMIT 500`;
+      const rows = await tx`SELECT id, full_name, student_number, birth_date, profile, status, created_at FROM students WHERE tenant_id = ${tenantId} AND school_id = ${schoolId} ORDER BY full_name ASC LIMIT 500`;
       return NextResponse.json({ data: rows });
     }
     if (resource === "classes") {
@@ -111,7 +167,7 @@ export async function POST(request: Request, { params }: Context) {
     if (!parsed.success) return NextResponse.json({ error: "Data siswa tidak valid. Nama lengkap wajib diisi." }, { status: 400 });
     return authorize(resource, async (tx, tenantId, schoolId, userId) => {
       const data = parsed.data;
-      const rows = await tx`INSERT INTO students (tenant_id, school_id, full_name, student_number, birth_date) VALUES (${tenantId}, ${schoolId}, ${data.fullName}, ${data.studentNumber || null}, ${data.birthDate ? new Date(data.birthDate).toISOString() : null}) RETURNING id, full_name, student_number, birth_date, status, created_at`;
+      const rows = await tx`INSERT INTO students (tenant_id, school_id, full_name, student_number, birth_date, profile) VALUES (${tenantId}, ${schoolId}, ${data.fullName}, ${data.studentNumber || null}, ${data.birthDate ? new Date(data.birthDate).toISOString() : null}, ${JSON.stringify(data.profile)}::jsonb) RETURNING id, full_name, student_number, birth_date, profile, status, created_at`;
       await tx`INSERT INTO audit_logs (tenant_id, school_id, actor_user_id, action, resource_type, resource_id) VALUES (${tenantId}, ${schoolId}, ${userId}, 'student.created', 'student', ${rows[0].id})`;
       return NextResponse.json({ data: rows[0] }, { status: 201 });
     });
@@ -154,7 +210,7 @@ export async function PATCH(request: Request, { params }: Context) {
     } else if (resource === "students") {
       const status = changes.status;
       if (status && !["active", "inactive", "graduated", "transferred"].includes(status)) return NextResponse.json({ error: "Status siswa tidak valid." }, { status: 400 });
-      rows = await tx`UPDATE students SET full_name = COALESCE(${changes.fullName ?? null}, full_name), student_number = CASE WHEN ${changes.studentNumber !== undefined} THEN NULLIF(${changes.studentNumber ?? ""}, '') ELSE student_number END, birth_date = CASE WHEN ${changes.birthDate !== undefined} THEN ${changes.birthDate ? new Date(changes.birthDate).toISOString() : null}::timestamptz ELSE birth_date END, status = COALESCE(${status ?? null}, status) WHERE id = ${id} AND tenant_id = ${tenantId} AND school_id = ${schoolId} RETURNING id, full_name, student_number, birth_date, status, created_at`;
+      rows = await tx`UPDATE students SET full_name = COALESCE(${changes.fullName ?? null}, full_name), student_number = CASE WHEN ${changes.studentNumber !== undefined} THEN NULLIF(${changes.studentNumber ?? ""}, '') ELSE student_number END, birth_date = CASE WHEN ${changes.birthDate !== undefined} THEN ${changes.birthDate ? new Date(changes.birthDate).toISOString() : null}::timestamptz ELSE birth_date END, profile = CASE WHEN ${changes.profile !== undefined} THEN profile || ${JSON.stringify(changes.profile ?? {})}::jsonb ELSE profile END, status = COALESCE(${status ?? null}, status) WHERE id = ${id} AND tenant_id = ${tenantId} AND school_id = ${schoolId} RETURNING id, full_name, student_number, birth_date, profile, status, created_at`;
     } else if (resource === "classes") {
       const status = changes.status;
       if (status && !["active", "inactive"].includes(status)) return NextResponse.json({ error: "Status kelas tidak valid." }, { status: 400 });

@@ -69,3 +69,45 @@
 .reports-table td{white-space:nowrap}
 @media(max-width:560px){.reports-overview{gap:7px}.reports-overview>div{padding:12px 10px}.reports-overview strong{font-size:17px}.reports-toolbar{align-items:stretch}.reports-select-wrap{width:100%}.reports-actions{display:grid;grid-template-columns:repeat(3,1fr)}.reports-actions button{justify-content:center;padding:8px 5px;font-size:8px}}
 @media print{body{background:#fff}.reports-shell{max-width:none;padding:0}.reports-shell .registry-back,.reports-shell .registry-refresh,.reports-shell .reports-actions,.reports-shell .registry-footnote{display:none!important}.reports-shell .registry-panel,.reports-shell .reports-overview>div{border:0;box-shadow:none;padding:6px 0}.reports-table-wrap{max-height:none;overflow:visible;border:0}.reports-table{min-width:0;font-size:8px}.reports-table th,.reports-table td{padding:5px 4px;font-size:8px;white-space:normal}.reports-table th{position:static}.reports-shell .registry-header{margin-bottom:12px}}
+
+
+/* Student registry: structured Indonesian school administration form */
+.registry-toolbar{display:flex;align-items:center;gap:8px}.registry-add{height:36px;padding:0 12px;border:0;border-radius:7px;background:#6254d9;color:#fff;font:700 10px 'DM Sans';display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+.student-form{display:block!important;padding:16px!important;background:#fbfbfe;border:1px solid #ececf5;border-radius:10px;margin:14px 0 18px}
+.student-form-section{padding:0 0 15px;margin:0 0 15px;border-bottom:1px solid #eceef4}
+.student-form-section h3{font:700 12px 'Plus Jakarta Sans';color:#303a53;margin:0 0 12px}
+.student-form-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:11px}
+.student-form-grid>label{display:grid;gap:6px;min-width:0;color:#667087;font-size:10px;font-weight:700}
+.student-form-grid input,.student-form-grid select{height:37px;width:100%;min-width:0;border:1px solid #e4e7ef;border-radius:7px;padding:0 10px;background:#fff;color:#303a53;font:11px 'DM Sans'}
+.student-form-actions{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.student-form-actions small{max-width:600px;color:#8b93a7;font-size:9px;line-height:1.6}
+.student-form-actions button{height:38px;padding:0 13px;border:0;border-radius:7px;background:#6254d9;color:#fff;font:700 10px 'DM Sans';display:inline-flex;align-items:center;gap:7px;cursor:pointer}
+.student-form-actions button:disabled{opacity:.55;cursor:not-allowed}
+@media(max-width:850px){.student-form-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){.student-form{padding:12px!important}.student-form-grid{grid-template-columns:1fr}.student-form-actions button{width:100%;justify-content:center}}
+
+
+/* Configurable form designer */
+.forms-layout{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(280px,.75fr);gap:14px;align-items:start}
+.forms-meta{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px;margin:14px 0}
+.forms-meta label,.forms-field-grid label,.forms-options{display:grid;gap:6px;color:#667087;font-size:10px;font-weight:700}
+.forms-meta .forms-wide{grid-column:1/-1}
+.forms-meta input,.forms-meta select,.forms-meta textarea,.forms-field-grid input,.forms-field-grid select,.forms-options input{width:100%;min-width:0;border:1px solid #e4e7ef;border-radius:7px;padding:9px 10px;background:#fff;color:#303a53;font:11px 'DM Sans'}
+.forms-meta input,.forms-meta select,.forms-field-grid input,.forms-field-grid select,.forms-options input{height:37px;padding-top:0;padding-bottom:0}
+.forms-field-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:15px 0 10px}.forms-field-head h3{font:700 12px 'Plus Jakarta Sans';margin:0;color:#303a53}
+.forms-field{border:1px solid #eceef4;border-radius:9px;padding:12px;margin:9px 0;background:#fff}
+.forms-field-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;color:#303a53;font-size:10px}
+.forms-field-title button{border:0;background:transparent;color:#b14b61;cursor:pointer}
+.forms-field-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+.forms-required{display:flex!important;align-items:center;gap:7px!important;padding-top:20px}.forms-required input{width:14px!important;height:14px!important}
+.forms-options{margin-top:10px}
+.forms-actions,.forms-item-actions{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:14px}
+.forms-list article{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;padding:12px 0;border-bottom:1px solid #eff0f4}
+.forms-list article b{display:block;font-size:11px;color:#303a53}.forms-list article small{display:block;margin-top:4px;color:#9299aa;font-size:9px}
+.forms-item-actions{grid-column:1/-1;margin:0}
+@media(max-width:900px){.forms-layout{grid-template-columns:1fr}.forms-field-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){.forms-meta,.forms-field-grid{grid-template-columns:1fr}.forms-meta .forms-wide{grid-column:auto}.forms-actions>*{flex:1;justify-content:center}.forms-field-head{align-items:flex-start}}
+
+.forms-entry{display:grid;gap:12px;margin-top:14px}.forms-entry>label{display:grid;gap:6px;color:#667087;font-size:10px;font-weight:700}.forms-entry>label span{color:#b14b61;display:inline}.forms-entry input:not([type=checkbox]),.forms-entry select,.forms-entry textarea{width:100%;border:1px solid #e4e7ef;border-radius:7px;padding:9px 10px;background:#fff;color:#303a53;font:11px 'DM Sans'}.forms-entry input:not([type=checkbox]),.forms-entry select{height:38px}.forms-entry input[type=checkbox]{width:16px;height:16px}.forms-entry button{height:38px;display:inline-flex;align-items:center;justify-content:center;gap:7px;width:max-content;padding:0 14px}
+
+.registry-row-actions{display:flex;gap:5px;flex-wrap:wrap}.registry-row-actions .registry-toggle{white-space:nowrap}

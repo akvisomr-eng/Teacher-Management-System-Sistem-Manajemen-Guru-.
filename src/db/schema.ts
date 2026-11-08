@@ -74,7 +74,9 @@ export const students = pgTable("students", {
   fullName: varchar("full_name", { length: 180 }).notNull(),
   birthDate: timestamp("birth_date", { withTimezone: true }),
   status: varchar("status", { length: 24 }).notNull().default("active"),
-  profile: jsonb("profile").$type<Record<string, unknown>>().notNull().default({})
+  profile: jsonb("profile").$type<Record<string, unknown>>().notNull().default({}),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow()
 }, (t) => [index("students_school_idx").on(t.tenantId, t.schoolId), uniqueIndex("students_school_number_uq").on(t.schoolId, t.studentNumber)]);
 
 export const curriculumVersions = pgTable("curriculum_versions", {
