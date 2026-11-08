@@ -124,16 +124,3 @@ export async function PATCH(request: Request, { params }: Context) {
     return NextResponse.json({ data: rows[0] });
   });
 }
-
-export async function DELETE(request: Request, { params }: Context) {
-  const { resource } = await params;
-  if (resource !== "assignments") return NextResponse.json({ error: "Penghapusan data tidak didukung." }, { status: 405 });
-  const parsed = z.object({ id: z.string().uuid() }).safeParse(await request.json().catch(() => null));
-  if (!parsed.success) return NextResponse.json({ error: "ID penugasan tidak valid." }, { status: 400 });
-  return authorize(resource, async (tx, tenantId, schoolId, userId) => {
-    const rows = await tx`DELETE FROM teaching_assignments WHERE id = ${parsed.data.id} AND tenant_id = ${tenantId} AND school_id = ${schoolId} RETURNING id`;
-    if (!rows.length) return NextResponse.json({ error: "Penugasan tidak ditemukan." }, { status: 404 });
-    await tx`INSERT INTO audit_logs (tenant_id, school_id, actor_user_id, action, resource_type, resource_id) VALUES (${tenantId}, ${schoolId}, ${userId}, 'teaching_assignment.deleted', 'teaching_assignment', ${parsed.data.id})`;
-    return NextResponse.json({ success: true });
-  });
-}
