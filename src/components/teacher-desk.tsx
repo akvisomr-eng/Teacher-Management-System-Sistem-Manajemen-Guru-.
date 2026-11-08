@@ -45,6 +45,7 @@ export default function TeacherDesk({ identity }: { identity: Identity }) {
   const [title, setTitle] = useState("");
   const [itemType, setItemType] = useState("lesson_plan");
   const [body, setBody] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [online, setOnline] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("Data kerja tersimpan di perangkat ini sampai Anda memilih sinkronisasi.");
@@ -66,8 +67,8 @@ export default function TeacherDesk({ identity }: { identity: Identity }) {
   async function save() {
     if (!dbName) { setMessage("Login online sekali sebagai guru untuk membuka penyimpanan pribadi pada perangkat ini."); return; }
     if (!title.trim()) { setMessage("Isi judul dokumen terlebih dahulu."); return; }
-    const item: WorkItem = { id: crypto.randomUUID(), itemType, title: title.trim(), content: { body }, schemaVersion: 1, clientUpdatedAt: new Date().toISOString(), syncState: "local" };
-    await putLocal(dbName, item); await refresh(); setTitle(""); setBody(""); setMessage("Tersimpan di perangkat. Anda dapat melanjutkan tanpa internet.");
+    const item: WorkItem = { id: editingId ?? crypto.randomUUID(), itemType, title: title.trim(), content: { body }, schemaVersion: 1, clientUpdatedAt: new Date().toISOString(), syncState: "local" };
+    await putLocal(dbName, item); await refresh(); setTitle(""); setBody(""); setEditingId(null); setMessage("Tersimpan di perangkat. Anda dapat melanjutkan tanpa internet.");
   }
 
   async function sync() {
@@ -84,6 +85,32 @@ export default function TeacherDesk({ identity }: { identity: Identity }) {
       await refresh();
       setMessage(`${result.accepted} dari ${result.received} dokumen diterima server. Konflik ditandai untuk pemeriksaan, bukan ditimpa diam-diam.`);
     } catch (error) { setMessage(error instanceof Error ? error.message : "Tidak dapat terhubung ke server."); }
+    finally { setBusy(false); }
+  }
+
+  async function pull() {
+    if (!dbName) { setMessage("Login sebagai guru untuk mengambil dokumen dari TMS."); return; }
+    setBusy(true);
+    try {
+      const response = await fetch("/api/teacher-workspace", { cache: "no-store" });
+      if (!response.ok) throw new Error(response.status === 401 ? "Sesi login berakhir. Login kembali untuk mengambil data." : "Data TMS belum dapat diambil.");
+      const result = await response.json();
+      const current = await localItems(dbName);
+      const byId = new Map(current.map(item => [item.id, item]));
+      let added = 0, conflicts = 0;
+      for (const remote of (result.items ?? [])) {
+        const serverItem: WorkItem = { id: remote.id, itemType: remote.item_type, title: remote.title, content: remote.content, schemaVersion: remote.schema_version, clientUpdatedAt: remote.client_updated_at, syncState: "synced" };
+        const local = byId.get(serverItem.id);
+        if (!local) { await putLocal(dbName, serverItem); added++; }
+        else if (local.syncState !== "synced" && new Date(local.clientUpdatedAt).getTime() !== new Date(serverItem.clientUpdatedAt).getTime()) {
+          await putLocal(dbName, { ...local, syncState: "conflict" }); conflicts++;
+        } else if (new Date(serverItem.clientUpdatedAt).getTime() > new Date(local.clientUpdatedAt).getTime()) {
+          await putLocal(dbName, serverItem);
+        }
+      }
+      await refresh();
+      setMessage(`Data TMS diperiksa. ${added} dokumen baru diunduh; ${conflicts} konflik lokal perlu ditinjau.`);
+    } catch (error) { setMessage(error instanceof Error ? error.message : "Tidak dapat mengambil data dari TMS."); }
     finally { setBusy(false); }
   }
 
@@ -114,7 +141,7 @@ export default function TeacherDesk({ identity }: { identity: Identity }) {
   return <main style={{minHeight:"100vh",background:"#f4f6fb",color:"#17233d",fontFamily:"Arial,sans-serif",padding:"28px",maxWidth:1100,margin:"auto"}}>
     <header style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:16,flexWrap:"wrap"}}>
       <div><small style={{letterSpacing:2,color:"#6254d9",fontWeight:700}}>TMS • PERSONAL WORKSPACE</small><h1 style={{fontSize:30,margin:"8px 0"}}>Ruang Kerja Guru</h1><p style={{color:"#65708a",margin:0}}>{identity ? `${identity.name} · ${identity.school}` : "Mode offline · data lokal perangkat"}</p></div>
-      <div style={{display:"flex",gap:8,flexWrap:"wrap"}}><button onClick={exportData}>Ekspor / Flashdisk</button><label style={{border:"1px solid #d9ddec",borderRadius:8,padding:"10px 14px",background:"white",cursor:"pointer"}}>Impor paket<input type="file" accept=".json,application/json" hidden onChange={e=>void importData(e.target.files?.[0])}/></label><button onClick={()=>void sync()} disabled={!online||busy}>{busy?"Menyinkronkan…":"Sinkronkan"}</button></div>
+      <div style={{display:"flex",gap:8,flexWrap:"wrap"}}><button onClick={exportData}>Ekspor / Flashdisk</button><button onClick={()=>void pull()} disabled={!online||busy}>Ambil dari TMS</button><label style={{border:"1px solid #d9ddec",borderRadius:8,padding:"10px 14px",background:"white",cursor:"pointer"}}>Impor paket<input type="file" accept=".json,application/json" hidden onChange={e=>void importData(e.target.files?.[0])}/></label><button onClick={()=>void sync()} disabled={!online||busy}>{busy?"Menyinkronkan…":"Sinkronkan"}</button></div>
     </header>
     <section style={{background:"white",borderRadius:14,padding:20,marginTop:24,border:"1px solid #e6eaf2"}}>
       <div style={{display:"flex",justifyContent:"space-between",gap:12,flexWrap:"wrap"}}><b>Status perangkat</b><span>{online?"● Online":"● Offline"}</span></div><p style={{color:"#65708a",fontSize:13}}>{message}</p>
@@ -126,11 +153,11 @@ export default function TeacherDesk({ identity }: { identity: Identity }) {
         <label style={{display:"block",fontSize:13,marginBottom:6}}>Jenis dokumen</label><select value={itemType} onChange={e=>setItemType(e.target.value)} style={{width:"100%",padding:11,marginBottom:12}}>{TYPES.map(([v,l])=><option key={v} value={v}>{l}</option>)}</select>
         <label style={{display:"block",fontSize:13,marginBottom:6}}>Judul</label><input value={title} onChange={e=>setTitle(e.target.value)} placeholder="Contoh: Rencana pembelajaran Matematika" style={{width:"100%",padding:11,marginBottom:12}}/>
         <label style={{display:"block",fontSize:13,marginBottom:6}}>Isi / catatan</label><textarea value={body} onChange={e=>setBody(e.target.value)} rows={9} placeholder="Tuliskan ide, langkah pembelajaran, refleksi, atau materi…" style={{width:"100%",padding:11,resize:"vertical"}}/>
-        <button onClick={()=>void save()} style={{marginTop:12,background:"#6254d9",color:"white",border:0,borderRadius:8,padding:"12px 18px",cursor:"pointer"}}>Simpan di perangkat</button>
+        <button onClick={()=>void save()} style={{marginTop:12,background:"#6254d9",color:"white",border:0,borderRadius:8,padding:"12px 18px",cursor:"pointer"}}>{editingId?"Perbarui dokumen":"Simpan di perangkat"}</button>{editingId&&<button onClick={()=>{setEditingId(null);setTitle("");setBody("");}} style={{marginLeft:8,marginTop:12,padding:"12px 18px"}}>Batal edit</button>}
       </div>
       <div style={{background:"white",borderRadius:14,padding:20,border:"1px solid #e6eaf2"}}>
         <h2 style={{marginTop:0}}>Dokumen saya ({items.length})</h2>
-        {items.length===0?<p style={{color:"#7b8499"}}>Belum ada dokumen. Mulai buat pekerjaan pribadi Anda.</p>:<div style={{display:"grid",gap:10}}>{items.map(item=><article key={item.id} style={{border:"1px solid #edf0f5",borderRadius:10,padding:13}}><div style={{display:"flex",justifyContent:"space-between",gap:8}}><b>{item.title}</b><small>{item.syncState==="synced"?"Tersinkron":item.syncState==="conflict"?"Perlu pemeriksaan":"Lokal"}</small></div><small style={{color:"#7b8499"}}>{TYPES.find(([v])=>v===item.itemType)?.[1]??item.itemType} · {new Date(item.clientUpdatedAt).toLocaleString("id-ID")}</small><p style={{whiteSpace:"pre-wrap",fontSize:13,color:"#46516a"}}>{item.content.body}</p></article>)}</div>}
+        {items.length===0?<p style={{color:"#7b8499"}}>Belum ada dokumen. Mulai buat pekerjaan pribadi Anda.</p>:<div style={{display:"grid",gap:10}}>{items.map(item=><article key={item.id} style={{border:"1px solid #edf0f5",borderRadius:10,padding:13}}><div style={{display:"flex",justifyContent:"space-between",gap:8}}><b>{item.title}</b><small>{item.syncState==="synced"?"Tersinkron":item.syncState==="conflict"?"Perlu pemeriksaan":"Lokal"}</small></div><button onClick={()=>{setEditingId(item.id);setTitle(item.title);setItemType(item.itemType);setBody(item.content.body);}} style={{marginTop:6}}>Edit</button><small style={{color:"#7b8499"}}>{TYPES.find(([v])=>v===item.itemType)?.[1]??item.itemType} · {new Date(item.clientUpdatedAt).toLocaleString("id-ID")}</small><p style={{whiteSpace:"pre-wrap",fontSize:13,color:"#46516a"}}>{item.content.body}</p></article>)}</div>}
       </div>
     </section>
     <footer style={{marginTop:24,color:"#8790a3",fontSize:12}}>Teacher Desk terhubung ke database TMS yang sama saat online. Data induk sekolah tetap dikelola melalui alur resmi TMS.</footer>
