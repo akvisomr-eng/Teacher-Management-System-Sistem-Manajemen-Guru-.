@@ -39,6 +39,7 @@ type ActivityItem = { title: string; person: string; time: string; tag: string }
 export default function Home() {
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const [activeNav, setActiveNav] = useState("Ringkasan");
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [activities, setActivities] = useState<ActivityItem[]>([]);
@@ -83,7 +84,14 @@ export default function Home() {
       </aside>
       {menuOpen && <button className="scrim" aria-label="Tutup navigasi" onClick={() => setMenuOpen(false)}/>}
       <section className="main-area">
-        <header className="topbar"><div className="top-left"><button className="menu-toggle" onClick={() => setMenuOpen(true)} aria-label="Buka menu"><Menu size={20}/></button><div className="crumb">Workspace <span>/</span> <b>{activeNav}</b></div></div><div className="top-actions"><div className="searchbox"><Search size={16}/><input aria-label="Cari" placeholder="Cari data, menu, atau bantuan..."/><kbd>⌘ K</kbd></div><button className="icon-button notification" aria-label="Notifikasi"><Bell size={19}/><i/></button><div className="top-avatar">AM</div></div></header>
+        <header className="topbar"><div className="top-left"><button className="menu-toggle" onClick={() => setMenuOpen(true)} aria-label="Buka menu"><Menu size={20}/></button><div className="crumb">Workspace <span>/</span> <b>{activeNav}</b></div></div><div className="top-actions"><div className="searchbox"><Search size={16}/><input aria-label="Cari" placeholder="Cari data, menu, atau bantuan..."/><kbd>⌘ K</kbd></div><button className="icon-button notification" aria-label="Notifikasi"><Bell size={19}/><i/></button><div className="account-menu-wrap">
+              <button className="top-avatar account-trigger" type="button" aria-label="Buka menu akun" aria-haspopup="menu" aria-expanded={accountMenuOpen} onClick={() => setAccountMenuOpen(open => !open)}>{(session?.user?.name ?? session?.user?.email ?? "A").slice(0,2).toUpperCase()}</button>
+              {accountMenuOpen && <div className="account-menu" role="menu" aria-label="Menu akun">
+                <div className="account-menu-heading"><div className="account-menu-avatar">{(session?.user?.name ?? session?.user?.email ?? "A").slice(0,2).toUpperCase()}</div><div><b>{session?.user?.name ?? "Pengguna TMS"}</b><small>{session?.user?.email ?? "Memuat akun..."}</small></div></div>
+                <div className="account-menu-meta"><span>Organisasi</span><b>{summary?.school.tenantName ?? "Memuat..."}</b><span>Sekolah</span><b>{summary?.school.schoolName ?? "Memuat..."}</b><span>Peran akses</span><b>{summary?.school.role ?? "Memuat..."}</b></div>
+                <button className="account-signout" type="button" role="menuitem" onClick={async () => { setAccountMenuOpen(false); await authClient.signOut(); router.replace("/auth/sign-in"); router.refresh(); }}>Keluar dari TMS</button>
+              </div>}
+            </div></div></header>
         <div className="content">
           <div className="welcome-row"><div><div className="eyebrow">WORKSPACE AKADEMIK</div><h1>Selamat datang, {session?.user?.name?.split(" ")[0] ?? "Admin"}! <span>✦</span></h1><p>Berikut ringkasan aktivitas akademik sekolah Anda hari ini.</p></div><button className="period-button"><CalendarDays size={16}/> Tahun Ajaran Aktif <ChevronDown size={15}/></button></div>
           <div className="notice"><div className="notice-icon"><ShieldCheck size={19}/></div><div><b>{loadError ? "Koneksi data perlu diperiksa" : "Workspace sekolah Anda"}</b><p>{loadError || `Data ditampilkan dalam lingkup ${summary?.school.schoolName ?? "sekolah"}. Akses dibatasi berdasarkan keanggotaan dan peran.`}</p></div><button aria-label="Tutup informasi" onClick={(e) => e.currentTarget.parentElement?.remove()}><X size={17}/></button></div>
