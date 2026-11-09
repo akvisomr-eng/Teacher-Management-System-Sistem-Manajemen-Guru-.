@@ -94,7 +94,7 @@ export function ReportsWorkspace() {
 
   return <main className="registry-shell reports-shell">
     <header className="registry-header">
-      <Link href="/" className="registry-back"><ArrowLeft size={16}/> Dashboard</Link>
+      <div className="registry-header-actions"><Link href="/" className="registry-back"><ArrowLeft size={16}/> Kembali ke Dashboard</Link><button type="button" className="registry-print" onClick={() => window.print()}><Printer size={15}/> Cetak halaman</button></div>
       <div className="registry-heading"><div className="registry-symbol"><BarChart3 size={22}/></div><div><span>REPORT CENTER</span><h1>Pusat Laporan</h1><p>Ringkasan data akademik sekolah dengan ekspor CSV dan tampilan cetak.</p></div></div>
     </header>
     <section className="reports-overview">
