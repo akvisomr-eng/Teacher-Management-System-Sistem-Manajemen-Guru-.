@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, BookOpen, Copy, Plus, RefreshCw, Save, Send, Archive } from "lucide-react";
+import { ArrowLeft, BookOpen, Copy, Plus, RefreshCw, Save, Send, Archive , Printer} from "lucide-react";
 
 type Outcome = { code: string; title: string; description: string; phase: string };
 type Definition = { description: string; learningOutcomes: Outcome[]; subjectGuides: { subject: string; notes: string }[]; assessmentPrinciples: string };
@@ -172,7 +172,7 @@ export function CurriculumWorkspace() {
 
   return <main className="registry-shell">
     <header className="registry-header">
-      <Link href="/" className="registry-back"><ArrowLeft size={16}/> Dashboard</Link>
+      <div className="registry-header-actions"><Link href="/" className="registry-back"><ArrowLeft size={16}/> Kembali ke Dashboard</Link><button type="button" className="registry-print" onClick={() => window.print()}><Printer size={15}/> Cetak halaman</button></div>
       <div className="registry-heading"><div className="registry-symbol"><BookOpen size={22}/></div><div><span>CURRICULUM CENTER</span><h1>Pusat Kurikulum</h1><p>Kelola kerangka, capaian pembelajaran, dan versi kurikulum sekolah.</p></div></div>
     </header>
     <section className="registry-stats">

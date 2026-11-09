@@ -1,7 +1,7 @@
 "use client";
 import {useEffect,useState} from "react";
 import Link from "next/link";
-import {ArrowLeft,Plus,Save,Trash2,FilePlus2,ShieldCheck} from "lucide-react";
+import {ArrowLeft,Plus,Save,Trash2,FilePlus2,ShieldCheck, Printer} from "lucide-react";
 
 type Field={id:string;key:string;label:string;type:"text"|"textarea"|"number"|"date"|"email"|"phone"|"select"|"checkbox";required:boolean;options:string[]};
 type Form={id:string;name:string;description:string|null;module_key:string;form_version:number;status:string;fields:Field[]};
@@ -25,7 +25,7 @@ export function CustomFormsWorkspace(){
  }
  async function archive(f:Form){const r=await fetch("/api/forms",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:f.id,name:f.name,description:f.description||"",moduleKey:f.module_key,fields:f.fields,status:"archived"})});const d=await r.json();if(!r.ok){setError(d.error||"Gagal mengarsipkan");return;}await load();}
  return <main className="registry-shell forms-shell">
-  <header className="registry-header"><Link href="/" className="registry-back"><ArrowLeft size={16}/> Dashboard</Link><div className="registry-heading"><div className="registry-symbol"><FilePlus2 size={22}/></div><div><span>ADMINISTRASI SEKOLAH</span><h1>Pembuat Formulir</h1><p>Buat formulir tambahan sesuai kebutuhan sekolah tanpa mengubah kode aplikasi.</p></div></div></header>
+  <header className="registry-header"><div className="registry-header-actions"><Link href="/" className="registry-back"><ArrowLeft size={16}/> Kembali ke Dashboard</Link><button type="button" className="registry-print" onClick={() => window.print()}><Printer size={15}/> Cetak halaman</button></div><div className="registry-heading"><div className="registry-symbol"><FilePlus2 size={22}/></div><div><span>ADMINISTRASI SEKOLAH</span><h1>Pembuat Formulir</h1><p>Buat formulir tambahan sesuai kebutuhan sekolah tanpa mengubah kode aplikasi.</p></div></div></header>
   <div className="forms-layout"><section className="registry-panel"><div className="registry-panel-head"><div><h2>{editing?"Ubah formulir":"Buat formulir baru"}</h2><p>Hanya admin, kepala sekolah, wakil kepala sekolah, dan operator berwenang.</p></div><ShieldCheck size={20}/></div>
    <div className="forms-meta"><label>Nama formulir<input value={name} onChange={e=>setName(e.target.value)} placeholder="Contoh: Pendataan minat dan bakat siswa"/></label><label>Menu / konteks<select value={moduleKey} onChange={e=>setModuleKey(e.target.value)}>{modules.map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label><label className="forms-wide">Deskripsi<textarea value={description} onChange={e=>setDescription(e.target.value)} rows={2} placeholder="Tujuan dan petunjuk pengisian"/></label></div>
    <div className="forms-field-head"><h3>Kolom formulir</h3><button className="registry-add" onClick={()=>setFields(v=>[...v,newField()])}><Plus size={14}/> Tambah kolom</button></div>

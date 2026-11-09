@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, BookOpenCheck, ClipboardList, Plus, RefreshCw } from "lucide-react";
+import { ArrowLeft, BookOpenCheck, ClipboardList, Plus, RefreshCw , Printer} from "lucide-react";
 
 type Tab = "plans" | "journals";
 type Plan = { id: string; title: string; subject: string | null; grade_level: string | null; status: string; teacher_name: string | null; content: { objectives?: string; activities?: string; assessment?: string } };
@@ -97,7 +97,7 @@ export function TeachingWorkspace() {
   }
 
   return <main className="registry-shell">
-    <header className="registry-header"><Link href="/" className="registry-back"><ArrowLeft size={16}/> Dashboard</Link><div className="registry-heading"><div className="registry-symbol"><BookOpenCheck size={22}/></div><div><span>AKTIVITAS PEMBELAJARAN</span><h1>Perencanaan Ajar & Jurnal</h1><p>Susun perangkat ajar dan dokumentasikan proses pembelajaran.</p></div></div></header>
+    <header className="registry-header"><div className="registry-header-actions"><Link href="/" className="registry-back"><ArrowLeft size={16}/> Kembali ke Dashboard</Link><button type="button" className="registry-print" onClick={() => window.print()}><Printer size={15}/> Cetak halaman</button></div><div className="registry-heading"><div className="registry-symbol"><BookOpenCheck size={22}/></div><div><span>AKTIVITAS PEMBELAJARAN</span><h1>Perencanaan Ajar & Jurnal</h1><p>Susun perangkat ajar dan dokumentasikan proses pembelajaran.</p></div></div></header>
     <section className="registry-stats"><div><small>Rencana ajar</small><strong>{plans.length}</strong></div><div><small>Jurnal mengajar</small><strong>{journals.length}</strong></div><div><small>Perlu ditinjau</small><strong>{plans.filter(item => item.status === "submitted").length + journals.filter(item => item.status === "submitted").length}</strong></div></section>
     <section className="registry-panel">
       <div className="registry-panel-head"><div><h2>Ruang kerja pembelajaran</h2><p>Guru dan pengelola sekolah dapat menyusun serta meninjau aktivitas.</p></div><button className="registry-refresh" onClick={() => void load()} aria-label="Muat ulang"><RefreshCw size={16}/></button></div>

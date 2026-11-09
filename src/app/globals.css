@@ -142,3 +142,20 @@
 .account-signout{width:100%;height:38px;border:1px solid #f1dfe2;border-radius:8px;background:#fff7f7;color:#b44755;text-align:left;padding:0 11px;font:700 11px 'DM Sans';cursor:pointer}
 .account-signout:hover{background:#ffeded}
 @media(max-width:760px){.account-menu{top:calc(100% + 10px)}}
+
+
+.registry-header-actions{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:20px;flex-wrap:wrap}
+.registry-header-actions .registry-back{margin:0}
+.registry-print{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:35px;padding:0 12px;border:1px solid #e5e7ef;border-radius:8px;background:#fff;color:#59627a;font:600 11px 'DM Sans';cursor:pointer}
+.registry-print:hover{border-color:#c9c4f4;color:#6254d9;background:#faf9ff}
+.registry-print:focus-visible,.registry-header-actions .registry-back:focus-visible{outline:3px solid #c9c4f4;outline-offset:3px}
+@media print{
+ @page{size:auto;margin:14mm}
+ .registry-header-actions,.registry-toolbar,.registry-search,.registry-form,.student-form-actions,.standard-form-actions,.standard-forms-nav,.standard-forms-editor form,.registry-row-actions,.registry-refresh,.registry-add{display:none!important}
+ .registry-shell{max-width:none;min-height:0;padding:0}
+ .registry-panel,.registry-stats>div{break-inside:avoid;box-shadow:none}
+ .registry-table-wrap{overflow:visible}
+ .registry-table{min-width:0}
+ .registry-table th,.registry-table td{white-space:normal}
+ .standard-forms-panel{break-before:page}
+}
