@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Plus, Search, RefreshCw, Users, GraduationCap, Save } from "lucide-react";
+import { ArrowLeft, Plus, Search, RefreshCw, Users, GraduationCap, Save , Printer} from "lucide-react";
 
 type Resource = "teachers" | "students";
 type Profile = {
@@ -83,7 +83,7 @@ export function RegistryWorkspace({ resource }: { resource: Resource }) {
 
   const field = (label:string,key:keyof Profile,placeholder="",type="text") => <label key={key}>{label}<input type={type} value={profile[key]} onChange={e=>setField(key,e.target.value)} placeholder={placeholder}/></label>;
   return <main className="registry-shell">
-    <header className="registry-header"><Link href="/" className="registry-back"><ArrowLeft size={16}/> Dashboard</Link><div className="registry-heading"><div className="registry-symbol">{isTeacher?<Users size={22}/>:<GraduationCap size={22}/>}</div><div><span>MASTER DATA SEKOLAH</span><h1>{isTeacher?"Data Guru":"Data Siswa"}</h1><p>Kelola direktori {isTeacher?"tenaga pendidik":"peserta didik"} sesuai kebutuhan administrasi satuan pendidikan.</p></div></div></header>
+    <header className="registry-header"><div className="registry-header-actions"><Link href="/" className="registry-back"><ArrowLeft size={16}/> Kembali ke Dashboard</Link><button type="button" className="registry-print" onClick={() => window.print()}><Printer size={15}/> Cetak halaman</button></div><div className="registry-heading"><div className="registry-symbol">{isTeacher?<Users size={22}/>:<GraduationCap size={22}/>}</div><div><span>MASTER DATA SEKOLAH</span><h1>{isTeacher?"Data Guru":"Data Siswa"}</h1><p>Kelola direktori {isTeacher?"tenaga pendidik":"peserta didik"} sesuai kebutuhan administrasi satuan pendidikan.</p></div></div></header>
     <section className="registry-stats"><div><small>Total terdaftar</small><strong>{rows.length}</strong></div><div><small>Aktif</small><strong>{rows.filter(row=>row.status==="active").length}</strong></div><div><small>Nonaktif / lainnya</small><strong>{rows.filter(row=>row.status!=="active").length}</strong></div></section>
     <section className="registry-panel"><div className="registry-panel-head"><div><h2>Direktori {isTeacher?"guru":"peserta didik"}</h2><p>Data dibatasi pada sekolah dan tenant yang Anda kelola.</p></div><div className="registry-toolbar"><button className="registry-refresh" onClick={()=>void load()} aria-label="Muat ulang"><RefreshCw size={16}/></button>{!isTeacher&&<button className="registry-add" onClick={()=>{if(!showForm)setEditingId(null);setShowForm(v=>!v)}}><Plus size={16}/> {showForm?"Tutup formulir":"Tambah siswa"}</button>}</div></div>
       <div className="registry-search"><Search size={17}/><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Cari nama atau nomor identitas..."/></div>
