@@ -92,19 +92,25 @@ export default function TeacherDesk({ identity }: { identity: Identity }) {
     try {
       const pending = (await readTeacherItems(dbName, vaultKey)).filter(x => x.syncState !== "synced");
       if (!pending.length) { setMessage("Semua dokumen lokal sudah tersinkron."); return; }
-      const response = await fetch("/api/teacher-workspace", {
-        method: "POST", headers: { "content-type": "application/json" },
-        body: JSON.stringify({ items: pending.map(item => ({
-          id: item.id, itemType: item.itemType, title: item.title, content: item.content,
-          schemaVersion: item.schemaVersion, clientUpdatedAt: item.clientUpdatedAt
-        })) })
-      });
-      if (!response.ok) throw new Error(response.status === 401 ? "Sesi login berakhir. Login kembali untuk sinkronisasi." : "Sinkronisasi gagal. Data lokal tetap aman.");
-      const result = await response.json();
-      const accepted = new Set<string>((result.items ?? []).map((x: {id:string}) => x.id));
+      const accepted = new Set<string>();
+      let received = 0;
+      for (let offset = 0; offset < pending.length; offset += 25) {
+        const batch = pending.slice(offset, offset + 25);
+        const response = await fetch("/api/teacher-workspace", {
+          method: "POST", headers: { "content-type": "application/json" },
+          body: JSON.stringify({ items: batch.map(item => ({
+            id: item.id, itemType: item.itemType, title: item.title, content: item.content,
+            schemaVersion: item.schemaVersion, clientUpdatedAt: item.clientUpdatedAt
+          })) })
+        });
+        if (!response.ok) throw new Error(response.status === 401 ? "Sesi login berakhir. Login kembali untuk sinkronisasi." : "Sinkronisasi gagal. Data lokal tetap aman.");
+        const result = await response.json();
+        received += Number(result.received ?? batch.length);
+        for (const row of (result.items ?? []) as Array<{id:string}>) accepted.add(row.id);
+      }
       for (const item of pending) await writeTeacherItem(dbName, vaultKey, { ...item, syncState: accepted.has(item.id) ? "synced" : "conflict" });
       await refresh();
-      setMessage(`${result.accepted} dari ${result.received} dokumen diterima server. Konflik ditandai untuk pemeriksaan.`);
+      setMessage(`${accepted.size} dari ${received} dokumen diterima server. Konflik ditandai untuk pemeriksaan.`);
     } catch (error) { setMessage(error instanceof Error ? error.message : "Tidak dapat terhubung ke server."); }
     finally { setBusy(false); }
   }
