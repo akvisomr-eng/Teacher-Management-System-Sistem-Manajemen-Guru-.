@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   clearTeacherItems, createTeacherBackup, openTeacherBackup, readTeacherItems,
   unlockTeacherVault, writeTeacherItem, type VaultWorkItem
@@ -16,8 +16,9 @@ const TYPES = [
 
 export default function TeacherDesk({ identity }: { identity: Identity }) {
   const [items, setItems] = useState<VaultWorkItem[]>([]);
-  const [localTeacherId] = useState<string | null>(() => identity?.teacherId ?? (typeof window !== "undefined" ? window.sessionStorage.getItem("tms-teacher-id") : null));
-  const dbName = localTeacherId ? `${DB_NAME}:${localTeacherId}` : null;
+  const [localTeacherId, setLocalTeacherId] = useState<string | null>(() => identity?.teacherId ?? (typeof window !== "undefined" ? window.sessionStorage.getItem("tms-teacher-id") : null));
+  const dbName = (identity?.teacherId ?? localTeacherId) ? `${DB_NAME}:${identity?.teacherId ?? localTeacherId}` : null;
+  const previousIdentity = useRef<string | null>(identity?.teacherId ?? null);
   const [title, setTitle] = useState("");
   const [itemType, setItemType] = useState("lesson_plan");
   const [body, setBody] = useState("");
@@ -49,7 +50,25 @@ export default function TeacherDesk({ identity }: { identity: Identity }) {
   }, [dbName, vaultKey]);
 
   useEffect(() => {
-    if (identity?.teacherId) sessionStorage.setItem("tms-teacher-id", identity.teacherId);
+    const nextIdentity = identity?.teacherId ?? null;
+    if (previousIdentity.current !== nextIdentity) {
+      setVaultKey(null); setVaultSalt(null); setItems([]);
+      setEditingId(null); setTitle(""); setBody(""); setSubject(""); setClassName(""); setDueDate("");
+      setPassphrase("");
+      if (nextIdentity) {
+        setLocalTeacherId(nextIdentity);
+        sessionStorage.setItem("tms-teacher-id", nextIdentity);
+        setMessage("Identitas guru berubah. Vault sebelumnya dikunci; buka vault milik akun ini untuk melanjutkan.");
+      } else if (previousIdentity.current) {
+        setLocalTeacherId(null);
+        sessionStorage.removeItem("tms-teacher-id");
+        setMessage("Sesi guru berakhir. Data lokal tetap terenkripsi dan tidak ditampilkan pada akun lain.");
+      }
+      previousIdentity.current = nextIdentity;
+    } else if (nextIdentity) {
+      setLocalTeacherId(nextIdentity);
+      sessionStorage.setItem("tms-teacher-id", nextIdentity);
+    }
     const update = () => setOnline(navigator.onLine);
     window.addEventListener("online", update);
     window.addEventListener("offline", update);
