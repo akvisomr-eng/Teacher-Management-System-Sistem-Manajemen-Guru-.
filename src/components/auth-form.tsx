@@ -88,7 +88,6 @@ export function AuthForm({ initialMode }: Props) {
   }
 
   const isReset = step === "reset";
-  const isPasswordStep = step === "form" || isReset;
 
   return (
     <main className="auth-shell">
