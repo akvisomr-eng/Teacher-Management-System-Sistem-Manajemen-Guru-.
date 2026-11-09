@@ -142,16 +142,36 @@ export default function TeacherDesk({ identity }: { identity: Identity }) {
   async function importData(file?: File) {
     if (!file || !dbName || !vaultKey || !localTeacherId) return;
     try {
+      if (file.size > 5 * 1024 * 1024) throw new Error("Ukuran paket melebihi batas 5 MB.");
       const backup = await openTeacherBackup(await file.text(), passphrase);
       if (!backup.teacher?.teacherId || backup.teacher.teacherId !== localTeacherId) throw new Error("Identitas guru pada paket tidak cocok.");
       if (!Array.isArray(backup.items) || backup.items.length > 500) throw new Error("Struktur paket tidak valid atau jumlah data melebihi batas.");
+      const existing = new Map((await readTeacherItems(dbName, vaultKey)).map(item => [item.id, item]));
+      let restored = 0, duplicates = 0, conflicts = 0;
       for (const item of backup.items) {
-        if (typeof item.id !== "string" || typeof item.title !== "string" || !TYPES.some(([type]) => type === item.itemType) || typeof item.content?.body !== "string") {
+        if (typeof item.id !== "string" || item.id.length > 100 || typeof item.title !== "string" || !item.title.trim() ||
+            item.title.length > 200 || !TYPES.some(([type]) => type === item.itemType) ||
+            typeof item.content?.body !== "string" || item.content.body.length > 100_000 ||
+            !Number.isInteger(item.schemaVersion) || item.schemaVersion < 1 ||
+            !Number.isFinite(Date.parse(item.clientUpdatedAt))) {
           throw new Error("Ada dokumen dengan struktur tidak valid.");
         }
-        await writeTeacherItem(dbName, vaultKey, { ...item, syncState: "local" });
+        const current = existing.get(item.id);
+        if (current) {
+          const same = current.title === item.title && current.itemType === item.itemType &&
+            current.content.body === item.content.body &&
+            current.clientUpdatedAt === item.clientUpdatedAt;
+          if (same) { duplicates++; continue; }
+          const copy = { ...item, id: crypto.randomUUID(), title: `${item.title} (salinan impor)`, syncState: "local" as const };
+          await writeTeacherItem(dbName, vaultKey, copy);
+          conflicts++;
+        } else {
+          await writeTeacherItem(dbName, vaultKey, { ...item, syncState: "local" });
+        }
+        restored++;
       }
-      await refresh(); setMessage(`${backup.items.length} dokumen dipulihkan sebagai draf lokal terenkripsi.`);
+      await refresh();
+      setMessage(`${restored} dokumen dipulihkan; ${duplicates} duplikat identik dilewati; ${conflicts} ID yang berbenturan disimpan sebagai salinan agar data lama tidak tertimpa.`);
     } catch (error) { setMessage(error instanceof Error ? error.message : "Impor gagal."); }
   }
 
