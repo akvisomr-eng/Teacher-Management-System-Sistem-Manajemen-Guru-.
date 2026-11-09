@@ -185,7 +185,9 @@ export async function POST(request: Request, { params }: Context) {
       const data = parsed.data;
       const rows = await tx`INSERT INTO teachers (tenant_id, school_id, full_name, employee_number, education) VALUES (${tenantId}, ${schoolId}, ${data.fullName}, ${data.employeeNumber || null}, ${data.education || null}) RETURNING id, full_name, employee_number, education, employment_status AS status, created_at`;
       await tx`INSERT INTO audit_logs (tenant_id, school_id, actor_user_id, action, resource_type, resource_id) VALUES (${tenantId}, ${schoolId}, ${userId}, 'teacher.created', 'teacher', ${rows[0].id})`;
-      return NextResponse.json({ data: rows[0] }, { status: 201 });
+      if (data.accountEmail) await linkTeacherAccount(tx, tenantId, schoolId, rows[0].id as string, data.fullName, data.accountEmail, userId);
+      const [saved] = await tx`SELECT t.id, t.full_name, t.employee_number, t.education, t.employment_status AS status, t.created_at, u.email AS account_email, (t.user_id IS NOT NULL) AS account_linked FROM teachers t LEFT JOIN users u ON u.id = t.user_id WHERE t.id = ${rows[0].id}`;
+      return NextResponse.json({ data: saved }, { status: 201 });
     });
   }
   if (resource === "students") {
@@ -233,6 +235,8 @@ export async function PATCH(request: Request, { params }: Context) {
       const status = changes.status;
       if (status && !["active", "inactive", "leave"].includes(status)) return NextResponse.json({ error: "Status guru tidak valid." }, { status: 400 });
       rows = await tx`UPDATE teachers SET full_name = COALESCE(${changes.fullName ?? null}, full_name), employee_number = CASE WHEN ${changes.employeeNumber !== undefined} THEN NULLIF(${changes.employeeNumber ?? ""}, '') ELSE employee_number END, education = CASE WHEN ${changes.education !== undefined} THEN NULLIF(${changes.education ?? ""}, '') ELSE education END, employment_status = COALESCE(${status ?? null}, employment_status) WHERE id = ${id} AND tenant_id = ${tenantId} AND school_id = ${schoolId} RETURNING id, full_name, employee_number, education, employment_status AS status, created_at`;
+      if (changes.accountEmail) await linkTeacherAccount(tx, tenantId, schoolId, id, rows[0].full_name as string, changes.accountEmail, userId);
+      if (changes.accountEmail !== undefined) rows = await tx`SELECT t.id, t.full_name, t.employee_number, t.education, t.employment_status AS status, t.created_at, u.email AS account_email, (t.user_id IS NOT NULL) AS account_linked FROM teachers t LEFT JOIN users u ON u.id = t.user_id WHERE t.id = ${id}`;
     } else if (resource === "students") {
       const status = changes.status;
       if (status && !["active", "inactive", "graduated", "transferred"].includes(status)) return NextResponse.json({ error: "Status siswa tidak valid." }, { status: 400 });
