@@ -48,7 +48,8 @@ export default function TeacherDesk({ identity }: { identity: Identity }) {
     setBusy(true);
     try {
       const vault = await unlockTeacherVault(dbName, passphrase);
-      setVaultKey(vault.key); setVaultSalt(vault.salt);
+      const localItems = await readTeacherItems(dbName, vault.key);
+      setItems(localItems); setVaultKey(vault.key); setVaultSalt(vault.salt);
       setMessage("Vault berhasil dibuka. Dokumen lokal dienkripsi dengan AES-256-GCM.");
     } catch (error) { setMessage(error instanceof Error ? error.message : "Vault gagal dibuka."); }
     finally { setBusy(false); }
