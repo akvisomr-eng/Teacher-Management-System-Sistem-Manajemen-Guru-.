@@ -59,9 +59,9 @@ export async function POST(request: Request) {
       if (message.includes("TEACHER_ACCOUNT_NOT_READY")) return NextResponse.json({ error: "Akun belum terdaftar. Minta guru membuat akun melalui halaman Login Guru terlebih dahulu." }, { status: 409 });
       if (message.includes("TEACHER_RECORD_NOT_FOUND")) return NextResponse.json({ error: "Data guru tidak ditemukan pada sekolah ini." }, { status: 404 });
       if (message.includes("ACCOUNT_HAS_NON_TEACHER_ROLE")) return NextResponse.json({ error: "Akun tersebut sudah memiliki peran non-guru pada sekolah ini. Gunakan akun guru pribadi yang terpisah." }, { status: 409 });
-      if (message.includes("ACCOUNT_ALREADY_LINKED")) return NextResponse.json({ error: "Akun tersebut sudah terhubung ke data guru lain." }, { status: 409 });
-      if (message.includes("TEACHER_ALREADY_LINKED")) return NextResponse.json({ error: "Data guru sudah terhubung ke akun lain." }, { status: 409 });
-      if (message.includes("FORBIDDEN")) return NextResponse.json({ error: "Akses pengelola sekolah diperlukan." }, { status: 403 });
+      if (message.includes("ACCOUNT_ALREADY_LINKED_TO_ANOTHER_TEACHER")) return NextResponse.json({ error: "Akun tersebut sudah terhubung ke data guru lain." }, { status: 409 });
+      if (message.includes("TEACHER_ALREADY_LINKED_TO_DIFFERENT_ACCOUNT")) return NextResponse.json({ error: "Data guru sudah terhubung ke akun lain." }, { status: 409 });
+      if (message.includes("FORBIDDEN_TEACHER_ACCOUNT_LINK")) return NextResponse.json({ error: "Akses pengelola sekolah diperlukan." }, { status: 403 });
       throw error;
     }
   });
