@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, ClipboardCheck, Plus, RefreshCw, Save } from "lucide-react";
+import { ArrowLeft, ClipboardCheck, Plus, RefreshCw, Save , Printer} from "lucide-react";
 
 type Assignment = { id: string; class_name: string; grade_level: string; subject_name: string; teacher_name?: string };
 type Assessment = { id: string; title: string; assessment_type: string; max_score: number; due_at: string | null; status: string; assignment_id: string; class_name: string; grade_level: string; subject_name: string; teacher_name: string };
@@ -89,7 +89,7 @@ export function AssessmentWorkspace() {
   }
 
   return <main className="registry-shell">
-    <header className="registry-header"><Link href="/" className="registry-back"><ArrowLeft size={16}/> Dashboard</Link><div className="registry-heading"><div className="registry-symbol"><ClipboardCheck size={22}/></div><div><span>ASSESSMENT CENTER</span><h1>Asesmen & Gradebook</h1><p>Kelola instrumen penilaian dan input hasil belajar siswa.</p></div></div></header>
+    <header className="registry-header"><div className="registry-header-actions"><Link href="/" className="registry-back"><ArrowLeft size={16}/> Kembali ke Dashboard</Link><button type="button" className="registry-print" onClick={() => window.print()}><Printer size={15}/> Cetak halaman</button></div><div className="registry-heading"><div className="registry-symbol"><ClipboardCheck size={22}/></div><div><span>ASSESSMENT CENTER</span><h1>Asesmen & Gradebook</h1><p>Kelola instrumen penilaian dan input hasil belajar siswa.</p></div></div></header>
     <section className="registry-stats"><div><small>Total asesmen</small><strong>{assessments.length}</strong></div><div><small>Sudah diterbitkan</small><strong>{assessments.filter(item => item.status === "published").length}</strong></div><div><small>Perlu dinilai</small><strong>{results.filter(item => item.score === null).length}</strong></div></section>
     <section className="registry-panel">
       <div className="registry-panel-head"><div><h2>{selected ? `Gradebook · ${selected.title}` : "Daftar asesmen"}</h2><p>{selected ? `${selected.class_name} · ${selected.subject_name} · Maksimum ${selected.max_score}` : "Asesmen terikat pada penugasan kelas dan mata pelajaran."}</p></div><button className="registry-refresh" onClick={() => selected ? setSelected(null) : void load()} aria-label={selected ? "Kembali" : "Muat ulang"}>{selected ? <ArrowLeft size={16}/> : <RefreshCw size={16}/>}</button></div>
