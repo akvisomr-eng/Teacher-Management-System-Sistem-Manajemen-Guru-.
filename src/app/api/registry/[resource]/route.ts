@@ -227,8 +227,28 @@ export async function POST(request: Request, { params }: Context) {
 export async function PATCH(request: Request, { params }: Context) {
   const { resource } = await params;
   if (!resourceSchema.safeParse(resource).success) return NextResponse.json({ error: "Modul tidak ditemukan." }, { status: 404 });
-  const parsed = updateSchema.safeParse(await request.json().catch(() => null));
-  if (!parsed.success) return NextResponse.json({ error: "Perubahan data tidak valid." }, { status: 400 });
+  const rawBody: unknown = await request.json().catch(() => null);
+  // Forms may submit nullable database values for optional text fields. Normalize
+  // those values before validation so an otherwise valid edit is not rejected.
+  const normalizedBody = rawBody && typeof rawBody === "object" && !Array.isArray(rawBody)
+    ? Object.fromEntries(Object.entries(rawBody).map(([key, value]) => [
+        key,
+        typeof value === "string" ? value.trim() : value
+      ]))
+    : rawBody;
+  const parsed = updateSchema.safeParse(normalizedBody);
+  if (!parsed.success) {
+    const details = parsed.error.issues.map((issue) => ({
+      field: issue.path.length ? issue.path.join(".") : "data",
+      message: issue.message
+    }));
+    return NextResponse.json({
+      error: details[0]
+        ? `Perubahan data tidak valid pada kolom ${details[0].field}: ${details[0].message}`
+        : "Perubahan data tidak valid.",
+      details
+    }, { status: 400 });
+  }
   const { id, ...changes } = parsed.data;
   return authorize(resource, async (tx, tenantId, schoolId, userId) => {
     let rows;
