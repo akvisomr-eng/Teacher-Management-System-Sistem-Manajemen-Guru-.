@@ -131,6 +131,7 @@ async function authorize(resource: string, work: Work) {
 async function linkTeacherAccount(tx: DbTx, tenantId: string, schoolId: string, teacherId: string, teacherName: string, rawEmail: string, actorUserId: string) {
   const email = rawEmail.trim().toLowerCase();
   if (!email) return;
+  await tx`SELECT pg_advisory_xact_lock(hashtext(${email}))`;
   const users = await tx`SELECT id, email FROM users WHERE lower(email) = ${email} LIMIT 2`;
   if (users.length > 1) throw new Error("TEACHER_ACCOUNT_CONFLICT: Ditemukan lebih dari satu akun dengan email tersebut. Periksa data akun terlebih dahulu.");
   let userId: string;
@@ -155,7 +156,7 @@ export async function GET(_request: Request, { params }: Context) {
   const { resource } = await params;
   return authorize(resource, async (tx, tenantId, schoolId) => {
     if (resource === "teachers") {
-      const rows = await tx`SELECT t.id, t.full_name, t.employee_number, t.education, t.employment_status AS status, t.created_at, u.email AS account_email, (t.user_id IS NOT NULL) AS account_linked FROM teachers t LEFT JOIN users u ON u.id = t.user_id WHERE t.tenant_id = ${tenantId} AND t.school_id = ${schoolId} ORDER BY t.full_name ASC LIMIT 500`;
+      const rows = await tx`SELECT t.id, t.full_name, t.employee_number, t.education, t.employment_status AS status, t.created_at, u.email AS account_email, (t.user_id IS NOT NULL) AS account_linked, (u.auth_user_id IS NOT NULL) AS account_activated FROM teachers t LEFT JOIN users u ON u.id = t.user_id WHERE t.tenant_id = ${tenantId} AND t.school_id = ${schoolId} ORDER BY t.full_name ASC LIMIT 500`;
       return NextResponse.json({ data: rows });
     }
     if (resource === "students") {
