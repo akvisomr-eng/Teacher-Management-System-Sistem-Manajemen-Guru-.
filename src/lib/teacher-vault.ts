@@ -56,41 +56,52 @@ function requestValue<T>(request: IDBRequest<T>): Promise<T> {
   });
 }
 
+async function readRawRows(dbName: string): Promise<Array<VaultWorkItem | EncryptedRecord>> {
+  const db = await openDb(dbName);
+  const rows = await requestValue(db.transaction(STORE, "readonly").objectStore(STORE).getAll()) as Array<VaultWorkItem | EncryptedRecord>;
+  db.close();
+  return rows;
+}
+
 export async function unlockTeacherVault(dbName: string, passphrase: string) {
   if (passphrase.length < 10) throw new Error("Gunakan frasa sandi minimal 10 karakter.");
   const db = await openDb(dbName);
-  const tx = db.transaction([STORE, META], "readwrite");
-  const metaStore = tx.objectStore(META);
-  let meta = await requestValue(metaStore.get("vault")) as VaultMeta | undefined;
-  let salt: Uint8Array;
-  let key: CryptoKey;
+  const meta = await requestValue(db.transaction(META, "readonly").objectStore(META).get("vault")) as VaultMeta | undefined;
+  db.close();
+
   if (meta) {
-    salt = base64ToBytes(meta.salt);
-    key = await deriveKey(passphrase, salt);
+    const salt = base64ToBytes(meta.salt);
+    const key = await deriveKey(passphrase, salt);
     try {
       const verifier = await unseal<string>(key, meta.verifierIv, meta.verifier);
       if (verifier !== "TMS-TEACHER-VAULT-V1") throw new Error("Frasa sandi tidak cocok.");
     } catch {
-      db.close();
       throw new Error("Frasa sandi salah atau data vault rusak. Data terenkripsi tidak diubah.");
     }
-  } else {
-    salt = randomBytes(16);
-    key = await deriveKey(passphrase, salt);
-    const proof = await seal(key, "TMS-TEACHER-VAULT-V1");
-    meta = { id: "vault", salt: bytesToBase64(salt), verifierIv: proof.iv, verifier: proof.payload };
-    metaStore.put(meta);
-    const store = tx.objectStore(STORE);
-    const existing = await requestValue(store.getAll()) as Array<VaultWorkItem | EncryptedRecord>;
-    for (const item of existing) {
-      if ("encrypted" in item && item.encrypted) continue;
-      const encrypted = await seal(key, item);
-      store.put({ id: item.id, encrypted: true, ...encrypted } satisfies EncryptedRecord);
-    }
+    return { key, salt: meta.salt };
   }
-  await new Promise<void>((resolve, reject) => { tx.oncomplete = () => resolve(); tx.onerror = () => reject(tx.error); });
-  db.close();
-  return { key, salt: bytesToBase64(salt) };
+
+  const salt = randomBytes(16);
+  const key = await deriveKey(passphrase, salt);
+  const proof = await seal(key, "TMS-TEACHER-VAULT-V1");
+  const nextMeta: VaultMeta = { id: "vault", salt: bytesToBase64(salt), verifierIv: proof.iv, verifier: proof.payload };
+  const existing = await readRawRows(dbName);
+  const encryptedRows: EncryptedRecord[] = [];
+  for (const item of existing) {
+    if ("encrypted" in item && item.encrypted) {
+      throw new Error("Data terenkripsi ditemukan tanpa metadata vault. Hentikan proses untuk mencegah kehilangan data.");
+    }
+    const encrypted = await seal(key, item);
+    encryptedRows.push({ id: item.id, encrypted: true, ...encrypted });
+  }
+
+  const writeDb = await openDb(dbName);
+  const tx = writeDb.transaction([STORE, META], "readwrite");
+  tx.objectStore(META).put(nextMeta);
+  for (const row of encryptedRows) tx.objectStore(STORE).put(row);
+  await new Promise<void>((resolve, reject) => { tx.oncomplete = () => resolve(); tx.onerror = () => reject(tx.error); tx.onabort = () => reject(tx.error); });
+  writeDb.close();
+  return { key, salt: nextMeta.salt };
 }
 
 export async function readTeacherItems(dbName: string, key: CryptoKey): Promise<VaultWorkItem[]> {
