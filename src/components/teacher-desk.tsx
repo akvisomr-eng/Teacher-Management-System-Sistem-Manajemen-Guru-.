@@ -164,9 +164,12 @@ export default function TeacherDesk({ identity }: { identity: Identity }) {
           if (same) { duplicates++; continue; }
           const copy = { ...item, id: crypto.randomUUID(), title: `${item.title} (salinan impor)`, syncState: "local" as const };
           await writeTeacherItem(dbName, vaultKey, copy);
+          existing.set(copy.id, copy);
           conflicts++;
         } else {
-          await writeTeacherItem(dbName, vaultKey, { ...item, syncState: "local" });
+          const restoredItem = { ...item, syncState: "local" as const };
+          await writeTeacherItem(dbName, vaultKey, restoredItem);
+          existing.set(restoredItem.id, restoredItem);
         }
         restored++;
       }
