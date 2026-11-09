@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, BookOpenCheck, Plus, RefreshCw, Users, GraduationCap } from "lucide-react";
+import { ArrowLeft, BookOpenCheck, Plus, RefreshCw, Users, GraduationCap , Printer} from "lucide-react";
 
 type ClassRow = { id: string; name: string; grade_level: string; status: string; academic_year_id: string; academic_year_name: string; homeroom_teacher_name: string | null };
 type SubjectRow = { id: string; code: string | null; name: string; category: string | null; is_active: boolean };
@@ -103,7 +103,7 @@ export function AcademicSetupWorkspace() {
   }
 
   return <main className="registry-shell">
-    <header className="registry-header"><Link href="/" className="registry-back"><ArrowLeft size={16}/> Dashboard</Link><div className="registry-heading"><div className="registry-symbol"><BookOpenCheck size={22}/></div><div><span>MASTER DATA AKADEMIK</span><h1>Kelas & Mata Pelajaran</h1><p>Susun struktur kelas dan katalog mata pelajaran sekolah.</p></div></div></header>
+    <header className="registry-header"><div className="registry-header-actions"><Link href="/" className="registry-back"><ArrowLeft size={16}/> Kembali ke Dashboard</Link><button type="button" className="registry-print" onClick={() => window.print()}><Printer size={15}/> Cetak halaman</button></div><div className="registry-heading"><div className="registry-symbol"><BookOpenCheck size={22}/></div><div><span>MASTER DATA AKADEMIK</span><h1>Kelas & Mata Pelajaran</h1><p>Susun struktur kelas dan katalog mata pelajaran sekolah.</p></div></div></header>
     <section className="registry-stats"><div><small>Total kelas</small><strong>{classes.length}</strong></div><div><small>Mata pelajaran aktif</small><strong>{subjects.filter(item => item.is_active).length}</strong></div><div><small>Tahun ajaran tersedia</small><strong>{years.length}</strong></div></section>
     <section className="registry-panel">
       <div className="registry-panel-head"><div><h2>Pengaturan akademik</h2><p>Data terikat pada sekolah dan tenant yang sedang aktif.</p></div><button className="registry-refresh" onClick={() => void load()} aria-label="Muat ulang"><RefreshCw size={16}/></button></div>
