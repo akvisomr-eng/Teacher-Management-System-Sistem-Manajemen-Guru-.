@@ -16,13 +16,13 @@ const TYPES = [
 
 export default function TeacherDesk({ identity }: { identity: Identity }) {
   const [items, setItems] = useState<VaultWorkItem[]>([]);
-  const [localTeacherId, setLocalTeacherId] = useState<string | null>(identity?.teacherId ?? null);
+  const [localTeacherId] = useState<string | null>(() => identity?.teacherId ?? (typeof window !== "undefined" ? window.sessionStorage.getItem("tms-teacher-id") : null));
   const dbName = localTeacherId ? `${DB_NAME}:${localTeacherId}` : null;
   const [title, setTitle] = useState("");
   const [itemType, setItemType] = useState("lesson_plan");
   const [body, setBody] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [online, setOnline] = useState(false);
+  const [online, setOnline] = useState(() => typeof navigator !== "undefined" && navigator.onLine);
   const [busy, setBusy] = useState(false);
   const [vaultKey, setVaultKey] = useState<CryptoKey | null>(null);
   const [vaultSalt, setVaultSalt] = useState<string | null>(null);
@@ -35,18 +35,13 @@ export default function TeacherDesk({ identity }: { identity: Identity }) {
   }, [dbName, vaultKey]);
 
   useEffect(() => {
-    const rememberedTeacher = identity?.teacherId || sessionStorage.getItem("tms-teacher-id");
     if (identity?.teacherId) sessionStorage.setItem("tms-teacher-id", identity.teacherId);
-    if (rememberedTeacher) setLocalTeacherId(rememberedTeacher);
     const update = () => setOnline(navigator.onLine);
-    update();
     window.addEventListener("online", update);
     window.addEventListener("offline", update);
     if ("serviceWorker" in navigator) void navigator.serviceWorker.register("/teacher-sw.js").catch(() => undefined);
     return () => { window.removeEventListener("online", update); window.removeEventListener("offline", update); };
   }, [identity?.teacherId]);
-
-  useEffect(() => { void refresh().catch(error => setMessage(error instanceof Error ? error.message : "Vault tidak dapat dibaca.")); }, [refresh]);
 
   async function unlock() {
     if (!dbName) { setMessage("Login online sekali sebagai guru untuk membuka ruang kerja pribadi."); return; }
