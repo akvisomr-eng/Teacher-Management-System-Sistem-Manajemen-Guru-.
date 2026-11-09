@@ -2,6 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
+import type { Route } from "next";
 import { Eye, EyeOff, GraduationCap, ShieldCheck } from "lucide-react";
 import { authClient } from "@/lib/auth/client";
 
@@ -22,16 +23,16 @@ export function AuthForm({ initialMode }: Props) {
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
 
-  function getRedirectTarget() {
+  function getRedirectTarget(): Route {
     const requested = new URLSearchParams(window.location.search).get("callbackURL");
     if (!requested) return "/";
     try {
       const target = new URL(requested, window.location.origin);
-      return target.origin === window.location.origin
+      return (target.origin === window.location.origin
         ? `${target.pathname}${target.search}${target.hash}`
-        : "/";
+        : "/") as Route;
     } catch {
-      return "/";
+      return "/" as Route;
     }
   }
 
