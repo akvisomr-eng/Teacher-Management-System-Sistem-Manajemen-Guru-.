@@ -128,11 +128,34 @@ async function authorize(resource: string, work: Work) {
   }
 }
 
+async function linkTeacherAccount(tx: DbTx, tenantId: string, schoolId: string, teacherId: string, teacherName: string, rawEmail: string, actorUserId: string) {
+  const email = rawEmail.trim().toLowerCase();
+  if (!email) return;
+  const users = await tx`SELECT id, email FROM users WHERE lower(email) = ${email} LIMIT 2`;
+  if (users.length > 1) throw new Error("TEACHER_ACCOUNT_CONFLICT: Ditemukan lebih dari satu akun dengan email tersebut. Periksa data akun terlebih dahulu.");
+  let userId: string;
+  if (users[0]) {
+    userId = users[0].id as string;
+    const memberships = await tx`SELECT tenant_id, school_id, role FROM memberships WHERE user_id = ${userId} LIMIT 5`;
+    if (memberships.some((membership) => membership.role !== "teacher" || membership.tenant_id !== tenantId || membership.school_id !== schoolId)) {
+      throw new Error("TEACHER_ACCOUNT_CONFLICT: Email sudah digunakan oleh akun dengan peran atau penempatan lain. Gunakan email akun guru yang berbeda.");
+    }
+    const assignments = await tx`SELECT id FROM teachers WHERE user_id = ${userId} AND id <> ${teacherId} LIMIT 1`;
+    if (assignments.length) throw new Error("TEACHER_ACCOUNT_CONFLICT: Akun tersebut sudah tertaut ke data guru lain.");
+  } else {
+    const created = await tx`INSERT INTO users (email, full_name, status) VALUES (${email}, ${teacherName}, 'invited') RETURNING id`;
+    userId = created[0].id as string;
+  }
+  await tx`INSERT INTO memberships (tenant_id, school_id, user_id, role) VALUES (${tenantId}, ${schoolId}, ${userId}, 'teacher') ON CONFLICT (tenant_id, school_id, user_id, role) DO NOTHING`;
+  const linked = await tx`UPDATE teachers SET user_id = ${userId} WHERE id = ${teacherId} AND tenant_id = ${tenantId} AND school_id = ${schoolId} AND (user_id IS NULL OR user_id = ${userId}) RETURNING id`;
+  if (!linked.length) throw new Error("TEACHER_ACCOUNT_CONFLICT: Data guru sudah tertaut ke akun lain.");
+  await tx`INSERT INTO audit_logs (tenant_id, school_id, actor_user_id, action, resource_type, resource_id, metadata) VALUES (${tenantId}, ${schoolId}, ${actorUserId}, 'teacher.account_linked', 'teacher', ${teacherId}, ${JSON.stringify({ email })}::jsonb)`;
+}
 export async function GET(_request: Request, { params }: Context) {
   const { resource } = await params;
   return authorize(resource, async (tx, tenantId, schoolId) => {
     if (resource === "teachers") {
-      const rows = await tx`SELECT id, full_name, employee_number, education, employment_status AS status, created_at FROM teachers WHERE tenant_id = ${tenantId} AND school_id = ${schoolId} ORDER BY full_name ASC LIMIT 500`;
+      const rows = await tx`SELECT t.id, t.full_name, t.employee_number, t.education, t.employment_status AS status, t.created_at, u.email AS account_email, (t.user_id IS NOT NULL) AS account_linked FROM teachers t LEFT JOIN users u ON u.id = t.user_id WHERE t.tenant_id = ${tenantId} AND t.school_id = ${schoolId} ORDER BY t.full_name ASC LIMIT 500`;
       return NextResponse.json({ data: rows });
     }
     if (resource === "students") {
