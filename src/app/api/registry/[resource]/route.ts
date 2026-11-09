@@ -160,6 +160,10 @@ export async function POST(request: Request, { params }: Context) {
     if (!parsed.success) return NextResponse.json({ error: "Data guru tidak valid. Nama lengkap wajib diisi." }, { status: 400 });
     return authorize(resource, async (tx, tenantId, schoolId, userId) => {
       const data = parsed.data;
+      if (data.accountEmail) {
+        const duplicate = await tx`SELECT id FROM teachers WHERE school_id = ${schoolId} AND lower(account_email) = ${data.accountEmail.toLowerCase()} LIMIT 1`;
+        if (duplicate.length) return NextResponse.json({ error: "Email tersebut sudah disiapkan untuk data guru lain di sekolah ini." }, { status: 409 });
+      }
       const rows = await tx`INSERT INTO teachers (tenant_id, school_id, full_name, employee_number, education, account_email) VALUES (${tenantId}, ${schoolId}, ${data.fullName}, ${data.employeeNumber || null}, ${data.education || null}, ${data.accountEmail ? data.accountEmail.toLowerCase() : null}) RETURNING id, full_name, employee_number, education, employment_status AS status, created_at`;
       await tx`INSERT INTO audit_logs (tenant_id, school_id, actor_user_id, action, resource_type, resource_id) VALUES (${tenantId}, ${schoolId}, ${userId}, 'teacher.created', 'teacher', ${rows[0].id})`;
       const [saved] = await tx`SELECT t.id, t.full_name, t.employee_number, t.education, t.employment_status AS status, t.created_at, u.email AS account_email, (t.user_id IS NOT NULL) AS account_linked FROM teachers t LEFT JOIN users u ON u.id = t.user_id WHERE t.id = ${rows[0].id}`;
