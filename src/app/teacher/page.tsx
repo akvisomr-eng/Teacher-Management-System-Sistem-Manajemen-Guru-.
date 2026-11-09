@@ -6,15 +6,23 @@ export const dynamic = "force-dynamic";
 
 export default async function TeacherPage() {
   let identity: { teacherId: string; name: string; school: string } | null = null;
+  let accessMessage = "Akun ini belum memiliki penautan identitas guru yang aktif. Hubungi operator sekolah.";
   try {
     identity = await withAuthenticatedUser(async (tx, _user, profile) => {
       const memberships = await tx`
-        SELECT tenant_id, school_id FROM memberships
-        WHERE user_id = ${profile.id} AND role = 'teacher' AND school_id IS NOT NULL
-        ORDER BY created_at ASC LIMIT 2
+        SELECT tenant_id, school_id, role FROM memberships
+        WHERE user_id = ${profile.id} AND school_id IS NOT NULL
+        ORDER BY created_at ASC LIMIT 5
       `;
-      if (memberships.length !== 1) return null;
-      const membership = memberships[0];
+      const teacherMemberships = memberships.filter((membership) => membership.role === "teacher");
+      if (teacherMemberships.length !== 1) {
+        const isOperator = memberships.some((membership) => ["tenant_owner", "tenant_admin", "principal", "vice_principal", "school_operator"].includes(membership.role));
+        accessMessage = isOperator
+          ? "Akun ini terdaftar sebagai operator atau administrator sekolah, bukan sebagai akun guru. Buka Data Guru untuk menautkan email akun masing-masing guru."
+          : "Akun ini belum memiliki penempatan guru aktif. Minta operator sekolah menautkan email akun Anda ke data induk guru.";
+        return null;
+      }
+      const membership = teacherMemberships[0];
       await tx`SELECT set_config('app.tenant_id', ${membership.tenant_id}, true)`;
       const rows = await tx`
         SELECT t.id AS teacher_id, t.full_name, s.name AS school_name
@@ -24,7 +32,7 @@ export default async function TeacherPage() {
           AND t.school_id = ${membership.school_id} AND t.employment_status = 'active'
         ORDER BY t.created_at ASC LIMIT 2
       `;
-      if (rows.length !== 1) return null;
+      if (rows.length !== 1) { accessMessage = "Akun guru belum ditautkan ke tepat satu data induk guru aktif. Hubungi operator sekolah."; return null; }
       return { teacherId: rows[0].teacher_id, name: rows[0].full_name, school: rows[0].school_name };
     });
   } catch {
@@ -34,7 +42,7 @@ export default async function TeacherPage() {
   if (!identity) {
     return <main style={{maxWidth:640,margin:"12vh auto",padding:32,fontFamily:"sans-serif",background:"#fff",borderRadius:18}}>
       <h1>Ruang Kerja Guru</h1>
-      <p>Akun ini belum memiliki penautan identitas guru yang aktif. Minta operator sekolah menautkan akun pribadi Anda ke data induk guru.</p>
+      <p>{accessMessage}</p>
       <a href="/workspace/teachers">Kembali ke TMS</a>
     </main>;
   }
