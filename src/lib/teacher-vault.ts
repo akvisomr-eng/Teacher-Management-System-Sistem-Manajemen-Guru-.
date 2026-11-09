@@ -33,7 +33,9 @@ function openDb(name: string): Promise<IDBDatabase> {
 
 async function deriveKey(passphrase: string, salt: Uint8Array): Promise<CryptoKey> {
   const material = await crypto.subtle.importKey("raw", new TextEncoder().encode(passphrase), "PBKDF2", false, ["deriveKey"]);
-  const saltBuffer = new ArrayBuffer(salt.byteLength);\n  new Uint8Array(saltBuffer).set(salt);\n  return crypto.subtle.deriveKey({ name: "PBKDF2", salt: saltBuffer, iterations: ITERATIONS, hash: "SHA-256" }, material,
+  const saltBuffer = new ArrayBuffer(salt.byteLength);
+  new Uint8Array(saltBuffer).set(salt);
+  return crypto.subtle.deriveKey({ name: "PBKDF2", salt: saltBuffer, iterations: ITERATIONS, hash: "SHA-256" }, material,
     { name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]);
 }
 
