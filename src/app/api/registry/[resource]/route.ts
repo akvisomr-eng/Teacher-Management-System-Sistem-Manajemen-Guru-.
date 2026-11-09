@@ -11,7 +11,8 @@ const resourceSchema = z.enum(["teachers", "students", "classes", "subjects"]);
 const teacherCreate = z.object({
   fullName: z.string().trim().min(2).max(180),
   employeeNumber: z.string().trim().max(50).optional().default(""),
-  education: z.string().trim().max(80).optional().default("")
+  education: z.string().trim().max(80).optional().default(""),
+  accountEmail: z.string().trim().email().max(254).or(z.literal("")).optional().default("")
 });
 const studentProfileSchema = z.object({
   citizenship: z.string().trim().max(40).optional().default("WNI"),
@@ -89,6 +90,7 @@ const updateSchema = z.object({
   fullName: z.string().trim().min(2).max(180).optional(),
   employeeNumber: z.string().trim().max(50).optional(),
   education: z.string().trim().max(80).optional(),
+  accountEmail: z.string().trim().email().max(254).or(z.literal("")).optional(),
   studentNumber: z.string().trim().max(50).optional(),
   birthDate: z.string().date().optional().or(z.literal("")),
   profile: studentProfileSchema.partial().optional(),
@@ -120,8 +122,9 @@ async function authorize(resource: string, work: Work) {
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Permintaan gagal.";
-    const status = message === "UNAUTHENTICATED" ? 401 : message.includes("DATABASE_URL") ? 503 : 500;
-    return NextResponse.json({ error: status === 500 ? "Terjadi kesalahan saat mengakses data sekolah." : message }, { status });
+    const status = message === "UNAUTHENTICATED" ? 401 : message.includes("DATABASE_URL") ? 503 : message.startsWith("TEACHER_ACCOUNT_CONFLICT:") ? 409 : 500;
+    const safeMessage = status === 409 ? message.replace("TEACHER_ACCOUNT_CONFLICT: ", "") : status === 500 ? "Terjadi kesalahan saat mengakses data sekolah." : message;
+    return NextResponse.json({ error: safeMessage }, { status });
   }
 }
 
