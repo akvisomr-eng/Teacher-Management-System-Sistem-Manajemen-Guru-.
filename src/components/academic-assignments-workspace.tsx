@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, ClipboardCheck, Plus, RefreshCw, Users, GraduationCap } from "lucide-react";
+import { ArrowLeft, ClipboardCheck, Plus, RefreshCw, Users, GraduationCap , Printer} from "lucide-react";
 
 type Tab = "assignments" | "enrollments";
 type AcademicYear = { id: string; name: string };
@@ -104,7 +104,7 @@ export function AcademicAssignmentsWorkspace() {
   }
 
   return <main className="registry-shell">
-    <header className="registry-header"><Link href="/" className="registry-back"><ArrowLeft size={16}/> Dashboard</Link><div className="registry-heading"><div className="registry-symbol"><ClipboardCheck size={22}/></div><div><span>OPERASIONAL AKADEMIK</span><h1>Penugasan & Rombongan Belajar</h1><p>Atur guru pengampu mata pelajaran dan penempatan siswa dalam kelas.</p></div></div></header>
+    <header className="registry-header"><div className="registry-header-actions"><Link href="/" className="registry-back"><ArrowLeft size={16}/> Kembali ke Dashboard</Link><button type="button" className="registry-print" onClick={() => window.print()}><Printer size={15}/> Cetak halaman</button></div><div className="registry-heading"><div className="registry-symbol"><ClipboardCheck size={22}/></div><div><span>OPERASIONAL AKADEMIK</span><h1>Penugasan & Rombongan Belajar</h1><p>Atur guru pengampu mata pelajaran dan penempatan siswa dalam kelas.</p></div></div></header>
     <section className="registry-stats"><div><small>Penugasan guru</small><strong>{assignments.length}</strong></div><div><small>Siswa terdaftar di kelas</small><strong>{enrollments.filter(item => item.status === "active").length}</strong></div><div><small>Tahun ajaran tersedia</small><strong>{years.length}</strong></div></section>
     <section className="registry-panel">
       <div className="registry-panel-head"><div><h2>Operasional kelas</h2><p>Seluruh data dibatasi pada sekolah yang sedang aktif.</p></div><button className="registry-refresh" onClick={() => void load()} aria-label="Muat ulang"><RefreshCw size={16}/></button></div>
