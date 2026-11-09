@@ -20,13 +20,13 @@ Teacher Desk is a teacher-facing companion application inside the existing TMS p
 - Official master data changes remain subject to school review/approval. Offline imports never directly overwrite canonical teacher/student master records.
 
 ## Offline-first and removable-media workflow
-- Browser local persistence uses IndexedDB, not localStorage, for structured drafts.
+- Browser local persistence uses IndexedDB, not localStorage, for structured drafts. Teacher Desk now encrypts local records with AES-256-GCM; a passphrase-derived key uses PBKDF2-SHA-256 with 310,000 iterations and a per-teacher random salt. The passphrase is not persisted.
 - A teacher can create and edit personal work without a network connection after the app shell has been visited once.
 - Sync is explicit and idempotent. The server authenticates the teacher again and derives ownership before accepting data.
-- Portable backup/transfer uses a versioned JSON package. Export and import are available without network access, including via USB flash drive.
+- Portable backup/transfer uses a versioned AES-GCM encrypted JSON package. Export and import are available without network access, including via USB flash drive; the package requires its passphrase on the receiving device.
 - Import is staged as local drafts first. It never silently merges into official school records.
 - Conflict handling must show both local and server versions and require a teacher choice; no silent destructive last-write-wins.
-- Offline data is private to the local OS/browser profile. Shared/public computers require sign-out and local-data clearing. Encryption-at-rest for exported packages and optional local vault passphrase are a later hardening milestone.
+- Existing v1 plaintext IndexedDB drafts are encrypted in place when the teacher creates the local vault for the first time. The vault must be unlocked after a browser restart. Losing the passphrase makes local data and portable backups unrecoverable. Shared/public computers still require sign-out and local-data clearing.
 
 ## Privacy and security
 - Do not cache authenticated HTML, API responses, student lists, grades, or sensitive personal information in the service worker.
@@ -38,7 +38,7 @@ Teacher Desk is a teacher-facing companion application inside the existing TMS p
 1. **Foundation:** dedicated teacher entry, identity-to-teacher mapping, owner-scoped workspace storage, IndexedDB drafts, manual sync, JSON export/import, offline app-shell fallback.
 2. **Teaching workflows:** assigned classes/subjects, teaching plans, ATP/TP/Modul Ajar, journals, attendance preparation, assessment drafts, rubrics, and printable documents.
 3. **Review and collaboration:** submit selected work to school, reviewer feedback, version history, conflict resolution, and approval handoff to TMS.
-4. **Hardening:** encrypted portable package, backup restore, device management, audit review, accessibility, performance, and end-to-end testing across Windows/macOS/Linux browsers.
+4. **Hardening:** encrypted local vault and portable package foundation delivered; remaining work includes device management, audit review, accessibility, performance, and end-to-end testing across Windows/macOS/Linux browsers.
 
 ## Release gates
 - No production migration before staging migration and API tests pass.
