@@ -35,7 +35,6 @@ export function TeachingWorkspace({ teacherMode = false }: { teacherMode?: boole
   const [reflection, setReflection] = useState("");
 
   const load = useCallback(async () => {
-    setLoading(true); setError("");
     try {
       const [planResponse, journalResponse] = await Promise.all([
         fetch("/api/teaching/plans", { cache: "no-store" }),
