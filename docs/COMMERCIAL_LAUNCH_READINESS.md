@@ -5,9 +5,11 @@ Status checked: 10 November 2026
 ## Current release
 
 - Production URL: https://teacher-management-system-nine.vercel.app
-- Production commit: `711b40420951a5e6bad54de0045ec4f6ae2f232e`
+- Production commit: `1e7fccf34ee4fee349d409603b6de59db12abfd8`
 - Vercel deployment: `dpl_3yFgP47wZSyrZfJs3CRTh2aVAbfA` — READY
-- Main CI for the release: passed typecheck, lint, production dependency audit, build and production smoke.
+- Main CI run #264 for the current release: passed typecheck, lint, production dependency audit, build and production smoke.
+- Vercel commit status for the current release: `success`.
+- PR #45 merged the local-timezone teaching-journal date fix; its CI and production smoke checks passed.
 - Neon production and staging branches: READY.
 - Runtime database role `tms_app`: `rolsuper=false`, `rolbypassrls=false`.
 
@@ -18,7 +20,8 @@ Status checked: 10 November 2026
 - Teacher Desk with encrypted offline drafts, encrypted backup/restore, sync, and explicit local/server conflict resolution.
 - Teacher-specific activity view for lesson plans and teaching journals.
 - Teacher ownership checks and school-manager review transitions.
-- Administrative student-form sections now display in reverse order (bottom section first), as requested; standard administrative forms follow the same visual order.
+- Administrative student-form sections now display in reverse order (bottom section first), as requested; standard administrative forms follow the same visual order. GTK standard-form sections are rendered in reverse order as well.
+- Teaching-journal default date now uses the browser's local calendar timezone, avoiding UTC date rollover for Indonesian teachers.
 - Service worker cache cleanup is isolated to the TMS cache namespace and merged to production.
 
 ## Commercial launch blockers
