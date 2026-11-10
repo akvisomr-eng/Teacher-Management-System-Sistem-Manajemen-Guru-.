@@ -5,8 +5,8 @@ Status checked: 10 November 2026
 ## Current release
 
 - Production URL: https://teacher-management-system-nine.vercel.app
-- Production commit: `ff545f6ea4cd07b51b7fa1fff1e07c4a87404ccb`
-- Vercel deployment: `dpl_5k9wAf53e1v9iyzZ8KXSAoJisQEq` — READY
+- Production commit: `711b40420951a5e6bad54de0045ec4f6ae2f232e`
+- Vercel deployment: `dpl_3yFgP47wZSyrZfJs3CRTh2aVAbfA` — READY
 - Main CI for the release: passed typecheck, lint, production dependency audit, build and production smoke.
 - Neon production and staging branches: READY.
 - Runtime database role `tms_app`: `rolsuper=false`, `rolbypassrls=false`.
@@ -19,7 +19,7 @@ Status checked: 10 November 2026
 - Teacher-specific activity view for lesson plans and teaching journals.
 - Teacher ownership checks and school-manager review transitions.
 - Administrative student-form sections now display in reverse order (bottom section first), as requested; standard administrative forms follow the same visual order.
-- Service worker cache isolation is in PR validation.
+- Service worker cache cleanup is isolated to the TMS cache namespace and merged to production.
 
 ## Commercial launch blockers
 
