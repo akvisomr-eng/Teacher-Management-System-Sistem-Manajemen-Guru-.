@@ -84,3 +84,12 @@ Email/password dan verifikasi OTP aktif. Shared SMTP masih digunakan untuk uji a
 ## Commercial launch readiness (10 November 2026)
 
 See [COMMERCIAL_LAUNCH_READINESS.md](COMMERCIAL_LAUNCH_READINESS.md) for the current release and outstanding blockers. Production is live for controlled pilot validation, not yet a fully commercial SaaS. Verified production snapshot: 1 tenant, 1 school, 15 active teacher records, 0 linked teacher accounts, 0 teacher memberships. Neon Auth still uses the shared sender; billing/payment and approved pricing are not implemented. Neon production project is on free_v3 with 6-hour history retention and no separately listed snapshots; branch protection was unavailable at the current plan limit. A real teacher registration/linking test, branded SMTP/domain, backup/restore drill, and legal/support controls remain required.
+
+## Payment gateway (Midtrans)
+
+- Midtrans is the selected primary provider; Xendit is not part of the first integration.
+- Payment collection remains disabled. No payment credentials or subscription prices are configured.
+- Keep MIDTRANS_ENABLED=false until merchant approval, sandbox checkout/webhook acceptance, pricing approval, and entitlement enforcement are complete.
+- Store MIDTRANS_SERVER_KEY as a Sensitive server-only Vercel environment variable. Never expose it to browser code or logs. The optional Snap Client Key is publishable and may be configured only when the checkout UI is ready.
+- Preview must use Midtrans Sandbox credentials and Production must use Production credentials. Do not mix environments.
+- Follow docs/PAYMENTS_MIDTRANS.md for signed notifications, idempotency, reconciliation, subscription lifecycle, and release gates.
