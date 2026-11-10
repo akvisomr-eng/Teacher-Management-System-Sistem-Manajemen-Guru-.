@@ -16,9 +16,11 @@ const TYPES = [
 
 export default function TeacherDesk({ identity }: { identity: Identity }) {
   const [items, setItems] = useState<VaultWorkItem[]>([]);
-  const [localTeacherId, setLocalTeacherId] = useState<string | null>(() => identity?.teacherId ?? (typeof window !== "undefined" ? window.sessionStorage.getItem("tms-teacher-id") : null));
-  const dbName = (identity?.teacherId ?? localTeacherId) ? `${DB_NAME}:${identity?.teacherId ?? localTeacherId}` : null;
+  const [localTeacherId] = useState<string | null>(() => identity?.teacherId ?? (typeof window !== "undefined" ? window.sessionStorage.getItem("tms-teacher-id") : null));
   const previousIdentity = useRef<string | null>(identity?.teacherId ?? null);
+  const loggedOut = useRef(false);
+  const effectiveTeacherId = identity?.teacherId ?? (loggedOut.current ? null : localTeacherId);
+  const dbName = effectiveTeacherId ? `${DB_NAME}:${effectiveTeacherId}` : null;
   const [title, setTitle] = useState("");
   const [itemType, setItemType] = useState("lesson_plan");
   const [body, setBody] = useState("");
@@ -56,17 +58,17 @@ export default function TeacherDesk({ identity }: { identity: Identity }) {
       setEditingId(null); setTitle(""); setBody(""); setSubject(""); setClassName(""); setDueDate("");
       setPassphrase("");
       if (nextIdentity) {
-        setLocalTeacherId(nextIdentity);
+        loggedOut.current = false;
         sessionStorage.setItem("tms-teacher-id", nextIdentity);
         setMessage("Identitas guru berubah. Vault sebelumnya dikunci; buka vault milik akun ini untuk melanjutkan.");
       } else if (previousIdentity.current) {
-        setLocalTeacherId(null);
+        loggedOut.current = true;
         sessionStorage.removeItem("tms-teacher-id");
         setMessage("Sesi guru berakhir. Data lokal tetap terenkripsi dan tidak ditampilkan pada akun lain.");
       }
       previousIdentity.current = nextIdentity;
     } else if (nextIdentity) {
-      setLocalTeacherId(nextIdentity);
+      loggedOut.current = false;
       sessionStorage.setItem("tms-teacher-id", nextIdentity);
     }
     const update = () => setOnline(navigator.onLine);
