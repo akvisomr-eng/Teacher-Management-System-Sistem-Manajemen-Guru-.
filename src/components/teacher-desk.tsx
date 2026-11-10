@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import {
   clearTeacherItems, createTeacherBackup, openTeacherBackup, readTeacherItems,
   unlockTeacherVault, writeTeacherItem, type VaultWorkItem
@@ -236,6 +237,7 @@ function TeacherDeskContent({ identity, allowOfflineFallback }: { identity: Iden
     <header style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:16,flexWrap:"wrap"}}>
       <div><small style={{letterSpacing:2,color:"#6254d9",fontWeight:700}}>TMS • PERSONAL WORKSPACE</small><h1 style={{fontSize:30,margin:"8px 0"}}>Ruang Kerja Guru</h1><p style={{color:"#65708a",margin:0}}>{identity ? `${identity.name} · ${identity.school}` : "Mode offline · ruang pribadi perangkat"}</p></div>
       <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+        <Link href="/teacher/activities" style={{display:"inline-flex",alignItems:"center",padding:"9px 12px",border:"1px solid #d9ddec",borderRadius:8,background:"white",color:"#35415c",textDecoration:"none",fontSize:14}}>Aktivitas pembelajaran</Link>
         <button onClick={exportData} disabled={!vaultKey}>Ekspor cadangan</button>
         <button onClick={()=>void pull()} disabled={!online||busy||!vaultKey}>Ambil dari TMS</button>
         <button onClick={()=>void clearDeviceData()} disabled={!vaultKey}>Bersihkan perangkat</button>
