@@ -76,3 +76,16 @@ Do not store real keys in GitHub, SQL, logs, issue descriptions, or chat. Rotate
 ## Current implementation status
 
 Provider selected and integration requirements documented. **No payment checkout, webhook, subscription enforcement, or live collection is implemented or enabled yet.** This is intentional until merchant credentials and commercial terms exist.
+
+## Billing ledger implementation (staging validation)
+
+Migration `0011_billing_payment_ledger.sql` introduces:
+- Tenant/school-scoped invoices with IDR integer amounts and explicit lifecycle states.
+- Midtrans/manual-transfer payment attempts with unique provider order IDs and optional provider transaction references.
+- A sanitized payment-event ledger with a unique provider/payload hash for duplicate-notification detection.
+- Row-level security enabled and forced on all three tables.
+- Billing reads/writes restricted to tenant owners, tenant admins, principals, vice principals, and school operators in the active tenant/school scope. Payment event records are read-only to the application role.
+
+The migration was applied and checked on the existing Neon staging branch only. All three tables were present, RLS and FORCE RLS were enabled, each table had the expected policy, and the `tms_app` role saw zero billing rows without tenant context. With a real tenant-admin context, the scoped billing authorization helper returned true. **Production schema has not been changed.**
+
+This is a data foundation only. There is still no invoice-creation endpoint, Snap checkout endpoint, notification processor, subscription entitlement enforcement, or payment collection. The feature remains disabled pending merchant credentials and approved commercial terms.
