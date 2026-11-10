@@ -116,8 +116,18 @@ function TeacherDeskContent({ identity, allowOfflineFallback }: { identity: Iden
         const result = await response.json();
         received += Number(result.received ?? batch.length);
         for (const row of (result.items ?? []) as Array<{id:string}>) accepted.add(row.id);
+        for (const remote of (result.conflicts ?? []) as Array<{id:string;item_type:string;title:string;content:VaultWorkItem["content"];schema_version:number;client_updated_at:string}>) {
+          const local = pending.find(item => item.id === remote.id);
+          if (local) await writeTeacherItem(dbName, vaultKey, { ...local, syncState: "conflict",
+            serverVersion: { itemType: remote.item_type, title: remote.title, content: remote.content,
+              schemaVersion: remote.schema_version, clientUpdatedAt: remote.client_updated_at } });
+        }
       }
-      for (const item of pending) await writeTeacherItem(dbName, vaultKey, { ...item, syncState: accepted.has(item.id) ? "synced" : "conflict" });
+      for (const item of pending) {
+        const latest = (await readTeacherItems(dbName, vaultKey)).find(row => row.id === item.id) ?? item;
+        if (accepted.has(item.id)) await writeTeacherItem(dbName, vaultKey, { ...latest, syncState: "synced", serverVersion: undefined });
+        else if (latest.syncState !== "conflict") await writeTeacherItem(dbName, vaultKey, { ...latest, syncState: "conflict" });
+      }
       await refresh();
       setMessage(`${accepted.size} dari ${received} dokumen diterima server. Konflik ditandai untuk pemeriksaan.`);
     } catch (error) { setMessage(error instanceof Error ? error.message : "Tidak dapat terhubung ke server."); }
@@ -142,7 +152,10 @@ function TeacherDeskContent({ identity, allowOfflineFallback }: { identity: Iden
         const local = byId.get(serverItem.id);
         if (!local) { await writeTeacherItem(dbName, vaultKey, serverItem); added++; }
         else if (local.syncState !== "synced" && new Date(local.clientUpdatedAt).getTime() !== new Date(serverItem.clientUpdatedAt).getTime()) {
-          await writeTeacherItem(dbName, vaultKey, { ...local, syncState: "conflict" }); conflicts++;
+          await writeTeacherItem(dbName, vaultKey, { ...local, syncState: "conflict", serverVersion: {
+            itemType: serverItem.itemType, title: serverItem.title, content: serverItem.content,
+            schemaVersion: serverItem.schemaVersion, clientUpdatedAt: serverItem.clientUpdatedAt
+          } }); conflicts++;
         } else if (new Date(serverItem.clientUpdatedAt).getTime() > new Date(local.clientUpdatedAt).getTime()) {
           await writeTeacherItem(dbName, vaultKey, serverItem);
         }
@@ -151,6 +164,18 @@ function TeacherDeskContent({ identity, allowOfflineFallback }: { identity: Iden
       setMessage(`Data TMS diperiksa. ${added} dokumen baru diunduh; ${conflicts} konflik lokal perlu ditinjau.`);
     } catch (error) { setMessage(error instanceof Error ? error.message : "Tidak dapat mengambil data dari TMS."); }
     finally { setBusy(false); }
+  }
+
+  async function resolveConflict(item: VaultWorkItem, choice: "server" | "local") {
+    if (!dbName || !vaultKey || item.syncState !== "conflict" || !item.serverVersion) return;
+    if (choice === "server") {
+      await writeTeacherItem(dbName, vaultKey, { ...item, ...item.serverVersion, syncState: "synced", serverVersion: undefined });
+      setMessage("Versi server dipilih. Versi lokal sebelumnya digantikan pada vault perangkat ini.");
+    } else {
+      await writeTeacherItem(dbName, vaultKey, { ...item, clientUpdatedAt: new Date(Date.now() + 1000).toISOString(), syncState: "local", serverVersion: undefined });
+      setMessage("Versi lokal dipertahankan. Sinkronkan kembali untuk mengirim versi pilihan Anda.");
+    }
+    await refresh();
   }
 
   async function clearDeviceData() {
@@ -249,6 +274,19 @@ function TeacherDeskContent({ identity, allowOfflineFallback }: { identity: Iden
         {!vaultKey?<p style={{color:"#7b8499"}}>Buka vault untuk melihat pekerjaan pribadi.</p>:items.length===0?<p style={{color:"#7b8499"}}>Belum ada pekerjaan. Mulai buat rencana, jurnal, materi, atau refleksi.</p>:filteredItems.length===0?<p style={{color:"#7b8499"}}>Tidak ada pekerjaan yang cocok dengan pencarian.</p>:<div style={{display:"grid",gap:10}}>{filteredItems.map(item=><article key={item.id} style={{border:"1px solid #edf0f5",borderRadius:10,padding:13}}>
           <div style={{display:"flex",justifyContent:"space-between",gap:8}}><b>{item.title}</b><small>{item.syncState==="synced"?"Tersinkron":item.syncState==="conflict"?"Perlu pemeriksaan":"Lokal"}</small></div>
           <button onClick={()=>{setEditingId(item.id);setTitle(item.title);setItemType(item.itemType);setBody(item.content.body);setSubject(item.content.subject??"");setClassName(item.content.className??"");setDueDate(item.content.dueDate??"");}} style={{marginTop:6}}>Edit</button>
+          {item.syncState === "conflict" && <div style={{marginTop:10,padding:12,background:"#fff7e9",borderRadius:8,border:"1px solid #f0d8ae"}}>
+            <b>Konflik sinkronisasi — kedua versi dipertahankan</b>
+            {item.serverVersion ? <>
+              <p style={{fontSize:13,marginBottom:4}}><b>Versi perangkat:</b> {item.title}</p>
+              <p style={{fontSize:13,whiteSpace:"pre-wrap",marginTop:0}}>{item.content.body}</p>
+              <p style={{fontSize:13,marginBottom:4}}><b>Versi server:</b> {item.serverVersion.title}</p>
+              <p style={{fontSize:13,whiteSpace:"pre-wrap",marginTop:0}}>{item.serverVersion.content.body}</p>
+              <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+                <button onClick={()=>void resolveConflict(item,"server")}>Gunakan versi server</button>
+                <button onClick={()=>void resolveConflict(item,"local")}>Pertahankan versi perangkat</button>
+              </div>
+            </> : <p style={{fontSize:13}}>Versi server belum dapat dibaca dalam lingkup akun ini. Data lokal tidak dihapus; ambil data dari TMS atau hubungi operator.</p>}
+          </div>}
           <small style={{display:"block",color:"#7b8499",marginTop:5}}>{TYPES.find(([v])=>v===item.itemType)?.[1]??item.itemType}{item.content.subject?` · ${item.content.subject}`:""}{item.content.className?` · ${item.content.className}`:""} · {new Date(item.clientUpdatedAt).toLocaleString("id-ID")}</small>
           {item.content.dueDate&&<small style={{display:"block",color:"#9a5a19",marginTop:4}}>Target: {new Date(`${item.content.dueDate}T00:00:00`).toLocaleDateString("id-ID")}</small>}
           <p style={{whiteSpace:"pre-wrap",fontSize:13,color:"#46516a"}}>{item.content.body}</p>
