@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   clearTeacherItems, createTeacherBackup, openTeacherBackup, readTeacherItems,
   unlockTeacherVault, writeTeacherItem, type VaultWorkItem
@@ -16,10 +16,22 @@ const TYPES = [
 
 export default function TeacherDesk({ identity }: { identity: Identity }) {
   const [items, setItems] = useState<VaultWorkItem[]>([]);
-  const [localTeacherId] = useState<string | null>(() => identity?.teacherId ?? (typeof window !== "undefined" ? window.sessionStorage.getItem("tms-teacher-id") : null));
-  const previousIdentity = useRef<string | null>(identity?.teacherId ?? null);
-  const loggedOut = useRef(false);
-  const effectiveTeacherId = identity?.teacherId ?? (loggedOut.current ? null : localTeacherId);
+  const [identityState, setIdentityState] = useState(() => ({
+    observedIdentity: identity?.teacherId ?? null,
+    teacherId: identity?.teacherId ?? (typeof window !== "undefined" ? window.sessionStorage.getItem("tms-teacher-id") : null),
+    notice: null as string | null
+  }));
+  const currentIdentity = identity?.teacherId ?? null;
+  if (identityState.observedIdentity !== currentIdentity) {
+    setIdentityState({
+      observedIdentity: currentIdentity,
+      teacherId: currentIdentity,
+      notice: currentIdentity
+        ? "Identitas guru berubah. Vault sebelumnya dikunci; buka vault milik akun ini untuk melanjutkan."
+        : "Sesi guru berakhir. Data lokal tetap terenkripsi dan tidak ditampilkan pada akun lain."
+    });
+  }
+  const effectiveTeacherId = identityState.observedIdentity === currentIdentity ? identityState.teacherId : currentIdentity;
   const dbName = effectiveTeacherId ? `${DB_NAME}:${effectiveTeacherId}` : null;
   const [title, setTitle] = useState("");
   const [itemType, setItemType] = useState("lesson_plan");
@@ -36,6 +48,7 @@ export default function TeacherDesk({ identity }: { identity: Identity }) {
   const [vaultSalt, setVaultSalt] = useState<string | null>(null);
   const [passphrase, setPassphrase] = useState("");
   const [message, setMessage] = useState("Data offline akan dienkripsi sebelum disimpan pada perangkat.");
+  const visibleMessage = identityState.observedIdentity === currentIdentity && identityState.notice ? identityState.notice : message;
   const pendingCount = items.filter(item => item.syncState !== "synced").length;
   const syncedCount = items.length - pendingCount;
   const filteredItems = items.filter(item => {
@@ -53,22 +66,13 @@ export default function TeacherDesk({ identity }: { identity: Identity }) {
 
   useEffect(() => {
     const nextIdentity = identity?.teacherId ?? null;
-    if (previousIdentity.current !== nextIdentity) {
+    if (identityState.observedIdentity !== nextIdentity) {
       setVaultKey(null); setVaultSalt(null); setItems([]);
       setEditingId(null); setTitle(""); setBody(""); setSubject(""); setClassName(""); setDueDate("");
       setPassphrase("");
-      if (nextIdentity) {
-        loggedOut.current = false;
-        sessionStorage.setItem("tms-teacher-id", nextIdentity);
-        setMessage("Identitas guru berubah. Vault sebelumnya dikunci; buka vault milik akun ini untuk melanjutkan.");
-      } else if (previousIdentity.current) {
-        loggedOut.current = true;
-        sessionStorage.removeItem("tms-teacher-id");
-        setMessage("Sesi guru berakhir. Data lokal tetap terenkripsi dan tidak ditampilkan pada akun lain.");
-      }
-      previousIdentity.current = nextIdentity;
+      if (nextIdentity) sessionStorage.setItem("tms-teacher-id", nextIdentity);
+      else sessionStorage.removeItem("tms-teacher-id");
     } else if (nextIdentity) {
-      loggedOut.current = false;
       sessionStorage.setItem("tms-teacher-id", nextIdentity);
     }
     const update = () => setOnline(navigator.onLine);
@@ -173,7 +177,7 @@ export default function TeacherDesk({ identity }: { identity: Identity }) {
 
   async function exportData() {
     if (!dbName || !vaultKey || !vaultSalt) { setMessage("Buka vault terlebih dahulu."); return; }
-    const backup = await createTeacherBackup(passphrase, vaultSalt, identity ?? { teacherId: localTeacherId }, await readTeacherItems(dbName, vaultKey));
+    const backup = await createTeacherBackup(passphrase, vaultSalt, identity ?? { teacherId: effectiveTeacherId ?? "" }, await readTeacherItems(dbName, vaultKey));
     const blob = new Blob([backup], { type: "application/json" });
     const url = URL.createObjectURL(blob); const a = document.createElement("a");
     a.href = url; a.download = `tms-teacher-desk-encrypted-${new Date().toISOString().slice(0,10)}.json`; a.click(); URL.revokeObjectURL(url);
@@ -181,11 +185,11 @@ export default function TeacherDesk({ identity }: { identity: Identity }) {
   }
 
   async function importData(file?: File) {
-    if (!file || !dbName || !vaultKey || !localTeacherId) return;
+    if (!file || !dbName || !vaultKey || !effectiveTeacherId) return;
     try {
       if (file.size > 5 * 1024 * 1024) throw new Error("Ukuran paket melebihi batas 5 MB.");
       const backup = await openTeacherBackup(await file.text(), passphrase);
-      if (!backup.teacher?.teacherId || backup.teacher.teacherId !== localTeacherId) throw new Error("Identitas guru pada paket tidak cocok.");
+      if (!backup.teacher?.teacherId || backup.teacher.teacherId !== effectiveTeacherId) throw new Error("Identitas guru pada paket tidak cocok.");
       if (!Array.isArray(backup.items) || backup.items.length > 500) throw new Error("Struktur paket tidak valid atau jumlah data melebihi batas.");
       const existing = new Map((await readTeacherItems(dbName, vaultKey)).map(item => [item.id, item]));
       let restored = 0, duplicates = 0, conflicts = 0;
@@ -232,7 +236,7 @@ export default function TeacherDesk({ identity }: { identity: Identity }) {
     </header>
     <section style={{background:"white",borderRadius:14,padding:20,marginTop:24,border:"1px solid #e6eaf2"}}>
       <div style={{display:"flex",justifyContent:"space-between",gap:12,flexWrap:"wrap"}}><b>Keamanan perangkat</b><span>{online?"● Online":"● Offline"}</span></div>
-      <p style={{color:"#65708a",fontSize:13}}>{message}</p>
+      <p style={{color:"#65708a",fontSize:13}}>{visibleMessage}</p>
       {!vaultKey ? <div style={{display:"flex",gap:8,flexWrap:"wrap",alignItems:"center"}}>
         <input type="password" value={passphrase} onChange={e=>setPassphrase(e.target.value)} placeholder="Frasa sandi vault (minimal 10 karakter)" autoComplete="new-password" style={{padding:11,minWidth:260,flex:1}}/>
         <button onClick={()=>void unlock()} disabled={busy||passphrase.length<10}>{busy?"Membuka…":"Buka / buat vault"}</button>
