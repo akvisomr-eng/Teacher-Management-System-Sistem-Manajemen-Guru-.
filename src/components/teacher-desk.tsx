@@ -15,23 +15,15 @@ const TYPES = [
 ];
 
 export default function TeacherDesk({ identity }: { identity: Identity }) {
+  const [hasAuthenticated, setHasAuthenticated] = useState(Boolean(identity?.teacherId));
+  if (identity?.teacherId && !hasAuthenticated) setHasAuthenticated(true);
+  const instanceKey = identity?.teacherId ?? (hasAuthenticated ? "logged-out" : "offline");
+  return <TeacherDeskContent key={instanceKey} identity={identity} allowOfflineFallback={!hasAuthenticated && !identity?.teacherId} />;
+}
+
+function TeacherDeskContent({ identity, allowOfflineFallback }: { identity: Identity; allowOfflineFallback: boolean }) {
   const [items, setItems] = useState<VaultWorkItem[]>([]);
-  const [identityState, setIdentityState] = useState(() => ({
-    observedIdentity: identity?.teacherId ?? null,
-    teacherId: identity?.teacherId ?? (typeof window !== "undefined" ? window.sessionStorage.getItem("tms-teacher-id") : null),
-    notice: null as string | null
-  }));
-  const currentIdentity = identity?.teacherId ?? null;
-  if (identityState.observedIdentity !== currentIdentity) {
-    setIdentityState({
-      observedIdentity: currentIdentity,
-      teacherId: currentIdentity,
-      notice: currentIdentity
-        ? "Identitas guru berubah. Vault sebelumnya dikunci; buka vault milik akun ini untuk melanjutkan."
-        : "Sesi guru berakhir. Data lokal tetap terenkripsi dan tidak ditampilkan pada akun lain."
-    });
-  }
-  const effectiveTeacherId = identityState.observedIdentity === currentIdentity ? identityState.teacherId : currentIdentity;
+  const effectiveTeacherId = identity?.teacherId ?? (allowOfflineFallback && typeof window !== "undefined" ? window.sessionStorage.getItem("tms-teacher-id") : null);
   const dbName = effectiveTeacherId ? `${DB_NAME}:${effectiveTeacherId}` : null;
   const [title, setTitle] = useState("");
   const [itemType, setItemType] = useState("lesson_plan");
@@ -48,7 +40,7 @@ export default function TeacherDesk({ identity }: { identity: Identity }) {
   const [vaultSalt, setVaultSalt] = useState<string | null>(null);
   const [passphrase, setPassphrase] = useState("");
   const [message, setMessage] = useState("Data offline akan dienkripsi sebelum disimpan pada perangkat.");
-  const visibleMessage = identityState.observedIdentity === currentIdentity && identityState.notice ? identityState.notice : message;
+
   const pendingCount = items.filter(item => item.syncState !== "synced").length;
   const syncedCount = items.length - pendingCount;
   const filteredItems = items.filter(item => {
@@ -65,22 +57,14 @@ export default function TeacherDesk({ identity }: { identity: Identity }) {
   }, [dbName, vaultKey]);
 
   useEffect(() => {
-    const nextIdentity = identity?.teacherId ?? null;
-    if (identityState.observedIdentity !== nextIdentity) {
-      setVaultKey(null); setVaultSalt(null); setItems([]);
-      setEditingId(null); setTitle(""); setBody(""); setSubject(""); setClassName(""); setDueDate("");
-      setPassphrase("");
-      if (nextIdentity) sessionStorage.setItem("tms-teacher-id", nextIdentity);
-      else sessionStorage.removeItem("tms-teacher-id");
-    } else if (nextIdentity) {
-      sessionStorage.setItem("tms-teacher-id", nextIdentity);
-    }
+    if (identity?.teacherId) sessionStorage.setItem("tms-teacher-id", identity.teacherId);
+    else if (!allowOfflineFallback) sessionStorage.removeItem("tms-teacher-id");
     const update = () => setOnline(navigator.onLine);
     window.addEventListener("online", update);
     window.addEventListener("offline", update);
     if ("serviceWorker" in navigator) void navigator.serviceWorker.register("/teacher-sw.js").catch(() => undefined);
     return () => { window.removeEventListener("online", update); window.removeEventListener("offline", update); };
-  }, [identity?.teacherId]);
+  }, [identity?.teacherId, allowOfflineFallback]);
 
   async function unlock() {
     if (!dbName) { setMessage("Login online sekali sebagai guru untuk membuka ruang kerja pribadi."); return; }
@@ -236,7 +220,7 @@ export default function TeacherDesk({ identity }: { identity: Identity }) {
     </header>
     <section style={{background:"white",borderRadius:14,padding:20,marginTop:24,border:"1px solid #e6eaf2"}}>
       <div style={{display:"flex",justifyContent:"space-between",gap:12,flexWrap:"wrap"}}><b>Keamanan perangkat</b><span>{online?"● Online":"● Offline"}</span></div>
-      <p style={{color:"#65708a",fontSize:13}}>{visibleMessage}</p>
+      <p style={{color:"#65708a",fontSize:13}}>{message}</p>
       {!vaultKey ? <div style={{display:"flex",gap:8,flexWrap:"wrap",alignItems:"center"}}>
         <input type="password" value={passphrase} onChange={e=>setPassphrase(e.target.value)} placeholder="Frasa sandi vault (minimal 10 karakter)" autoComplete="new-password" style={{padding:11,minWidth:260,flex:1}}/>
         <button onClick={()=>void unlock()} disabled={busy||passphrase.length<10}>{busy?"Membuka…":"Buka / buat vault"}</button>
