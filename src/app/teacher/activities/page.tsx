@@ -5,8 +5,9 @@ import { TeachingWorkspace } from "@/components/teaching-workspace";
 export const dynamic = "force-dynamic";
 
 export default async function TeacherActivitiesPage() {
+  let access = false;
   try {
-    const access = await withAuthenticatedUser(async (tx, _user, profile) => {
+    access = await withAuthenticatedUser(async (tx, _user, profile) => {
       const memberships = await tx`
         SELECT tenant_id, school_id FROM memberships
         WHERE user_id = ${profile.id} AND role = 'teacher' AND school_id IS NOT NULL
@@ -23,9 +24,9 @@ export default async function TeacherActivitiesPage() {
       `;
       return teachers.length === 1;
     });
-    if (!access) redirect("/teacher");
   } catch {
     redirect("/auth/sign-in?redirectTo=%2Fteacher%2Factivities");
   }
+  if (!access) redirect("/teacher");
   return <TeachingWorkspace teacherMode />;
 }
