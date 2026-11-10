@@ -6,8 +6,9 @@ import { withAuthenticatedUser } from "@/db/connection";
 export const dynamic = "force-dynamic";
 type DbTx = TransactionSql<Record<string, never>>;
 const managerRoles = ["tenant_owner","tenant_admin","principal","vice_principal","school_operator"] as const;
+const databaseUuidSchema = z.string().regex(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i, "ID harus berupa UUID PostgreSQL yang valid.");
 const linkSchema = z.object({
-  teacherId: z.string().uuid(),
+  teacherId: databaseUuidSchema,
   email: z.string().trim().email().max(254)
 });
 
