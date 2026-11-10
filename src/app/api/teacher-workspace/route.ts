@@ -72,6 +72,7 @@ export async function POST(request: Request) {
   if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Paket sinkronisasi tidak valid." }, { status: 400 });
   return withTeacher(async (tx, teacher, profile) => {
     const accepted: Array<{ id: string; updated_at: string }> = [];
+    const conflicts: Array<Record<string, unknown>> = [];
     for (const item of parsed.data.items) {
       const rows = await tx`
         INSERT INTO teacher_workspace_items
@@ -90,13 +91,24 @@ export async function POST(request: Request) {
           AND teacher_workspace_items.client_updated_at <= EXCLUDED.client_updated_at
         RETURNING id, updated_at
       `;
-      if (rows[0]) accepted.push(rows[0] as { id: string; updated_at: string });
+      if (rows[0]) {
+        accepted.push(rows[0] as { id: string; updated_at: string });
+      } else {
+        const current = await tx`
+          SELECT id, item_type, title, content, schema_version, client_updated_at
+          FROM teacher_workspace_items
+          WHERE id = ${item.id} AND tenant_id = ${teacher.tenant_id}
+            AND school_id = ${teacher.school_id} AND teacher_id = ${teacher.teacher_id}
+            AND owner_user_id = ${profile.id} LIMIT 1
+        `;
+        if (current[0]) conflicts.push(current[0]);
+      }
     }
     await tx`
       INSERT INTO audit_logs (tenant_id, school_id, actor_user_id, action, resource_type, metadata)
       VALUES (${teacher.tenant_id}, ${teacher.school_id}, ${profile.id}, 'teacher_workspace.sync', 'teacher_workspace_items',
         ${tx.json({ received: parsed.data.items.length, accepted: accepted.length })})
     `;
-    return NextResponse.json({ accepted: accepted.length, received: parsed.data.items.length, items: accepted });
+    return NextResponse.json({ accepted: accepted.length, received: parsed.data.items.length, items: accepted, conflicts });
   });
 }
