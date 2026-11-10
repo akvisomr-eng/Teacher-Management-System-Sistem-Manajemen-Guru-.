@@ -37,12 +37,13 @@ async function authorize(resource: string, work: Work) {
       const memberships = await tx`
         SELECT tenant_id, school_id, role FROM memberships
         WHERE user_id = ${profile.id} AND school_id IS NOT NULL
-        ORDER BY created_at ASC LIMIT 1
+          AND role IN ('tenant_owner','tenant_admin','principal','vice_principal','school_operator','teacher','homeroom_teacher')
+        ORDER BY created_at ASC LIMIT 2
       `;
-      const membership = memberships[0] as { tenant_id: string; school_id: string; role: string } | undefined;
-      if (!membership || (!managerRoles.has(membership.role) && !teacherRoles.has(membership.role))) {
-        return NextResponse.json({ error: "Anda tidak memiliki izin mengelola aktivitas pembelajaran." }, { status: 403 });
+      if (memberships.length !== 1) {
+        return NextResponse.json({ error: "Akun harus memiliki tepat satu penempatan sekolah yang berwenang untuk aktivitas pembelajaran." }, { status: 403 });
       }
+      const membership = memberships[0] as { tenant_id: string; school_id: string; role: string };
       await tx`SELECT set_config('app.tenant_id', ${membership.tenant_id}, true)`;
       let teacherId: string | null = null;
       if (teacherRoles.has(membership.role)) {
@@ -125,11 +126,12 @@ export async function PATCH(request: Request, { params }: Context) {
     const parsed = planUpdate.safeParse(body);
     if (!parsed.success) return NextResponse.json({ error: "Status rencana ajar tidak valid." }, { status: 400 });
     return authorize(resource, async (tx, tenantId, schoolId, userId, teacherId, role) => {
-      if (!managerRoles.has(role) && ["approved", "revision"].includes(parsed.data.status)) return NextResponse.json({ error: "Guru tidak dapat menyetujui atau meminta revisi rencana ajar." }, { status: 403 });
+      if (teacherId && parsed.data.status !== "submitted") return NextResponse.json({ error: "Guru hanya dapat mengajukan rencana ajar untuk ditinjau." }, { status: 403 });
+      if (managerRoles.has(role) && !["approved", "revision"].includes(parsed.data.status)) return NextResponse.json({ error: "Pengelola hanya dapat menyetujui atau meminta revisi rencana yang diajukan." }, { status: 400 });
       const rows = teacherId
-        ? await tx`UPDATE teaching_plans SET status = ${parsed.data.status} WHERE id = ${parsed.data.id} AND tenant_id = ${tenantId} AND school_id = ${schoolId} AND teacher_id = ${teacherId} RETURNING id, status`
-        : await tx`UPDATE teaching_plans SET status = ${parsed.data.status} WHERE id = ${parsed.data.id} AND tenant_id = ${tenantId} AND school_id = ${schoolId} RETURNING id, status`;
-      if (!rows.length) return NextResponse.json({ error: "Rencana ajar tidak ditemukan." }, { status: 404 });
+        ? await tx`UPDATE teaching_plans SET status = 'submitted' WHERE id = ${parsed.data.id} AND tenant_id = ${tenantId} AND school_id = ${schoolId} AND teacher_id = ${teacherId} AND status IN ('draft','revision') RETURNING id, status`
+        : await tx`UPDATE teaching_plans SET status = ${parsed.data.status} WHERE id = ${parsed.data.id} AND tenant_id = ${tenantId} AND school_id = ${schoolId} AND status = 'submitted' RETURNING id, status`;
+      if (!rows.length) return NextResponse.json({ error: "Rencana ajar tidak ditemukan atau statusnya sudah berubah. Muat ulang data dan periksa alur persetujuan." }, { status: 409 });
       await tx`INSERT INTO audit_logs (tenant_id, school_id, actor_user_id, action, resource_type, resource_id) VALUES (${tenantId}, ${schoolId}, ${userId}, 'teaching_plan.status_changed', 'teaching_plan', ${parsed.data.id})`;
       return NextResponse.json({ data: rows[0] });
     });
@@ -138,11 +140,12 @@ export async function PATCH(request: Request, { params }: Context) {
     const parsed = journalUpdate.safeParse(body);
     if (!parsed.success) return NextResponse.json({ error: "Status jurnal tidak valid." }, { status: 400 });
     return authorize(resource, async (tx, tenantId, schoolId, userId, teacherId, role) => {
-      if (!managerRoles.has(role) && parsed.data.status === "reviewed") return NextResponse.json({ error: "Guru tidak dapat menandai jurnal sebagai telah ditinjau." }, { status: 403 });
+      if (teacherId && parsed.data.status !== "submitted") return NextResponse.json({ error: "Guru hanya dapat mengajukan jurnal untuk ditinjau." }, { status: 403 });
+      if (managerRoles.has(role) && parsed.data.status !== "reviewed") return NextResponse.json({ error: "Pengelola hanya dapat menandai jurnal yang diajukan sebagai telah ditinjau." }, { status: 400 });
       const rows = teacherId
-        ? await tx`UPDATE teaching_journals SET status = ${parsed.data.status} WHERE id = ${parsed.data.id} AND tenant_id = ${tenantId} AND school_id = ${schoolId} AND teacher_id = ${teacherId} RETURNING id, status`
-        : await tx`UPDATE teaching_journals SET status = ${parsed.data.status} WHERE id = ${parsed.data.id} AND tenant_id = ${tenantId} AND school_id = ${schoolId} RETURNING id, status`;
-      if (!rows.length) return NextResponse.json({ error: "Jurnal mengajar tidak ditemukan." }, { status: 404 });
+        ? await tx`UPDATE teaching_journals SET status = 'submitted' WHERE id = ${parsed.data.id} AND tenant_id = ${tenantId} AND school_id = ${schoolId} AND teacher_id = ${teacherId} AND status = 'draft' RETURNING id, status`
+        : await tx`UPDATE teaching_journals SET status = 'reviewed' WHERE id = ${parsed.data.id} AND tenant_id = ${tenantId} AND school_id = ${schoolId} AND status = 'submitted' RETURNING id, status`;
+      if (!rows.length) return NextResponse.json({ error: "Jurnal tidak ditemukan atau statusnya sudah berubah. Muat ulang data dan periksa alur peninjauan." }, { status: 409 });
       await tx`INSERT INTO audit_logs (tenant_id, school_id, actor_user_id, action, resource_type, resource_id) VALUES (${tenantId}, ${schoolId}, ${userId}, 'teaching_journal.status_changed', 'teaching_journal', ${parsed.data.id})`;
       return NextResponse.json({ data: rows[0] });
     });
