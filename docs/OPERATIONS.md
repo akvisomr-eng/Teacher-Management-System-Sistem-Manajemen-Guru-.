@@ -79,3 +79,8 @@ Email/password dan verifikasi OTP aktif. Shared SMTP masih digunakan untuk uji a
 - Review lifecycle: `draft → submitted → approved/rejected → archived`. Every transition is recorded in `audit_logs`; reviewer, review time, and review note are stored on the record.
 - Migration `0008_standard_form_workflow_links.sql` adds optional polymorphic teacher/student link metadata and review note. Apply to staging, verify constraints/index/API, then request explicit approval before production migration.
 - The workflow is internal administrative approval, not an official Dapodik approval or synchronization.
+
+
+## Commercial launch readiness (10 November 2026)
+
+See [COMMERCIAL_LAUNCH_READINESS.md](COMMERCIAL_LAUNCH_READINESS.md) for the current release and outstanding blockers. Production is live for controlled pilot validation, not yet a fully commercial SaaS. Verified production snapshot: 1 tenant, 1 school, 15 active teacher records, 0 linked teacher accounts, 0 teacher memberships. Neon Auth still uses the shared sender; billing/payment and approved pricing are not implemented. Neon production project is on free_v3 with 6-hour history retention and no separately listed snapshots; branch protection was unavailable at the current plan limit. A real teacher registration/linking test, branded SMTP/domain, backup/restore drill, and legal/support controls remain required.
