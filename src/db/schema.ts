@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, uuid, varchar, text, timestamp, boolean, jsonb, integer, uniqueIndex, index } from "drizzle-orm/pg-core";
+import { pgTable, uuid, varchar, text, timestamp, boolean, jsonb, integer, bigint, uniqueIndex, index } from "drizzle-orm/pg-core";
 
 export const tenants = pgTable("tenants", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -244,4 +244,62 @@ export const teacherWorkspaceItems = pgTable("teacher_workspace_items", {
 }, (t) => [
   index("teacher_workspace_items_owner_idx").on(t.tenantId, t.schoolId, t.teacherId, t.ownerUserId, t.updatedAt),
   index("teacher_workspace_items_sync_idx").on(t.tenantId, t.schoolId, t.ownerUserId, t.clientUpdatedAt)
+]);
+
+export const billingInvoices = pgTable("billing_invoices", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id, { onDelete: "cascade" }),
+  schoolId: uuid("school_id").notNull().references(() => schools.id, { onDelete: "cascade" }),
+  invoiceNumber: varchar("invoice_number", { length: 64 }).notNull(),
+  description: varchar("description", { length: 240 }).notNull(),
+  amountIdr: bigint("amount_idr", { mode: "number" }).notNull(),
+  currency: varchar("currency", { length: 3 }).notNull().default("IDR"),
+  status: varchar("status", { length: 24 }).notNull().default("draft"),
+  dueAt: timestamp("due_at", { withTimezone: true }),
+  issuedAt: timestamp("issued_at", { withTimezone: true }),
+  paidAt: timestamp("paid_at", { withTimezone: true }),
+  createdBy: uuid("created_by").references(() => users.id, { onDelete: "set null" }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow()
+}, (t) => [
+  uniqueIndex("billing_invoices_tenant_number_uq").on(t.tenantId, t.invoiceNumber),
+  index("billing_invoices_scope_status_idx").on(t.tenantId, t.schoolId, t.status, t.createdAt)
+]);
+
+export const paymentTransactions = pgTable("payment_transactions", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  invoiceId: uuid("invoice_id").notNull().references(() => billingInvoices.id, { onDelete: "restrict" }),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id, { onDelete: "cascade" }),
+  schoolId: uuid("school_id").notNull().references(() => schools.id, { onDelete: "cascade" }),
+  provider: varchar("provider", { length: 24 }).notNull(),
+  providerOrderId: varchar("provider_order_id", { length: 64 }).notNull().unique(),
+  providerTransactionId: varchar("provider_transaction_id", { length: 100 }),
+  amountIdr: bigint("amount_idr", { mode: "number" }).notNull(),
+  currency: varchar("currency", { length: 3 }).notNull().default("IDR"),
+  status: varchar("status", { length: 24 }).notNull().default("pending"),
+  fraudStatus: varchar("fraud_status", { length: 24 }),
+  paymentType: varchar("payment_type", { length: 48 }),
+  expiresAt: timestamp("expires_at", { withTimezone: true }),
+  paidAt: timestamp("paid_at", { withTimezone: true }),
+  sanitizedProviderData: jsonb("sanitized_provider_data").$type<Record<string, unknown>>().notNull().default({}),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow()
+}, (t) => [
+  index("payment_transactions_scope_status_idx").on(t.tenantId, t.schoolId, t.status, t.createdAt)
+]);
+
+export const billingPaymentEvents = pgTable("billing_payment_events", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  tenantId: uuid("tenant_id").notNull(),
+  schoolId: uuid("school_id").notNull(),
+  paymentTransactionId: uuid("payment_transaction_id").references(() => paymentTransactions.id, { onDelete: "restrict" }),
+  provider: varchar("provider", { length: 24 }).notNull(),
+  payloadHash: varchar("payload_hash", { length: 64 }).notNull(),
+  eventType: varchar("event_type", { length: 48 }).notNull(),
+  signatureValid: boolean("signature_valid").notNull().default(false),
+  sanitizedPayload: jsonb("sanitized_payload").$type<Record<string, unknown>>().notNull().default({}),
+  receivedAt: timestamp("received_at", { withTimezone: true }).notNull().defaultNow()
+}, (t) => [
+  uniqueIndex("billing_payment_events_provider_hash_uq").on(t.provider, t.payloadHash),
+  index("billing_payment_events_scope_received_idx").on(t.tenantId, t.schoolId, t.receivedAt)
 ]);
