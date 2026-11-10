@@ -42,3 +42,8 @@ Variabel lingkungan dijelaskan pada `.env.example` dan `docs/OPERATIONS.md`. Jan
 
 ## Status rilis
 Fondasi aplikasi telah digabung ke `main` dan dipublikasikan pada Vercel. CI menjalankan typecheck, lint, audit dependency produksi, dan production build. Pusat Kurikulum telah lolos CI dan Preview deployment; deployment Production untuk commit `3484615329b4691bd1cd37b8643c025e1de1945c` berstatus `READY`. Status `READY` pada Vercel tidak dengan sendirinya membuktikan seluruh alur bisnis telah diuji end-to-end. Lihat `docs/OPERATIONS.md` untuk status infrastruktur dan release gates yang masih terbuka.
+
+
+## Commercial launch status
+
+The current release is live for controlled school-pilot validation. It is **not yet declared commercially ready**: billing/payment, approved pricing, branded domain and SMTP, production backup/restore, legal/support policies, and real teacher end-to-end acceptance remain open. See [Commercial Launch Readiness](docs/COMMERCIAL_LAUNCH_READINESS.md) for verified status and release gates.
