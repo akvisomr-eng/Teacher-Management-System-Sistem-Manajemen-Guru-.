@@ -5,7 +5,7 @@ Status checked: 10 November 2026
 ## Current release
 
 - Production URL: https://teacher-management-system-nine.vercel.app
-- Production commit: `1e7fccf34ee4fee349d409603b6de59db12abfd8`
+- Production commit: `1a1f236866ca30c6fa4c2e10156de3dde2688de2`
 - Vercel deployment: `dpl_3yFgP47wZSyrZfJs3CRTh2aVAbfA` — READY
 - Main CI run #264 for the current release: passed typecheck, lint, production dependency audit, build and production smoke.
 - Vercel commit status for the current release: `success`.
@@ -19,6 +19,7 @@ Status checked: 10 November 2026
 - Teacher and student master registries, academic structure, assignments and student placement.
 - Teacher Desk with encrypted offline drafts, encrypted backup/restore, sync, and explicit local/server conflict resolution.
 - Teacher-specific activity view for lesson plans and teaching journals.
+- Teacher Desk clearly distinguishes private offline drafts and synced archive copies from formal school submissions; official review remains in the online Teaching Activities workflow.
 - Teacher ownership checks and school-manager review transitions.
 - Administrative student-form sections now display in reverse order (bottom section first), as requested; standard administrative forms follow the same visual order. GTK standard-form sections are rendered in reverse order as well.
 - Teaching-journal default date now uses the browser's local calendar timezone, avoiding UTC date rollover for Indonesian teachers.
@@ -28,7 +29,7 @@ Status checked: 10 November 2026
 
 These are external/product decisions or operational controls, not items that can be safely fabricated by code:
 
-1. **Real teacher activation:** production currently has 1 school, 1 tenant, 15 active teacher records, 0 linked teacher accounts, and 0 teacher memberships. Each teacher must register using the real email stored on their teacher record; the school operator then links the account. Do not create dummy users.
+1. **Real teacher activation:** production currently has 1 school, 1 tenant, 15 active teacher records, 0 invitation emails recorded, 0 linked teacher accounts, and 0 teacher memberships. The 15 active teacher records currently have no account email set. The school operator must enter each teacher's real email, the teacher registers using that exact email, and the operator then links the account. Do not create dummy users.
 2. **Branded authentication email:** production Neon Auth currently uses the shared sender `auth@mail.myneon.app` / `Neon Auth`. A verified organization-owned sender domain and SMTP provider must be configured and deliverability tested before public registration.
 3. **Subscription billing:** no payment gateway, subscription enforcement, invoice lifecycle, or validated price list is implemented. Starter / Professional / Enterprise are concepts only; prices and quotas must be validated and approved before they are exposed as live offers. Payment provider credentials are not present in the project configuration.
 4. **Branded production domain:** production currently uses Vercel-hosted aliases. A domain controlled by the business, DNS verification, TLS, and Neon Auth trusted-origin configuration are required for a branded commercial launch.
