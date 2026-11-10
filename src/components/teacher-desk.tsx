@@ -172,7 +172,7 @@ function TeacherDeskContent({ identity, allowOfflineFallback }: { identity: Iden
       await writeTeacherItem(dbName, vaultKey, { ...item, ...item.serverVersion, syncState: "synced", serverVersion: undefined });
       setMessage("Versi server dipilih. Versi lokal sebelumnya digantikan pada vault perangkat ini.");
     } else {
-      await writeTeacherItem(dbName, vaultKey, { ...item, clientUpdatedAt: new Date(Date.now() + 1000).toISOString(), syncState: "local", serverVersion: undefined });
+      await writeTeacherItem(dbName, vaultKey, { ...item, clientUpdatedAt: new Date(Math.max(Date.parse(item.serverVersion.clientUpdatedAt) + 1000, new Date().getTime() + 1000)).toISOString(), syncState: "local", serverVersion: undefined });
       setMessage("Versi lokal dipertahankan. Sinkronkan kembali untuk mengirim versi pilihan Anda.");
     }
     await refresh();
