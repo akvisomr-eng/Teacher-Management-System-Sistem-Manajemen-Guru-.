@@ -6,6 +6,7 @@ export type VaultWorkItem = {
   schemaVersion: number;
   clientUpdatedAt: string;
   syncState: "local" | "synced" | "conflict";
+  serverVersion?: { itemType: string; title: string; content: VaultWorkItem["content"]; schemaVersion: number; clientUpdatedAt: string };
 };
 
 type EncryptedRecord = { id: string; encrypted: true; iv: string; payload: string };
