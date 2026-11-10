@@ -8,6 +8,9 @@ export const dynamic = "force-dynamic";
 type DbTx = TransactionSql<Record<string, never>>;
 const roles = new Set(["tenant_owner", "tenant_admin", "principal", "vice_principal", "school_operator"]);
 const resourceSchema = z.enum(["teachers", "students", "classes", "subjects"]);
+// PostgreSQL accepts any 128-bit UUID value; do not enforce RFC version/variant bits
+// because existing primary keys include valid PostgreSQL UUIDs outside those bit ranges.
+const databaseUuidSchema = z.string().regex(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i, "ID harus berupa UUID PostgreSQL yang valid.");
 const teacherCreate = z.object({
   fullName: z.string().trim().min(2).max(180),
   employeeNumber: z.string().trim().max(50).optional().default(""),
@@ -77,8 +80,8 @@ const studentCreate = z.object({
 const classCreate = z.object({
   name: z.string().trim().min(1).max(100),
   gradeLevel: z.string().trim().min(1).max(50),
-  academicYearId: z.string().uuid(),
-  homeroomTeacherId: z.string().uuid().optional().or(z.literal(""))
+  academicYearId: databaseUuidSchema,
+  homeroomTeacherId: databaseUuidSchema.optional().or(z.literal(""))
 });
 const subjectCreate = z.object({
   name: z.string().trim().min(2).max(140),
@@ -86,7 +89,7 @@ const subjectCreate = z.object({
   category: z.string().trim().max(80).optional().default("")
 });
 const updateSchema = z.object({
-  id: z.string().uuid(),
+  id: databaseUuidSchema,
   fullName: z.string().trim().min(2).max(180).optional(),
   employeeNumber: z.string().trim().max(50).optional(),
   education: z.string().trim().max(80).optional(),
@@ -97,7 +100,7 @@ const updateSchema = z.object({
   status: z.string().trim().min(1).max(30).optional(),
   name: z.string().trim().min(1).max(140).optional(),
   gradeLevel: z.string().trim().min(1).max(50).optional(),
-  homeroomTeacherId: z.string().uuid().optional().or(z.literal("")),
+  homeroomTeacherId: databaseUuidSchema.optional().or(z.literal("")),
   code: z.string().trim().max(40).optional(),
   category: z.string().trim().max(80).optional(),
   isActive: z.boolean().optional()
