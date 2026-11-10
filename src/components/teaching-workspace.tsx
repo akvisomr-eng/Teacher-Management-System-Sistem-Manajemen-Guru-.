@@ -51,20 +51,7 @@ export function TeachingWorkspace({ teacherMode = false }: { teacherMode?: boole
     finally { setLoading(false); }
   }, []);
 
-  useEffect(() => {
-    let active = true;
-    Promise.all([
-      fetch("/api/teaching/plans", { cache: "no-store" }).then(async response => { const result = await response.json(); if (!response.ok) throw new Error(result.error ?? "Perencanaan ajar tidak dapat dimuat."); return result; }),
-      fetch("/api/teaching/journals", { cache: "no-store" }).then(async response => { const result = await response.json(); if (!response.ok) throw new Error(result.error ?? "Jurnal mengajar tidak dapat dimuat."); return result; })
-    ]).then(([planResult, journalResult]) => {
-      if (!active) return;
-      setPlans(planResult.data ?? []); setTeachers(planResult.options?.teachers ?? []);
-      setJournals(journalResult.data ?? []); setAssignments(journalResult.options?.assignments ?? []);
-      setCanReview(Boolean(planResult.permissions?.canReview));
-    }).catch(err => { if (active) setError(err instanceof Error ? err.message : "Gagal memuat aktivitas pembelajaran."); })
-      .finally(() => { if (active) setLoading(false); });
-    return () => { active = false; };
-  }, []);
+  useEffect(() => { void load(); }, [load]);
 
   async function createPlan(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault(); setSaving(true); setError("");
