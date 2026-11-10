@@ -10,6 +10,11 @@ type Journal = { id: string; journal_date: string; topic: string; reflection: st
 type Option = { id: string; full_name?: string; class_name?: string; subject_name?: string; teacher_name?: string };
 type Assignment = { id: string; class_name: string; subject_name: string; teacher_name?: string };
 
+function getLocalDateInputValue() {
+  const now = new Date();
+  return new Date(now.getTime() - now.getTimezoneOffset() * 60_000).toISOString().slice(0, 10);
+}
+
 export function TeachingWorkspace({ teacherMode = false }: { teacherMode?: boolean } = {}) {
   const [tab, setTab] = useState<Tab>("plans");
   const [plans, setPlans] = useState<Plan[]>([]);
@@ -30,7 +35,7 @@ export function TeachingWorkspace({ teacherMode = false }: { teacherMode?: boole
   const [assessment, setAssessment] = useState("");
 
   const [assignmentId, setAssignmentId] = useState("");
-  const [journalDate, setJournalDate] = useState(new Date().toISOString().slice(0, 10));
+  const [journalDate, setJournalDate] = useState("");
   const [topic, setTopic] = useState("");
   const [reflection, setReflection] = useState("");
 
@@ -51,6 +56,7 @@ export function TeachingWorkspace({ teacherMode = false }: { teacherMode?: boole
   }, []);
 
   useEffect(() => {
+    setJournalDate(current => current || getLocalDateInputValue());
     let active = true;
     Promise.all([
       fetch("/api/teaching/plans", { cache: "no-store" }).then(async response => { const result = await response.json(); if (!response.ok) throw new Error(result.error ?? "Perencanaan ajar tidak dapat dimuat."); return result; }),
