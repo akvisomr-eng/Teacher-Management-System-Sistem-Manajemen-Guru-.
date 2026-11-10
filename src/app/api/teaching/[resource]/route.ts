@@ -9,23 +9,24 @@ type DbTx = TransactionSql<Record<string, never>>;
 const managerRoles = new Set(["tenant_owner", "tenant_admin", "principal", "vice_principal", "school_operator"]);
 const teacherRoles = new Set(["teacher", "homeroom_teacher"]);
 const resourceSchema = z.enum(["plans", "journals"]);
+const databaseUuidSchema = z.string().regex(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i, "ID harus berupa UUID PostgreSQL yang valid.");
 const planCreate = z.object({
   title: z.string().trim().min(3).max(200),
   subject: z.string().trim().max(120).optional().default(""),
   gradeLevel: z.string().trim().max(50).optional().default(""),
-  teacherId: z.string().uuid().optional().or(z.literal("")),
+  teacherId: databaseUuidSchema.optional().or(z.literal("")),
   objectives: z.string().trim().max(5000).optional().default(""),
   activities: z.string().trim().max(8000).optional().default(""),
   assessment: z.string().trim().max(5000).optional().default("")
 });
 const journalCreate = z.object({
-  assignmentId: z.string().uuid(),
+  assignmentId: databaseUuidSchema,
   journalDate: z.string().date(),
   topic: z.string().trim().min(3).max(200),
   reflection: z.string().trim().max(10000).optional().default("")
 });
-const planUpdate = z.object({ id: z.string().uuid(), status: z.enum(["draft", "submitted", "approved", "revision"]) });
-const journalUpdate = z.object({ id: z.string().uuid(), status: z.enum(["draft", "submitted", "reviewed"]) });
+const planUpdate = z.object({ id: databaseUuidSchema, status: z.enum(["draft", "submitted", "approved", "revision"]) });
+const journalUpdate = z.object({ id: databaseUuidSchema, status: z.enum(["draft", "submitted", "reviewed"]) });
 
 type Context = { params: Promise<{ resource: string }> };
 type Work = (tx: DbTx, tenantId: string, schoolId: string, userId: string, teacherId: string | null, role: string) => Promise<Response>;
