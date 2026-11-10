@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   clearTeacherItems, createTeacherBackup, openTeacherBackup, readTeacherItems,
   unlockTeacherVault, writeTeacherItem, type VaultWorkItem
@@ -15,11 +15,15 @@ const TYPES = [
 ];
 
 export default function TeacherDesk({ identity }: { identity: Identity }) {
+  const [hasAuthenticated, setHasAuthenticated] = useState(Boolean(identity?.teacherId));
+  if (identity?.teacherId && !hasAuthenticated) setHasAuthenticated(true);
+  const instanceKey = identity?.teacherId ?? (hasAuthenticated ? "logged-out" : "offline");
+  return <TeacherDeskContent key={instanceKey} identity={identity} allowOfflineFallback={!hasAuthenticated && !identity?.teacherId} />;
+}
+
+function TeacherDeskContent({ identity, allowOfflineFallback }: { identity: Identity; allowOfflineFallback: boolean }) {
   const [items, setItems] = useState<VaultWorkItem[]>([]);
-  const [localTeacherId] = useState<string | null>(() => identity?.teacherId ?? (typeof window !== "undefined" ? window.sessionStorage.getItem("tms-teacher-id") : null));
-  const previousIdentity = useRef<string | null>(identity?.teacherId ?? null);
-  const loggedOut = useRef(false);
-  const effectiveTeacherId = identity?.teacherId ?? (loggedOut.current ? null : localTeacherId);
+  const effectiveTeacherId = identity?.teacherId ?? (allowOfflineFallback && typeof window !== "undefined" ? window.sessionStorage.getItem("tms-teacher-id") : null);
   const dbName = effectiveTeacherId ? `${DB_NAME}:${effectiveTeacherId}` : null;
   const [title, setTitle] = useState("");
   const [itemType, setItemType] = useState("lesson_plan");
@@ -36,6 +40,7 @@ export default function TeacherDesk({ identity }: { identity: Identity }) {
   const [vaultSalt, setVaultSalt] = useState<string | null>(null);
   const [passphrase, setPassphrase] = useState("");
   const [message, setMessage] = useState("Data offline akan dienkripsi sebelum disimpan pada perangkat.");
+
   const pendingCount = items.filter(item => item.syncState !== "synced").length;
   const syncedCount = items.length - pendingCount;
   const filteredItems = items.filter(item => {
@@ -52,31 +57,14 @@ export default function TeacherDesk({ identity }: { identity: Identity }) {
   }, [dbName, vaultKey]);
 
   useEffect(() => {
-    const nextIdentity = identity?.teacherId ?? null;
-    if (previousIdentity.current !== nextIdentity) {
-      setVaultKey(null); setVaultSalt(null); setItems([]);
-      setEditingId(null); setTitle(""); setBody(""); setSubject(""); setClassName(""); setDueDate("");
-      setPassphrase("");
-      if (nextIdentity) {
-        loggedOut.current = false;
-        sessionStorage.setItem("tms-teacher-id", nextIdentity);
-        setMessage("Identitas guru berubah. Vault sebelumnya dikunci; buka vault milik akun ini untuk melanjutkan.");
-      } else if (previousIdentity.current) {
-        loggedOut.current = true;
-        sessionStorage.removeItem("tms-teacher-id");
-        setMessage("Sesi guru berakhir. Data lokal tetap terenkripsi dan tidak ditampilkan pada akun lain.");
-      }
-      previousIdentity.current = nextIdentity;
-    } else if (nextIdentity) {
-      loggedOut.current = false;
-      sessionStorage.setItem("tms-teacher-id", nextIdentity);
-    }
+    if (identity?.teacherId) sessionStorage.setItem("tms-teacher-id", identity.teacherId);
+    else if (!allowOfflineFallback) sessionStorage.removeItem("tms-teacher-id");
     const update = () => setOnline(navigator.onLine);
     window.addEventListener("online", update);
     window.addEventListener("offline", update);
     if ("serviceWorker" in navigator) void navigator.serviceWorker.register("/teacher-sw.js").catch(() => undefined);
     return () => { window.removeEventListener("online", update); window.removeEventListener("offline", update); };
-  }, [identity?.teacherId]);
+  }, [identity?.teacherId, allowOfflineFallback]);
 
   async function unlock() {
     if (!dbName) { setMessage("Login online sekali sebagai guru untuk membuka ruang kerja pribadi."); return; }
@@ -173,7 +161,7 @@ export default function TeacherDesk({ identity }: { identity: Identity }) {
 
   async function exportData() {
     if (!dbName || !vaultKey || !vaultSalt) { setMessage("Buka vault terlebih dahulu."); return; }
-    const backup = await createTeacherBackup(passphrase, vaultSalt, identity ?? { teacherId: localTeacherId }, await readTeacherItems(dbName, vaultKey));
+    const backup = await createTeacherBackup(passphrase, vaultSalt, identity ?? { teacherId: effectiveTeacherId ?? "" }, await readTeacherItems(dbName, vaultKey));
     const blob = new Blob([backup], { type: "application/json" });
     const url = URL.createObjectURL(blob); const a = document.createElement("a");
     a.href = url; a.download = `tms-teacher-desk-encrypted-${new Date().toISOString().slice(0,10)}.json`; a.click(); URL.revokeObjectURL(url);
@@ -181,11 +169,11 @@ export default function TeacherDesk({ identity }: { identity: Identity }) {
   }
 
   async function importData(file?: File) {
-    if (!file || !dbName || !vaultKey || !localTeacherId) return;
+    if (!file || !dbName || !vaultKey || !effectiveTeacherId) return;
     try {
       if (file.size > 5 * 1024 * 1024) throw new Error("Ukuran paket melebihi batas 5 MB.");
       const backup = await openTeacherBackup(await file.text(), passphrase);
-      if (!backup.teacher?.teacherId || backup.teacher.teacherId !== localTeacherId) throw new Error("Identitas guru pada paket tidak cocok.");
+      if (!backup.teacher?.teacherId || backup.teacher.teacherId !== effectiveTeacherId) throw new Error("Identitas guru pada paket tidak cocok.");
       if (!Array.isArray(backup.items) || backup.items.length > 500) throw new Error("Struktur paket tidak valid atau jumlah data melebihi batas.");
       const existing = new Map((await readTeacherItems(dbName, vaultKey)).map(item => [item.id, item]));
       let restored = 0, duplicates = 0, conflicts = 0;
