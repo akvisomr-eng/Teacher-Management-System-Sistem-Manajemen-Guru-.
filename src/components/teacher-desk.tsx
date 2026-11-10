@@ -93,7 +93,7 @@ function TeacherDeskContent({ identity, allowOfflineFallback }: { identity: Iden
     };
     await writeTeacherItem(dbName, vaultKey, item); await refresh();
     setTitle(""); setBody(""); setSubject(""); setClassName(""); setDueDate(""); setEditingId(null);
-    setMessage("Tersimpan terenkripsi di perangkat. Anda dapat melanjutkan tanpa internet.");
+    setMessage("Draf tersimpan terenkripsi di perangkat. Saat online, sinkronkan untuk menyimpan salinannya di akun. Pengajuan/peninjauan sekolah dilakukan melalui Aktivitas pembelajaran.");
   }
 
   async function sync() {
@@ -259,7 +259,7 @@ function TeacherDeskContent({ identity, allowOfflineFallback }: { identity: Iden
     </section>
     <section style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(min(100%,320px),1fr))",gap:18,marginTop:18}}>
       <div style={{background:"white",borderRadius:14,padding:20,border:"1px solid #e6eaf2"}}>
-        <h2 style={{marginTop:0}}>Buat dokumen kerja</h2>
+        <h2 style={{marginTop:0}}>Buat dokumen kerja</h2><p style={{fontSize:13,lineHeight:1.6,color:"#65708a",background:"#f5f7fc",borderRadius:8,padding:12}}>Dokumen di ruang ini adalah draf pribadi yang dapat dibuat tanpa internet dan disinkronkan sebagai arsip kerja. Untuk mengajukan rencana ajar atau jurnal ke sekolah agar masuk alur peninjauan, sambungkan internet lalu buka <b>Aktivitas pembelajaran</b>. Draf di sini tidak otomatis menjadi catatan resmi atau dikirim untuk persetujuan.</p>
         <label style={{display:"block",fontSize:13,marginBottom:6}}>Jenis dokumen</label><select value={itemType} onChange={e=>setItemType(e.target.value)} style={{width:"100%",padding:11,marginBottom:12}}>{TYPES.map(([v,l])=><option key={v} value={v}>{l}</option>)}</select>
         <label style={{display:"block",fontSize:13,marginBottom:6}}>Judul</label><input value={title} onChange={e=>setTitle(e.target.value)} placeholder="Contoh: Rencana pembelajaran Matematika" style={{width:"100%",padding:11,marginBottom:12}}/>
         <label style={{display:"block",fontSize:13,marginBottom:6}}>Mata pelajaran (opsional)</label><input value={subject} onChange={e=>setSubject(e.target.value)} placeholder="Contoh: Matematika" style={{width:"100%",padding:11,marginBottom:12}}/>
