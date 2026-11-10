@@ -47,3 +47,11 @@ These are external/product decisions or operational controls, not items that can
 3. Configure business domain, branded SMTP, production backup/restore and monitoring.
 4. Select payment provider and approve price/quotas; implement and test checkout, webhook idempotency, invoices, subscription lifecycle and access enforcement.
 5. Commercial release after security, operational, legal and payment acceptance.
+
+
+## Payment provider decision (10 November 2026)
+
+- Midtrans is selected as the primary payment gateway; Xendit is deferred.
+- Payment integration is not live and collection remains disabled. Merchant account approval, credentials, approved prices/quotas, billing rules, signed webhook processing, subscription enforcement, and sandbox acceptance are still required.
+- The provider decision does not approve any price or authorize charging customers.
+- See [Midtrans Payment Foundation](PAYMENTS_MIDTRANS.md) for the implementation contract and release gates.
