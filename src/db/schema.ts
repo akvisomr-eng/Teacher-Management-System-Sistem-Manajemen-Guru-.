@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, uuid, varchar, text, timestamp, boolean, jsonb, integer, bigint, uniqueIndex, index } from "drizzle-orm/pg-core";
+import { pgTable, uuid, varchar, text, timestamp, boolean, jsonb, integer, bigint, uniqueIndex, index, foreignKey } from "drizzle-orm/pg-core";
 
 export const tenants = pgTable("tenants", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -263,6 +263,7 @@ export const billingInvoices = pgTable("billing_invoices", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow()
 }, (t) => [
   uniqueIndex("billing_invoices_tenant_number_uq").on(t.tenantId, t.invoiceNumber),
+  uniqueIndex("billing_invoices_id_scope_uq").on(t.id, t.tenantId, t.schoolId),
   index("billing_invoices_scope_status_idx").on(t.tenantId, t.schoolId, t.status, t.createdAt)
 ]);
 
@@ -285,7 +286,9 @@ export const paymentTransactions = pgTable("payment_transactions", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow()
 }, (t) => [
-  index("payment_transactions_scope_status_idx").on(t.tenantId, t.schoolId, t.status, t.createdAt)
+  uniqueIndex("payment_transactions_provider_ref_uq").on(t.provider, t.providerTransactionId).where(sql`${t.providerTransactionId} IS NOT NULL`),
+  index("payment_transactions_scope_status_idx").on(t.tenantId, t.schoolId, t.status, t.createdAt),
+  foreignKey({ columns: [t.invoiceId, t.tenantId, t.schoolId], foreignColumns: [billingInvoices.id, billingInvoices.tenantId, billingInvoices.schoolId], name: "payment_transactions_invoice_scope_fk" })
 ]);
 
 export const billingPaymentEvents = pgTable("billing_payment_events", {
