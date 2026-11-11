@@ -24,7 +24,9 @@ export function AuthForm({ initialMode }: Props) {
   const [busy, setBusy] = useState(false);
 
   function getRedirectTarget(): Route {
-    const requested = new URLSearchParams(window.location.search).get("callbackURL");
+    const params = new URLSearchParams(window.location.search);
+    // Support both the auth provider convention and legacy in-app links.
+    const requested = params.get("callbackURL") ?? params.get("redirectTo");
     if (!requested) return "/";
     try {
       const target = new URL(requested, window.location.origin);
