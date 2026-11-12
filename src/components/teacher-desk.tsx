@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { authClient } from "@/lib/auth/client";
 import TeacherDocumentEditor from "@/components/teacher-document-editor";
 import {
   clearTeacherItems, createTeacherBackup, openTeacherBackup, readTeacherItems,
@@ -24,6 +26,7 @@ export default function TeacherDesk({ identity }: { identity: Identity }) {
 }
 
 function TeacherDeskContent({ identity, allowOfflineFallback }: { identity: Identity; allowOfflineFallback: boolean }) {
+  const router = useRouter();
   const [items, setItems] = useState<VaultWorkItem[]>([]);
   const effectiveTeacherId = identity?.teacherId ?? (allowOfflineFallback && typeof window !== "undefined" ? window.sessionStorage.getItem("tms-teacher-id") : null);
   const dbName = effectiveTeacherId ? `${DB_NAME}:${effectiveTeacherId}` : null;
@@ -245,6 +248,7 @@ function TeacherDeskContent({ identity, allowOfflineFallback }: { identity: Iden
       <div><small style={{letterSpacing:2,color:"#6254d9",fontWeight:700}}>TMS • PERSONAL WORKSPACE</small><h1 style={{fontSize:30,margin:"8px 0"}}>Ruang Kerja Guru</h1><p style={{color:"#65708a",margin:0}}>{identity ? `${identity.name} · ${identity.school}` : "Mode offline · ruang pribadi perangkat"}</p></div>
       <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
         <Link href="/teacher/ai" style={{display:"inline-flex",alignItems:"center",padding:"9px 12px",border:"1px solid #6254d9",borderRadius:8,background:"#f4f2ff",color:"#5143c5",textDecoration:"none",fontSize:14,fontWeight:700}}>Asisten AI Guru</Link>
+        {identity?.teacherId ? <button type="button" onClick={async () => { lock(); await authClient.signOut(); sessionStorage.removeItem("tms-teacher-id"); router.replace("/teacher/sign-in"); router.refresh(); }} style={{display:"inline-flex",alignItems:"center",padding:"9px 12px",border:"1px solid #e5b8b8",borderRadius:8,background:"#fff5f5",color:"#9b3030",fontSize:14,fontWeight:700,cursor:"pointer"}}>Keluar</button> : <Link href="/teacher/sign-in" style={{display:"inline-flex",alignItems:"center",padding:"9px 12px",border:"1px solid #d9ddec",borderRadius:8,background:"white",color:"#35415c",textDecoration:"none",fontSize:14}}>Login guru</Link>}
         <Link href="/teacher/activities" style={{display:"inline-flex",alignItems:"center",padding:"9px 12px",border:"1px solid #d9ddec",borderRadius:8,background:"white",color:"#35415c",textDecoration:"none",fontSize:14}}>Aktivitas pembelajaran</Link>
         <button onClick={exportData} disabled={busy} title="Ekspor cadangan terenkripsi dari vault perangkat">Ekspor cadangan</button>
         <button onClick={()=>void pull()} disabled={busy} title="Mengambil arsip kerja milik akun guru dari server TMS; perlu online dan vault terbuka">Ambil dari TMS</button>
