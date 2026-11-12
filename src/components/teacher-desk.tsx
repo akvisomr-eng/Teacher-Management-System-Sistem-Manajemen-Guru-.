@@ -29,10 +29,6 @@ function TeacherDeskContent({ identity, allowOfflineFallback }: { identity: Iden
   const dbName = effectiveTeacherId ? `${DB_NAME}:${effectiveTeacherId}` : null;
   const [title, setTitle] = useState("");
   const [itemType, setItemType] = useState("lesson_plan");
-  const [body, setBody] = useState("");
-  const [subject, setSubject] = useState("");
-  const [className, setClassName] = useState("");
-  const [dueDate, setDueDate] = useState("");
   const [editorInitialData, setEditorInitialData] = useState<Record<string,string>>({});
   const [searchQuery, setSearchQuery] = useState("");
   const [filterType, setFilterType] = useState("all");
@@ -97,7 +93,7 @@ function TeacherDeskContent({ identity, allowOfflineFallback }: { identity: Iden
       schemaVersion: 2, clientUpdatedAt: new Date().toISOString(), syncState: "local"
     };
     await writeTeacherItem(dbName, vaultKey, item); await refresh();
-    setTitle(""); setBody(""); setSubject(""); setClassName(""); setDueDate(""); setEditingId(null); setEditorInitialData({});
+    setTitle(""); setEditingId(null); setEditorInitialData({});
     setMessage("Dokumen terstruktur tersimpan terenkripsi di perangkat. Sinkronisasi menyimpan arsip kerja; pengajuan resmi sekolah tetap melalui Aktivitas pembelajaran.");
   }
 
@@ -186,7 +182,7 @@ function TeacherDeskContent({ identity, allowOfflineFallback }: { identity: Iden
 
   async function clearDeviceData() {
     if (!dbName || !vaultKey || !window.confirm("Hapus seluruh dokumen lokal pada perangkat ini? Salinan tersinkron di TMS tidak dihapus.")) return;
-    await clearTeacherItems(dbName); await refresh(); setEditingId(null); setTitle(""); setBody(""); setSubject(""); setClassName(""); setDueDate("");
+    await clearTeacherItems(dbName); await refresh(); setEditingId(null); setTitle(""); setEditorInitialData({});
     setMessage("Dokumen lokal dihapus. Salinan server tetap tersedia.");
   }
 
