@@ -14,7 +14,16 @@ export async function GET() {
       `;
       if (!memberships.length) return { needsOnboarding: true, user: { name: user.name, email: user.email } };
 
-      const membership = memberships[0];
+      const adminRoles = ["tenant_owner", "tenant_admin", "principal", "vice_principal", "school_operator"];
+      const membership = memberships.find((item) => adminRoles.includes(item.role));
+      if (!membership) {
+        const isTeacher = memberships.some((item) => item.role === "teacher");
+        return {
+          accessDenied: true,
+          error: isTeacher ? "Akun ini terdaftar sebagai guru. Gunakan Portal Guru." : "Akun ini tidak memiliki hak akses administrator.",
+          portal: isTeacher ? "teacher" : "admin"
+        };
+      }
       await tx`SELECT set_config('app.tenant_id', ${membership.tenant_id}, true)`;
       const schoolId = membership.school_id;
       const [schoolInfo] = await tx`
@@ -47,6 +56,9 @@ export async function GET() {
         activities: activityRows
       };
     });
+    if ("accessDenied" in result && result.accessDenied) {
+      return NextResponse.json({ error: result.error, portal: result.portal }, { status: 403 });
+    }
     return NextResponse.json(result);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Gagal memuat ringkasan.";
