@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import TeacherDocumentEditor from "@/components/teacher-document-editor";
 import {
   clearTeacherItems, createTeacherBackup, openTeacherBackup, readTeacherItems,
   unlockTeacherVault, writeTeacherItem, type VaultWorkItem
@@ -32,6 +33,7 @@ function TeacherDeskContent({ identity, allowOfflineFallback }: { identity: Iden
   const [subject, setSubject] = useState("");
   const [className, setClassName] = useState("");
   const [dueDate, setDueDate] = useState("");
+  const [editorInitialData, setEditorInitialData] = useState<Record<string,string>>({});
   const [searchQuery, setSearchQuery] = useState("");
   const [filterType, setFilterType] = useState("all");
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -84,16 +86,19 @@ function TeacherDeskContent({ identity, allowOfflineFallback }: { identity: Iden
     setMessage("Vault dikunci. Data terenkripsi tetap tersimpan pada perangkat.");
   }
 
-  async function save() {
+  async function save(formTitle: string, formData: Record<string,string>) {
     if (!dbName || !vaultKey) { setMessage("Buka vault terlebih dahulu untuk menyimpan dokumen."); return; }
-    if (!title.trim()) { setMessage("Isi judul dokumen terlebih dahulu."); return; }
+    const template = formData.__templateKey ?? itemType;
+    const summary = Object.entries(formData).filter(([key,value]) => key !== "__templateKey" && value.trim())
+      .map(([key,value]) => `${key}: ${value}`).join("\n");
     const item: VaultWorkItem = {
-      id: editingId ?? crypto.randomUUID(), itemType, title: title.trim(), content: { body, subject: subject.trim(), className: className.trim(), dueDate },
-      schemaVersion: 1, clientUpdatedAt: new Date().toISOString(), syncState: "local"
+      id: editingId ?? crypto.randomUUID(), itemType, title: formTitle.trim() || formData.topic || formData.assessmentPurpose || itemType,
+      content: { body: summary, subject: formData.subject ?? "", className: formData.className ?? formData.phaseGrade ?? "", dueDate: formData.targetDate ?? formData.followUpDate ?? "", formData, templateKey: template, templateVersion: 2 },
+      schemaVersion: 2, clientUpdatedAt: new Date().toISOString(), syncState: "local"
     };
     await writeTeacherItem(dbName, vaultKey, item); await refresh();
-    setTitle(""); setBody(""); setSubject(""); setClassName(""); setDueDate(""); setEditingId(null);
-    setMessage("Draf tersimpan terenkripsi di perangkat. Saat online, sinkronkan untuk menyimpan salinannya di akun. Pengajuan/peninjauan sekolah dilakukan melalui Aktivitas pembelajaran.");
+    setTitle(""); setBody(""); setSubject(""); setClassName(""); setDueDate(""); setEditingId(null); setEditorInitialData({});
+    setMessage("Dokumen terstruktur tersimpan terenkripsi di perangkat. Sinkronisasi menyimpan arsip kerja; pengajuan resmi sekolah tetap melalui Aktivitas pembelajaran.");
   }
 
   async function sync() {
@@ -259,15 +264,16 @@ function TeacherDeskContent({ identity, allowOfflineFallback }: { identity: Iden
     </section>
     <section style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(min(100%,320px),1fr))",gap:18,marginTop:18}}>
       <div style={{background:"white",borderRadius:14,padding:20,border:"1px solid #e6eaf2"}}>
-        <h2 style={{marginTop:0}}>Buat dokumen kerja</h2><p style={{fontSize:13,lineHeight:1.6,color:"#65708a",background:"#f5f7fc",borderRadius:8,padding:12}}>Dokumen di ruang ini adalah draf pribadi yang dapat dibuat tanpa internet dan disinkronkan sebagai arsip kerja. Untuk mengajukan rencana ajar atau jurnal ke sekolah agar masuk alur peninjauan, sambungkan internet lalu buka <b>Aktivitas pembelajaran</b>. Draf di sini tidak otomatis menjadi catatan resmi atau dikirim untuk persetujuan.</p>
-        <label style={{display:"block",fontSize:13,marginBottom:6}}>Jenis dokumen</label><select value={itemType} onChange={e=>setItemType(e.target.value)} style={{width:"100%",padding:11,marginBottom:12}}>{TYPES.map(([v,l])=><option key={v} value={v}>{l}</option>)}</select>
-        <label style={{display:"block",fontSize:13,marginBottom:6}}>Judul</label><input value={title} onChange={e=>setTitle(e.target.value)} placeholder="Contoh: Rencana pembelajaran Matematika" style={{width:"100%",padding:11,marginBottom:12}}/>
-        <label style={{display:"block",fontSize:13,marginBottom:6}}>Mata pelajaran (opsional)</label><input value={subject} onChange={e=>setSubject(e.target.value)} placeholder="Contoh: Matematika" style={{width:"100%",padding:11,marginBottom:12}}/>
-        <label style={{display:"block",fontSize:13,marginBottom:6}}>Kelas / rombongan belajar (opsional)</label><input value={className} onChange={e=>setClassName(e.target.value)} placeholder="Contoh: VII-A" style={{width:"100%",padding:11,marginBottom:12}}/>
-        <label style={{display:"block",fontSize:13,marginBottom:6}}>Target penyelesaian (opsional)</label><input type="date" value={dueDate} onChange={e=>setDueDate(e.target.value)} style={{width:"100%",padding:11,marginBottom:12}}/>
-        <label style={{display:"block",fontSize:13,marginBottom:6}}>Isi / catatan</label><textarea value={body} onChange={e=>setBody(e.target.value)} rows={9} placeholder="Tuliskan tujuan, langkah pembelajaran, refleksi, materi, atau catatan pekerjaan…" style={{width:"100%",padding:11,resize:"vertical"}}/>
-        <button onClick={()=>void save()} disabled={!vaultKey} style={{marginTop:12,background:"#6254d9",color:"white",border:0,borderRadius:8,padding:"12px 18px",cursor:"pointer"}}>{editingId?"Perbarui dokumen":"Simpan terenkripsi"}</button>
-        {editingId&&<button onClick={()=>{setEditingId(null);setTitle("");setBody("");}} style={{marginLeft:8,marginTop:12,padding:"12px 18px"}}>Batal edit</button>}
+        <TeacherDocumentEditor
+          itemType={itemType}
+          onTypeChange={next => { setItemType(next); setEditingId(null); setEditorInitialData({}); }}
+          initialTitle={title}
+          initialData={editorInitialData}
+          onSave={(documentTitle, formData) => void save(documentTitle, formData)}
+          disabled={!vaultKey}
+          editing={Boolean(editingId)}
+          onCancel={() => { setEditingId(null); setTitle(""); setEditorInitialData({}); }}
+        />
       </div>
       <div style={{background:"white",borderRadius:14,padding:20,border:"1px solid #e6eaf2"}}>
         <h2 style={{marginTop:0}}>Pekerjaan saya ({filteredItems.length})</h2>
@@ -275,7 +281,7 @@ function TeacherDeskContent({ identity, allowOfflineFallback }: { identity: Iden
         <select aria-label="Filter jenis pekerjaan" value={filterType} onChange={e=>setFilterType(e.target.value)} style={{width:"100%",padding:11,marginBottom:12}}><option value="all">Semua jenis pekerjaan</option>{TYPES.map(([v,l])=><option key={v} value={v}>{l}</option>)}</select>
         {!vaultKey?<p style={{color:"#7b8499"}}>Buka vault untuk melihat pekerjaan pribadi.</p>:items.length===0?<p style={{color:"#7b8499"}}>Belum ada pekerjaan. Mulai buat rencana, jurnal, materi, atau refleksi.</p>:filteredItems.length===0?<p style={{color:"#7b8499"}}>Tidak ada pekerjaan yang cocok dengan pencarian.</p>:<div style={{display:"grid",gap:10}}>{filteredItems.map(item=><article key={item.id} style={{border:"1px solid #edf0f5",borderRadius:10,padding:13}}>
           <div style={{display:"flex",justifyContent:"space-between",gap:8}}><b>{item.title}</b><small>{item.syncState==="synced"?"Tersinkron":item.syncState==="conflict"?"Perlu pemeriksaan":"Lokal"}</small></div>
-          <button onClick={()=>{setEditingId(item.id);setTitle(item.title);setItemType(item.itemType);setBody(item.content.body);setSubject(item.content.subject??"");setClassName(item.content.className??"");setDueDate(item.content.dueDate??"");}} style={{marginTop:6}}>Edit</button>
+          <button onClick={()=>{setEditingId(item.id);setTitle(item.title);setItemType(item.itemType);setEditorInitialData((item.content.formData && typeof item.content.formData === "object" ? item.content.formData : {}) as Record<string,string>);}} style={{marginTop:6}}>Edit</button>
           {item.syncState === "conflict" && <div style={{marginTop:10,padding:12,background:"#fff7e9",borderRadius:8,border:"1px solid #f0d8ae"}}>
             <b>Konflik sinkronisasi — kedua versi dipertahankan</b>
             {item.serverVersion ? <>
