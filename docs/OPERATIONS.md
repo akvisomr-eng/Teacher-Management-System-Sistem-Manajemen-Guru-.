@@ -70,7 +70,7 @@ Email/password dan verifikasi OTP aktif. Shared SMTP masih digunakan untuk uji a
 - Vercel memiliki `DATABASE_URL` role `tms_app` yang terpisah untuk Preview dan Production; Auth URL dan cookie secret juga dipisahkan. `NEXT_PUBLIC_APP_URL` Production menggunakan `teacher-management-system-nine.vercel.app`.
 - Tidak ada runtime error yang terdeteksi pada rentang pemeriksaan terakhir 30 menit. Route workspace baru ter-build dan deployment READY; pengujian UI dan transaksi dengan sesi pengguna sekolah nyata masih diperlukan karena sesi autentikasi pengguna tidak tersedia untuk pengujian otomatis dari luar. Uji end-to-end sign-in, onboarding, dan transaksi sekolah dengan akun pengguna nyata tetap diperlukan.
 - Shared SMTP masih aktif. SMTP bermerek organisasi, uji autentikasi end-to-end, backup/recovery teruji, kebijakan privasi/retensi, dan prosedur insiden tetap menjadi release gate sebelum operasional komersial penuh.
-- Rapor, remedial/enrichment, komunikasi wali, AI, analitik lanjutan, integrasi, dan billing belum dinyatakan siap operasional.
+- Rapor lanjutan, remedial/enrichment, komunikasi wali, eksekusi model AI, analitik lanjutan, integrasi, dan billing belum dinyatakan siap operasional.
 
 
 ## Standard forms workflow (migration 0008)
@@ -83,7 +83,7 @@ Email/password dan verifikasi OTP aktif. Shared SMTP masih digunakan untuk uji a
 
 ## Commercial launch readiness (10 November 2026)
 
-See [COMMERCIAL_LAUNCH_READINESS.md](COMMERCIAL_LAUNCH_READINESS.md) for the current release and outstanding blockers. Production is live for controlled pilot validation, not yet a fully commercial SaaS. Verified production snapshot: 1 tenant, 1 school, 15 active teacher records, 0 linked teacher accounts, 0 teacher memberships. Neon Auth still uses the shared sender; billing/payment and approved pricing are not implemented. Neon production project is on free_v3 with 6-hour history retention and no separately listed snapshots; branch protection was unavailable at the current plan limit. A real teacher registration/linking test, branded SMTP/domain, backup/restore drill, and legal/support controls remain required.
+See [COMMERCIAL_LAUNCH_READINESS.md](COMMERCIAL_LAUNCH_READINESS.md) for the current release and outstanding blockers. Production is live for controlled pilot validation, not yet a fully commercial SaaS. Verified production snapshot (12 Nov 2026): 1 tenant, 1 school, 15 active teacher records, 15 teacher email fields populated, 1 linked teacher account, 1 teacher membership; Budi's teacher workspace contains six labeled sample documents. Neon Auth still uses the shared sender; billing/payment and approved pricing are not implemented. Neon production project is on free_v3 with 6-hour history retention and no separately listed snapshots; branch protection was unavailable at the current plan limit. A real teacher registration/linking test, branded SMTP/domain, backup/restore drill, and legal/support controls remain required.
 
 ## Payment gateway (Midtrans)
 
@@ -93,3 +93,11 @@ See [COMMERCIAL_LAUNCH_READINESS.md](COMMERCIAL_LAUNCH_READINESS.md) for the cur
 - Store MIDTRANS_SERVER_KEY as a Sensitive server-only Vercel environment variable. Never expose it to browser code or logs. The optional Snap Client Key is publishable and may be configured only when the checkout UI is ready.
 - Preview must use Midtrans Sandbox credentials and Production must use Production credentials. Do not mix environments.
 - Follow docs/PAYMENTS_MIDTRANS.md for signed notifications, idempotency, reconciliation, subscription lifecycle, and release gates.
+
+## AI Teaching Assistant (12 November 2026)
+
+- PR #60, #61, and #62 are merged. `/teacher/ai` is a protected teacher route; unauthenticated page access redirects to sign-in and the unauthenticated API returns 401 in production smoke tests.
+- The Teacher Desk editor now offers contextual suggestions on each field across the six teacher document types. A suggestion is not applied until the teacher explicitly accepts it.
+- PR #63 adds the specialist + independent reviewer two-agent pipeline; production rollout is pending CI and Vercel status for the merged commit.
+- AI model execution stays disabled until an approved model and monthly spend cap are configured. Vercel OIDC is used for deployed Gateway authentication. Each enabled interaction will invoke two bounded model calls.
+- Offline drafts remain available; AI suggestions require an authenticated online session. Avoid sending identifiable student data.
