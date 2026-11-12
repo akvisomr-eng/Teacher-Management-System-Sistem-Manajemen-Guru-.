@@ -11,9 +11,9 @@ import {
 type Identity = { teacherId: string; name: string; school: string } | null;
 const DB_NAME = "tms-teacher-desk";
 const TYPES = [
-  ["lesson_plan", "Rencana pembelajaran"], ["teaching_journal", "Jurnal mengajar"],
-  ["learning_material", "Materi pembelajaran"], ["assessment_draft", "Draf asesmen"],
-  ["reflection", "Refleksi pembelajaran"], ["personal_note", "Catatan pribadi"]
+  ["lesson_plan", "Modul Ajar / RPP"], ["teaching_journal", "Jurnal Mengajar Harian"],
+  ["learning_material", "Bahan Ajar / Materi"], ["assessment_draft", "Instrumen & Analisis Asesmen"],
+  ["reflection", "Refleksi Pembelajaran Guru"], ["personal_note", "Catatan Profesional Pribadi"]
 ];
 
 export default function TeacherDesk({ identity }: { identity: Identity }) {
