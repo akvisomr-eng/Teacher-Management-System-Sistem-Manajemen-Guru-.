@@ -30,21 +30,42 @@ const actionGuidance: Record<string, string> = {
 };
 
 export async function POST(request: Request) {
-  const parsed = requestSchema.safeParse(await request.json().catch(() => null));
+  const rawBody = await request.text().catch(() => "");
+  if (rawBody.length > 24000) return NextResponse.json({ error: "Permintaan terlalu besar. Ringkas konteks dokumen." }, { status: 413 });
+  let body: unknown = null;
+  try { body = JSON.parse(rawBody); } catch { return NextResponse.json({ error: "Format permintaan tidak valid." }, { status: 400 }); }
+  const parsed = requestSchema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: "Permintaan AI tidak valid." }, { status: 400 });
   const input = parsed.data;
   const contextEntries = Object.entries(input.context).slice(0, 30);
   const contextText = contextEntries.map(([key, value]) => `- ${key}: ${value}`).join("\n");
   if (contextText.length > 12000) return NextResponse.json({ error: "Konteks terlalu panjang. Ringkas data sebelum meminta bantuan AI." }, { status: 413 });
 
-  const apiKey = process.env.AI_GATEWAY_API_KEY;
+  const gatewayToken = process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN;
   const model = process.env.TMS_AI_MODEL;
-  if (!apiKey || !model) return NextResponse.json({
+  if (!gatewayToken || !model) return NextResponse.json({
     error: "Asisten AI belum diaktifkan oleh administrator. Konfigurasi AI Gateway dan model pada environment server diperlukan."
   }, { status: 503 });
 
   try {
-    return await withAuthenticatedUser(async (tx, _user, profile) => {
+    return await withAuthenticatedUser(async (tx, user, profile) => {
+      const account = await tx`
+        SELECT status, auth_user_id FROM users WHERE id = ${profile.id} LIMIT 1
+      `;
+      if (account.length !== 1 || account[0].status !== "active" || account[0].auth_user_id !== user.id) {
+        return NextResponse.json({ error: "Akun pengguna belum aktif atau sesi tidak cocok." }, { status: 403 });
+      }
+      await tx`SELECT pg_advisory_xact_lock(hashtext(${profile.id})::bigint)`;
+      const usage = await tx`
+        SELECT
+          count(*) FILTER (WHERE created_at > now() - interval '1 minute')::int AS minute_count,
+          count(*) FILTER (WHERE created_at > now() - interval '24 hours')::int AS day_count
+        FROM audit_logs
+        WHERE actor_user_id = ${profile.id} AND action = 'teacher_ai.request_attempt'
+      `;
+      if (usage[0].minute_count >= 5 || usage[0].day_count >= 60) {
+        return NextResponse.json({ error: "Batas penggunaan AI sementara tercapai. Coba kembali nanti atau hubungi administrator sekolah." }, { status: 429 });
+      }
       const memberships = await tx`
         SELECT tenant_id, school_id FROM memberships
         WHERE user_id = ${profile.id} AND role = 'teacher' AND school_id IS NOT NULL
@@ -60,6 +81,15 @@ export async function POST(request: Request) {
         LIMIT 2
       `;
       if (teachers.length !== 1) return NextResponse.json({ error: "Akun belum tertaut ke satu data induk guru aktif." }, { status: 403 });
+
+      await tx`
+        INSERT INTO audit_logs (tenant_id, school_id, actor_user_id, action, resource_type, metadata)
+        VALUES (${membership.tenant_id}, ${membership.school_id}, ${profile.id},
+          'teacher_ai.request_attempt', 'teacher_ai', ${tx.json({
+            action: input.action, documentType: input.documentType, model,
+            inputCharacters: userPrompt.length
+          })})
+      `;
 
       const system = [
         "Anda adalah TMS Teaching Assistant, pendamping profesional guru di Indonesia.",
@@ -84,7 +114,7 @@ export async function POST(request: Request) {
 
       const response = await fetch("https://ai-gateway.vercel.sh/v1/chat/completions", {
         method: "POST",
-        headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+        headers: { Authorization: `Bearer ${gatewayToken}`, "Content-Type": "application/json" },
         body: JSON.stringify({
           model,
           messages: [{ role: "system", content: system }, { role: "user", content: userPrompt }],
@@ -104,14 +134,6 @@ export async function POST(request: Request) {
       const answer = result.choices?.[0]?.message?.content;
       if (typeof answer !== "string" || !answer.trim()) return NextResponse.json({ error: "AI tidak menghasilkan jawaban yang dapat digunakan." }, { status: 502 });
 
-      await tx`
-        INSERT INTO audit_logs (tenant_id, school_id, actor_user_id, action, resource_type, metadata)
-        VALUES (${membership.tenant_id}, ${membership.school_id}, ${profile.id},
-          'teacher_ai.assistant_request', 'teacher_ai', ${tx.json({
-            action: input.action, documentType: input.documentType, model,
-            inputCharacters: userPrompt.length, outputCharacters: answer.length
-          })})
-      `;
       return NextResponse.json({ answer, specialist: input.documentType, model, requiresTeacherReview: true });
     });
   } catch (error) {
