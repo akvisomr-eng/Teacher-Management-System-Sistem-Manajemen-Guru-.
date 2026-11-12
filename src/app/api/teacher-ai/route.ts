@@ -43,9 +43,6 @@ export async function POST(request: Request) {
 
   const gatewayToken = process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN;
   const model = process.env.TMS_AI_MODEL;
-  if (!gatewayToken || !model) return NextResponse.json({
-    error: "Asisten AI belum diaktifkan oleh administrator. Konfigurasi AI Gateway dan model pada environment server diperlukan."
-  }, { status: 503 });
 
   try {
     return await withAuthenticatedUser(async (tx, user, profile) => {
@@ -70,6 +67,10 @@ export async function POST(request: Request) {
         LIMIT 2
       `;
       if (teachers.length !== 1) return NextResponse.json({ error: "Akun belum tertaut ke satu data induk guru aktif." }, { status: 403 });
+
+      if (!gatewayToken || !model) return NextResponse.json({
+        error: "Asisten AI belum diaktifkan oleh administrator. Konfigurasi AI Gateway dan model pada environment server diperlukan."
+      }, { status: 503 });
 
       const system = [
         "Anda adalah TMS Teaching Assistant, pendamping profesional guru di Indonesia.",
