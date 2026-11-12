@@ -48,7 +48,7 @@ export default async function TeacherPage() {
       };
     });
   } catch {
-    redirect("/auth/sign-in?redirectTo=%2Fteacher");
+    redirect("/teacher/sign-in");
   }
 
   if (!result.identity) {
