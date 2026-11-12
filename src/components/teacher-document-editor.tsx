@@ -53,23 +53,55 @@ personal_note:{label:"Catatan Profesional Pribadi",purpose:"Catatan pengembangan
 };
 const styles={input:{width:"100%",boxSizing:"border-box" as const,padding:10,border:"1px solid #dbe2ea",borderRadius:8,background:"#fff",color:"#17233d",fontSize:13},label:{display:"grid",gap:6,fontSize:12,fontWeight:650,color:"#334155",minWidth:0} as React.CSSProperties};
 
-export default function TeacherDocumentEditor({itemType,onTypeChange,initialTitle,initialData,onSave,disabled,editing,onCancel}:{itemType:string;onTypeChange:(value:string)=>void;initialTitle:string;initialData:Record<string,string>;onSave:(title:string,data:Record<string,string>)=>void;disabled:boolean;editing:boolean;onCancel:()=>void}){
+const safeAiContextKeys = new Set([
+ "curriculum","academicYear","semester","educationLevel","phaseGrade","subject","topic",
+ "meeting","duration","className","period","date","assessmentType","assessmentPurpose",
+ "learningOutcomes","learningObjectives","learningFlow","priorKnowledge","essentialUnderstanding",
+ "triggerQuestions","learningMaterials","learningModel","media","indicators","blueprint",
+ "achievementCriteria","reflectionScope","estimatedTime","category","priority","relatedArea"
+]);
+
+export default function TeacherDocumentEditor({itemType,onTypeChange,initialTitle,initialData,onSave,disabled,editing,onCancel,aiEnabled}:{itemType:string;onTypeChange:(value:string)=>void;initialTitle:string;initialData:Record<string,string>;onSave:(title:string,data:Record<string,string>)=>void;disabled:boolean;editing:boolean;onCancel:()=>void;aiEnabled:boolean}){
  const template=templates[itemType]??templates.lesson_plan;
  const [title,setTitle]=useState(initialTitle);
  const [values,setValues]=useState<Record<string,string>>(initialData);
+ const [suggestions,setSuggestions]=useState<Record<string,string>>({});
+ const [suggestionErrors,setSuggestionErrors]=useState<Record<string,string>>({});
+ const [suggesting,setSuggesting]=useState<string|null>(null);
  const missing=useMemo(()=>template.sections.flatMap(section=>section.fields.filter(field=>field.required&&!String(values[field.key]??"").trim()).map(field=>field.label)),[template,values]);
- function setField(key:string,value:string){setValues(old=>({...old,[key]:value}));}
+ function setField(key:string,value:string){setValues(old=>({...old,[key]:value}));setSuggestions(old=>({...old,[key]:""}));setSuggestionErrors(old=>({...old,[key]:""}));}
+ async function requestSuggestion(field:Field){
+  setSuggesting(field.key);
+  setSuggestionErrors(old=>({...old,[field.key]:""}));
+  try {
+   const context=Object.fromEntries(Object.entries(values).filter(([key,value])=>safeAiContextKeys.has(key)&&value.trim()).slice(0,20).map(([key,value])=>[key,value.slice(0,500)]));
+   const response=await fetch("/api/teacher-ai",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({action:"suggest",documentType:itemType,field:field.label,context,instruction:"Berikan saran isian yang spesifik untuk kolom ini berdasarkan konteks non-pribadi yang tersedia. Jangan mengarang fakta atau meminta identitas murid."})});
+   const result=await response.json();
+   if(!response.ok) throw new Error(result.error||"Saran AI belum tersedia.");
+   setSuggestions(old=>({...old,[field.key]:String(result.answer||"")}));
+  } catch(error) {
+   setSuggestionErrors(old=>({...old,[field.key]:error instanceof Error?error.message:"Tidak dapat meminta saran AI."}));
+  } finally {setSuggesting(null);}
+ }
  return <section>
  <h2 style={{marginTop:0}}>Formulir dokumen guru</h2>
- <p style={{fontSize:12,lineHeight:1.6,color:"#64748b",background:"#f5f7fc",borderRadius:8,padding:12}}>Setiap jenis dokumen memiliki struktur dan kolom tersendiri. Template mengacu pada prinsip Standar Proses dan Panduan Pembelajaran dan Asesmen edisi 2025. Format dapat disesuaikan satuan pendidikan. Arsip ini bukan sinkronisasi langsung ke Dapodik.</p>
+ <p style={{fontSize:12,lineHeight:1.6,color:"#64748b",background:"#f5f7fc",borderRadius:8,padding:12}}>Setiap jenis dokumen memiliki struktur dan kolom tersendiri. Template mengacu pada prinsip Standar Proses dan Panduan Pembelajaran dan Asesmen edisi 2025. Format dapat disesuaikan satuan pendidikan. Arsip ini bukan sinkronisasi langsung ke Dapodik. Saran AI hanya menggunakan konteks umum terpilih; guru tetap memeriksa dan menyetujui setiap saran. Jangan masukkan identitas pribadi murid.</p>
  <label style={styles.label}>Pilih jenis dokumen<select value={itemType} onChange={event=>onTypeChange(event.target.value)} style={styles.input}>{Object.entries(templates).map(([key,value])=><option key={key} value={key}>{value.label}</option>)}</select></label>
  <div style={{margin:"12px 0 16px",padding:13,background:"#f8fafc",borderRadius:9}}><b>{template.label}</b><p style={{fontSize:12,color:"#64748b",lineHeight:1.6,margin:"5px 0 0"}}>{template.purpose}</p></div>
  <form onSubmit={event=>{event.preventDefault();if(!missing.length)onSave(title,values);}}>
  <label style={{...styles.label,marginBottom:14}}>Judul dokumen<input value={title} onChange={event=>setTitle(event.target.value)} placeholder={template.label} style={styles.input}/></label>
  {template.sections.map(section=><fieldset key={section.title} style={{border:"1px solid #e2e8f0",borderRadius:11,padding:14,margin:"0 0 13px",minWidth:0}}><legend style={{padding:"0 7px",fontSize:13,fontWeight:750,color:"#1e293b"}}>{section.title}</legend><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(min(100%,230px),1fr))",gap:12}}>
- {section.fields.map(field=><label key={field.key} style={{...styles.label,gridColumn:field.type==="textarea"?"1/-1":undefined}}>{field.label}{field.required&&<span style={{color:"#b91c1c"}}> *</span>}
- {field.type==="textarea"?<textarea rows={4} required={field.required} value={values[field.key]??""} onChange={event=>setField(field.key,event.target.value)} style={{...styles.input,resize:"vertical",lineHeight:1.55}}/>:field.type==="select"?<select required={field.required} value={values[field.key]??""} onChange={event=>setField(field.key,event.target.value)} style={styles.input}><option value="">Pilih...</option>{(field.options??[]).map(option=><option key={option}>{option}</option>)}</select>:<input type={field.type??"text"} min={field.type==="number"?0:undefined} required={field.required} value={values[field.key]??""} onChange={event=>setField(field.key,event.target.value)} style={styles.input}/>}
- {field.hint&&<small style={{fontSize:10,color:"#64748b",fontWeight:400}}>{field.hint}</small>}</label>)}
+ {section.fields.map(field=><div key={field.key} style={{...styles.label,gridColumn:field.type==="textarea"?"1/-1":undefined}}>
+ <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:8,flexWrap:"wrap"}}><span>{field.label}{field.required&&<span style={{color:"#b91c1c"}}> *</span>}</span>{aiEnabled&&<button type="button" onClick={()=>void requestSuggestion(field)} disabled={suggesting!==null} style={{border:"1px solid #d7d2ff",background:"#f5f3ff",color:"#5143c5",borderRadius:7,padding:"5px 8px",fontSize:11,fontWeight:700,cursor:"pointer"}}>{suggesting===field.key?"Meminta…":"Saran AI"}</button>}</div>
+ {field.type==="textarea"?<textarea aria-label={field.label} rows={4} required={field.required} value={values[field.key]??""} onChange={event=>setField(field.key,event.target.value)} style={{...styles.input,resize:"vertical",lineHeight:1.55}}/>:field.type==="select"?<select aria-label={field.label} required={field.required} value={values[field.key]??""} onChange={event=>setField(field.key,event.target.value)} style={styles.input}><option value="">Pilih...</option>{(field.options??[]).map(option=><option key={option}>{option}</option>)}</select>:<input aria-label={field.label} type={field.type??"text"} min={field.type==="number"?0:undefined} required={field.required} value={values[field.key]??""} onChange={event=>setField(field.key,event.target.value)} style={styles.input}/>}
+ {field.hint&&<small style={{fontSize:10,color:"#64748b",fontWeight:400}}>{field.hint}</small>}
+ {suggestionErrors[field.key]&&<small role="alert" style={{color:"#a33232"}}>{suggestionErrors[field.key]}</small>}
+ {suggestions[field.key]&&<div style={{border:"1px solid #ddd8ff",background:"#faf9ff",borderRadius:8,padding:10,display:"grid",gap:8}}>
+ <small style={{fontWeight:700,color:"#5143c5"}}>Saran AI · belum diterapkan</small>
+ <p style={{fontSize:12,whiteSpace:"pre-wrap",lineHeight:1.5,margin:0,color:"#334155"}}>{suggestions[field.key]}</p>
+ <div style={{display:"flex",gap:7,flexWrap:"wrap"}}><button type="button" onClick={()=>{setField(field.key,suggestions[field.key]);setSuggestions(old=>({...old,[field.key]:""}));}} style={{border:0,background:"#6254d9",color:"#fff",borderRadius:7,padding:"7px 10px",fontSize:11,fontWeight:700}}>Gunakan saran</button><button type="button" onClick={()=>setSuggestions(old=>({...old,[field.key]:""}))} style={{border:"1px solid #dbe2ea",background:"#fff",borderRadius:7,padding:"7px 10px",fontSize:11}}>Tolak</button></div>
+ </div>}
+ </div>)}
  </div></fieldset>)}
  {missing.length>0&&<p style={{fontSize:11,color:"#9a5a19"}}>Kolom wajib yang belum diisi: {missing.join(", ")}</p>}
  <div style={{display:"flex",gap:8,flexWrap:"wrap"}}><button type="submit" disabled={disabled||missing.length>0} style={{background:"#6254d9",color:"#fff",border:0,borderRadius:8,padding:"11px 16px",fontWeight:700,cursor:"pointer"}}>{editing?"Perbarui dokumen":"Simpan dokumen terenkripsi"}</button>{editing&&<button type="button" onClick={onCancel}>Batal edit</button>}</div>

@@ -277,6 +277,7 @@ function TeacherDeskContent({ identity, allowOfflineFallback }: { identity: Iden
           onSave={(documentTitle, formData) => void save(documentTitle, formData)}
           disabled={!vaultKey}
           editing={Boolean(editingId)}
+          aiEnabled={Boolean(identity?.teacherId)}
           onCancel={() => { setEditingId(null); setTitle(""); setEditorInitialData({}); }}
         />
       </div>
