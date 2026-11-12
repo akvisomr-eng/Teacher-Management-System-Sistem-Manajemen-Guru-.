@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { withAuthenticatedUser } from "@/db/connection";
 
 export const dynamic = "force-dynamic";
@@ -35,7 +36,7 @@ export default async function AiSettingsPage() {
   ] as const;
 
   return <main style={{maxWidth:900,margin:"32px auto",padding:"0 22px",fontFamily:"Arial,sans-serif",color:"#17233d"}}>
-    <a href="/" style={{color:"#6254d9",textDecoration:"none"}}>← Kembali ke Dashboard Admin</a>
+    <Link href="/" style={{color:"#6254d9",textDecoration:"none"}}>← Kembali ke Dashboard Admin</Link>
     <header style={{margin:"24px 0"}}>
       <small style={{letterSpacing:1.5,color:"#6254d9",fontWeight:700}}>TMS • PENGATURAN SISTEM</small>
       <h1 style={{fontSize:30,margin:"8px 0"}}>Pengaturan Asisten AI</h1>
