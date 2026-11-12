@@ -2,7 +2,7 @@
 
 ## Current implementation boundary
 
-The first release adds an authenticated teacher-only assistant at `/teacher/ai` and `POST /api/teacher-ai`. It provides specialist prompt profiles for the six Teacher Desk document types and five actions: draft, field suggestion, review, improve, and innovation ideas.
+The release adds an authenticated teacher-only assistant at `/teacher/ai` and `POST /api/teacher-ai`. It provides specialist profiles for the six Teacher Desk document types and five actions: draft, field suggestion, review, improve, and innovation ideas. The Teacher Desk editor also exposes an AI suggestion action on each field; suggestions are displayed separately and only applied after explicit teacher acceptance.
 
 The endpoint:
 - Requires a valid Neon Auth session, exactly one teacher membership, and exactly one active teacher record linked to that user, tenant, and school.
@@ -12,6 +12,7 @@ The endpoint:
 - Does not persist prompts or generated content in TMS tables.
 - Treats generated content as a draft. The teacher must review and copy/adapt it; there is no automatic form overwrite or submission.
 - Advises users not to send identifiable student data.
+- Inline field assistance sends only a fixed allowlist of general academic context keys; student profile, attendance, evidence, and assessment-result fields are not included in that automatic context.
 
 ## Vercel environment configuration
 
