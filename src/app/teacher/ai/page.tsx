@@ -7,7 +7,11 @@ export const dynamic = "force-dynamic";
 export default async function TeacherAiPage() {
   let allowed = false;
   try {
-    allowed = await withAuthenticatedUser(async (tx, _user, profile) => {
+    allowed = await withAuthenticatedUser(async (tx, user, profile) => {
+      const account = await tx`
+        SELECT status, auth_user_id FROM users WHERE id = ${profile.id} LIMIT 1
+      `;
+      if (account.length !== 1 || account[0].status !== "active" || account[0].auth_user_id !== user.id) return false;
       const memberships = await tx`
         SELECT tenant_id, school_id FROM memberships
         WHERE user_id = ${profile.id} AND role = 'teacher' AND school_id IS NOT NULL
