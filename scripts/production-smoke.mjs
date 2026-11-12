@@ -72,14 +72,13 @@ if (process.env.TMS_EXPECT_TEACHER_AI_AUTH === "true") {
     assert.equal(response.status, 401, body.slice(0, 300));
   });
 
-  await check("report API validates report type", async () => {
-    const { response } = await request("/api/reports?type=not-a-report");
-    assert.equal(response.status, 400);
-  });
-
-  
 } else {
   process.stdout.write("SKIP teacher AI auth checks until the updated production release is deployed.\n");
 }
+
+await check("report API validates report type", async () => {
+  const { response } = await request("/api/reports?type=not-a-report");
+  assert.equal(response.status, 400);
+});
 
 process.stdout.write(`\nTMS production smoke: ${checks.length}/${checks.length} checks passed.\n`);
