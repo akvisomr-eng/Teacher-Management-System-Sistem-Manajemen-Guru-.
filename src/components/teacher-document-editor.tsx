@@ -69,7 +69,7 @@ export default function TeacherDocumentEditor({itemType,onTypeChange,initialTitl
  const [suggestionErrors,setSuggestionErrors]=useState<Record<string,string>>({});
  const [suggesting,setSuggesting]=useState<string|null>(null);
  const missing=useMemo(()=>template.sections.flatMap(section=>section.fields.filter(field=>field.required&&!String(values[field.key]??"").trim()).map(field=>field.label)),[template,values]);
- function setField(key:string,value:string){setValues(old=>({...old,[key]:value}));}
+ function setField(key:string,value:string){setValues(old=>({...old,[key]:value}));setSuggestions(old=>({...old,[key]:""}));setSuggestionErrors(old=>({...old,[key]:""}));}
  async function requestSuggestion(field:Field){
   setSuggesting(field.key);
   setSuggestionErrors(old=>({...old,[field.key]:""}));
@@ -85,7 +85,7 @@ export default function TeacherDocumentEditor({itemType,onTypeChange,initialTitl
  }
  return <section>
  <h2 style={{marginTop:0}}>Formulir dokumen guru</h2>
- <p style={{fontSize:12,lineHeight:1.6,color:"#64748b",background:"#f5f7fc",borderRadius:8,padding:12}}>Setiap jenis dokumen memiliki struktur dan kolom tersendiri. Template mengacu pada prinsip Standar Proses dan Panduan Pembelajaran dan Asesmen edisi 2025. Format dapat disesuaikan satuan pendidikan. Arsip ini bukan sinkronisasi langsung ke Dapodik.</p>
+ <p style={{fontSize:12,lineHeight:1.6,color:"#64748b",background:"#f5f7fc",borderRadius:8,padding:12}}>Setiap jenis dokumen memiliki struktur dan kolom tersendiri. Template mengacu pada prinsip Standar Proses dan Panduan Pembelajaran dan Asesmen edisi 2025. Format dapat disesuaikan satuan pendidikan. Arsip ini bukan sinkronisasi langsung ke Dapodik. Saran AI hanya menggunakan konteks umum terpilih; guru tetap memeriksa dan menyetujui setiap saran. Jangan masukkan identitas pribadi murid.</p>
  <label style={styles.label}>Pilih jenis dokumen<select value={itemType} onChange={event=>onTypeChange(event.target.value)} style={styles.input}>{Object.entries(templates).map(([key,value])=><option key={key} value={key}>{value.label}</option>)}</select></label>
  <div style={{margin:"12px 0 16px",padding:13,background:"#f8fafc",borderRadius:9}}><b>{template.label}</b><p style={{fontSize:12,color:"#64748b",lineHeight:1.6,margin:"5px 0 0"}}>{template.purpose}</p></div>
  <form onSubmit={event=>{event.preventDefault();if(!missing.length)onSave(title,values);}}>
