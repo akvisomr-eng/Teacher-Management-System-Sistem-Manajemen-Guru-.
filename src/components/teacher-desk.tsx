@@ -98,7 +98,9 @@ function TeacherDeskContent({ identity, allowOfflineFallback }: { identity: Iden
   }
 
   async function sync() {
-    if (!dbName || !vaultKey) { setMessage("Buka vault terlebih dahulu."); return; }
+    if (!dbName || !vaultKey) { setMessage("Sinkronkan belum dapat dijalankan: buka vault dengan frasa sandi terlebih dahulu."); return; }
+    if (!online) { setMessage("Sinkronisasi memerlukan koneksi internet. Dokumen lokal tetap aman dan dapat dikirim saat online."); return; }
+    if (busy) return;
     setBusy(true);
     try {
       const pending = (await readTeacherItems(dbName, vaultKey)).filter(x => x.syncState !== "synced");
@@ -137,7 +139,9 @@ function TeacherDeskContent({ identity, allowOfflineFallback }: { identity: Iden
   }
 
   async function pull() {
-    if (!dbName || !vaultKey) { setMessage("Buka vault terlebih dahulu."); return; }
+    if (!dbName || !vaultKey) { setMessage("Ambil dari TMS belum dapat dijalankan: buka vault dengan frasa sandi terlebih dahulu."); return; }
+    if (!online) { setMessage("Ambil dari TMS memerlukan koneksi internet. Gunakan Impor cadangan jika ingin memulihkan file saat offline."); return; }
+    if (busy) return;
     setBusy(true);
     try {
       const response = await fetch("/api/teacher-workspace", { cache: "no-store" });
@@ -181,13 +185,14 @@ function TeacherDeskContent({ identity, allowOfflineFallback }: { identity: Iden
   }
 
   async function clearDeviceData() {
-    if (!dbName || !vaultKey || !window.confirm("Hapus seluruh dokumen lokal pada perangkat ini? Salinan tersinkron di TMS tidak dihapus.")) return;
+    if (!dbName || !vaultKey) { setMessage("Bersihkan perangkat memerlukan vault yang sudah dibuka."); return; }
+    if (!window.confirm("Hapus seluruh dokumen lokal pada perangkat ini? Salinan tersinkron di TMS tidak dihapus.")) return;
     await clearTeacherItems(dbName); await refresh(); setEditingId(null); setTitle(""); setEditorInitialData({});
     setMessage("Dokumen lokal dihapus. Salinan server tetap tersedia.");
   }
 
   async function exportData() {
-    if (!dbName || !vaultKey || !vaultSalt) { setMessage("Buka vault terlebih dahulu."); return; }
+    if (!dbName || !vaultKey || !vaultSalt) { setMessage("Ekspor cadangan memerlukan vault yang sudah dibuka. Masukkan frasa sandi lalu pilih Buka / buat vault."); return; }
     const backup = await createTeacherBackup(passphrase, vaultSalt, identity ?? { teacherId: effectiveTeacherId ?? "" }, await readTeacherItems(dbName, vaultKey));
     const blob = new Blob([backup], { type: "application/json" });
     const url = URL.createObjectURL(blob); const a = document.createElement("a");
@@ -196,7 +201,8 @@ function TeacherDeskContent({ identity, allowOfflineFallback }: { identity: Iden
   }
 
   async function importData(file?: File) {
-    if (!file || !dbName || !vaultKey || !effectiveTeacherId) return;
+    if (!file) return;
+    if (!dbName || !vaultKey || !effectiveTeacherId) { setMessage("Impor cadangan memerlukan identitas guru dan vault yang sudah dibuka. Login guru, buka vault, lalu pilih file lagi."); return; }
     try {
       if (file.size > 5 * 1024 * 1024) throw new Error("Ukuran paket melebihi batas 5 MB.");
       const backup = await openTeacherBackup(await file.text(), passphrase);
@@ -239,16 +245,17 @@ function TeacherDeskContent({ identity, allowOfflineFallback }: { identity: Iden
       <div><small style={{letterSpacing:2,color:"#6254d9",fontWeight:700}}>TMS • PERSONAL WORKSPACE</small><h1 style={{fontSize:30,margin:"8px 0"}}>Ruang Kerja Guru</h1><p style={{color:"#65708a",margin:0}}>{identity ? `${identity.name} · ${identity.school}` : "Mode offline · ruang pribadi perangkat"}</p></div>
       <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
         <Link href="/teacher/activities" style={{display:"inline-flex",alignItems:"center",padding:"9px 12px",border:"1px solid #d9ddec",borderRadius:8,background:"white",color:"#35415c",textDecoration:"none",fontSize:14}}>Aktivitas pembelajaran</Link>
-        <button onClick={exportData} disabled={!vaultKey}>Ekspor cadangan</button>
-        <button onClick={()=>void pull()} disabled={!online||busy||!vaultKey}>Ambil dari TMS</button>
-        <button onClick={()=>void clearDeviceData()} disabled={!vaultKey}>Bersihkan perangkat</button>
-        <label style={{border:"1px solid #d9ddec",borderRadius:8,padding:"10px 14px",background:"white",cursor:"pointer",opacity:vaultKey?1:.5}}>Impor cadangan<input type="file" accept=".json,application/json" hidden disabled={!vaultKey} onChange={e=>void importData(e.target.files?.[0])}/></label>
-        <button onClick={()=>void sync()} disabled={!online||busy||!vaultKey}>{busy?"Memproses…":"Sinkronkan"}</button>
+        <button onClick={exportData} disabled={busy} title="Ekspor cadangan terenkripsi dari vault perangkat">Ekspor cadangan</button>
+        <button onClick={()=>void pull()} disabled={busy} title="Mengambil arsip kerja milik akun guru dari server TMS; perlu online dan vault terbuka">Ambil dari TMS</button>
+        <button onClick={()=>void clearDeviceData()} disabled={busy} title="Menghapus salinan lokal saja; tidak menghapus arsip server">Bersihkan perangkat</button>
+        <label style={{border:"1px solid #d9ddec",borderRadius:8,padding:"10px 14px",background:"white",cursor:"pointer"}} title="Pulihkan cadangan terenkripsi yang identitas gurunya cocok">Impor cadangan<input type="file" accept=".json,application/json" hidden onChange={e=>{void importData(e.target.files?.[0]);e.currentTarget.value="";}}/></label>
+        <button onClick={()=>void sync()} disabled={busy} title="Mengirim dokumen lokal ke server TMS; perlu online dan vault terbuka">{busy?"Memproses…":"Sinkronkan"}</button>
       </div>
     </header>
     <section style={{background:"white",borderRadius:14,padding:20,marginTop:24,border:"1px solid #e6eaf2"}}>
       <div style={{display:"flex",justifyContent:"space-between",gap:12,flexWrap:"wrap"}}><b>Keamanan perangkat</b><span>{online?"● Online":"● Offline"}</span></div>
       <p style={{color:"#65708a",fontSize:13}}>{message}</p>
+      {!vaultKey && <p role="status" style={{fontSize:13,background:"#fff7e9",border:"1px solid #f0d8ae",borderRadius:8,padding:10,color:"#79521d"}}>Tombol cadangan, ambil, bersihkan, impor, dan sinkronisasi menunggu vault dibuka. Ini perlindungan keamanan, bukan kerusakan tombol. Setelah vault terbuka, fungsi perangkat tersedia; Ambil dari TMS dan Sinkronkan juga memerlukan koneksi online.</p>}
       {!vaultKey ? <div style={{display:"flex",gap:8,flexWrap:"wrap",alignItems:"center"}}>
         <input type="password" value={passphrase} onChange={e=>setPassphrase(e.target.value)} placeholder="Frasa sandi vault (minimal 10 karakter)" autoComplete="new-password" style={{padding:11,minWidth:260,flex:1}}/>
         <button onClick={()=>void unlock()} disabled={busy||passphrase.length<10}>{busy?"Membuka…":"Buka / buat vault"}</button>
