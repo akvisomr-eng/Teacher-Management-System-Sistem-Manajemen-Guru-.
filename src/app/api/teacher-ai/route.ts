@@ -55,17 +55,6 @@ export async function POST(request: Request) {
       if (account.length !== 1 || account[0].status !== "active" || account[0].auth_user_id !== user.id) {
         return NextResponse.json({ error: "Akun pengguna belum aktif atau sesi tidak cocok." }, { status: 403 });
       }
-      await tx`SELECT pg_advisory_xact_lock(hashtext(${profile.id})::bigint)`;
-      const usage = await tx`
-        SELECT
-          count(*) FILTER (WHERE created_at > now() - interval '1 minute')::int AS minute_count,
-          count(*) FILTER (WHERE created_at > now() - interval '24 hours')::int AS day_count
-        FROM audit_logs
-        WHERE actor_user_id = ${profile.id} AND action = 'teacher_ai.request_attempt'
-      `;
-      if (usage[0].minute_count >= 5 || usage[0].day_count >= 60) {
-        return NextResponse.json({ error: "Batas penggunaan AI sementara tercapai. Coba kembali nanti atau hubungi administrator sekolah." }, { status: 429 });
-      }
       const memberships = await tx`
         SELECT tenant_id, school_id FROM memberships
         WHERE user_id = ${profile.id} AND role = 'teacher' AND school_id IS NOT NULL
@@ -81,15 +70,6 @@ export async function POST(request: Request) {
         LIMIT 2
       `;
       if (teachers.length !== 1) return NextResponse.json({ error: "Akun belum tertaut ke satu data induk guru aktif." }, { status: 403 });
-
-      await tx`
-        INSERT INTO audit_logs (tenant_id, school_id, actor_user_id, action, resource_type, metadata)
-        VALUES (${membership.tenant_id}, ${membership.school_id}, ${profile.id},
-          'teacher_ai.request_attempt', 'teacher_ai', ${tx.json({
-            action: input.action, documentType: input.documentType, model,
-            inputCharacters: userPrompt.length
-          })})
-      `;
 
       const system = [
         "Anda adalah TMS Teaching Assistant, pendamping profesional guru di Indonesia.",
@@ -111,6 +91,26 @@ export async function POST(request: Request) {
         "Konteks dokumen:",
         contextText || "(Belum ada konteks tambahan)"
       ].filter(Boolean).join("\n\n");
+
+      await tx`SELECT pg_advisory_xact_lock(hashtext(${profile.id})::bigint)`;
+      const usage = await tx`
+        SELECT
+          count(*) FILTER (WHERE created_at > now() - interval '1 minute')::int AS minute_count,
+          count(*) FILTER (WHERE created_at > now() - interval '24 hours')::int AS day_count
+        FROM audit_logs
+        WHERE actor_user_id = ${profile.id} AND action = 'teacher_ai.request_attempt'
+      `;
+      if (usage[0].minute_count >= 5 || usage[0].day_count >= 60) {
+        return NextResponse.json({ error: "Batas penggunaan AI sementara tercapai. Coba kembali nanti atau hubungi administrator sekolah." }, { status: 429 });
+      }
+      await tx`
+        INSERT INTO audit_logs (tenant_id, school_id, actor_user_id, action, resource_type, metadata)
+        VALUES (${membership.tenant_id}, ${membership.school_id}, ${profile.id},
+          'teacher_ai.request_attempt', 'teacher_ai', ${tx.json({
+            action: input.action, documentType: input.documentType, model,
+            inputCharacters: userPrompt.length
+          })})
+      `;
 
       const response = await fetch("https://ai-gateway.vercel.sh/v1/chat/completions", {
         method: "POST",
