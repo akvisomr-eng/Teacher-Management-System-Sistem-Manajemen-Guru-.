@@ -51,7 +51,9 @@ export default function Home() {
     fetch("/api/dashboard/summary", { cache: "no-store" })
       .then(async response => {
         const data = await response.json();
-        if (response.status === 401) { router.replace("/auth/sign-in"); return; }
+        if (response.status === 401) { router.replace("/admin/sign-in"); return; }
+        if (response.status === 403 && data.portal === "teacher") { router.replace("/teacher"); return; }
+        if (response.status === 403) { router.replace("/admin/sign-in?access=denied"); return; }
         if (!response.ok) throw new Error(data.error || "Tidak dapat memuat data sekolah.");
         if (data.needsOnboarding) { router.replace("/onboarding"); return; }
         if (cancelled) return;
