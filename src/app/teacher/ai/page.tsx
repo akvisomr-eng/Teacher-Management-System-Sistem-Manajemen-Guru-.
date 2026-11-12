@@ -8,6 +8,13 @@ export default async function TeacherAiPage() {
   let allowed = false;
   try {
     allowed = await withAuthenticatedUser(async (tx, _user, profile) => {
+      const memberships = await tx`
+        SELECT tenant_id, school_id FROM memberships
+        WHERE user_id = ${profile.id} AND role = 'teacher' AND school_id IS NOT NULL
+        ORDER BY created_at ASC LIMIT 2
+      `;
+      if (memberships.length !== 1) return false;
+      await tx`SELECT set_config('app.tenant_id', ${memberships[0].tenant_id}, true)`;
       const rows = await tx`
         SELECT t.id
         FROM memberships m
