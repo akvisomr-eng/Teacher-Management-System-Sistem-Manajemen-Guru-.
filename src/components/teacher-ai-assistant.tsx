@@ -46,7 +46,7 @@ export default function TeacherAiAssistant() {
     <Link href="/teacher" style={{color:"#6254d9",textDecoration:"none"}}>← Kembali ke Ruang Kerja Guru</Link>
     <header style={{margin:"20px 0"}}><small style={{color:"#6254d9",fontWeight:700,letterSpacing:1.5}}>TMS • TEACHING ASSISTANT</small>
       <h1 style={{fontSize:30,margin:"8px 0"}}>Asisten AI Guru</h1>
-      <p style={{color:"#65708a"}}>Pendamping khusus untuk menyusun, meninjau, menyempurnakan, dan mengembangkan praktik pembelajaran.</p>
+      <p style={{color:"#65708a"}}>Agen spesialis menyusun saran, reviewer independen memeriksa, dan guru tetap memutuskan hasil akhir.</p>
     </header>
     <section style={{background:"white",border:"1px solid #e3e8f1",borderRadius:14,padding:20,display:"grid",gap:14}}>
       <label style={{display:"grid",gap:6,fontWeight:600}}>Dokumen yang dibantu
@@ -73,9 +73,9 @@ export default function TeacherAiAssistant() {
     </section>
     {answer && <section style={{marginTop:18,background:"white",border:"1px solid #e3e8f1",borderRadius:14,padding:20}}>
       <h2 style={{marginTop:0}}>Hasil bantuan AI</h2><pre style={{whiteSpace:"pre-wrap",fontFamily:"inherit",lineHeight:1.65,overflowWrap:"anywhere"}}>{answer}</pre>
-      <p style={{fontSize:12,color:"#8a5a20",background:"#fff8eb",padding:12,borderRadius:8}}>Tinjau, koreksi, dan sesuaikan hasil dengan kondisi nyata. AI tidak mengisi atau mengirim dokumen secara otomatis. Jangan masukkan identitas pribadi peserta didik.</p>
+      <p style={{fontSize:12,color:"#8a5a20",background:"#fff8eb",padding:12,borderRadius:8}}>Hasil telah diperiksa oleh agen spesialis dan reviewer independen. Tinjau kembali dengan kondisi nyata; AI tidak mengisi atau mengirim dokumen secara otomatis. Jangan masukkan identitas pribadi peserta didik.</p>
       <button onClick={()=>void navigator.clipboard.writeText(answer)} style={{padding:"9px 13px",border:"1px solid #ccd4e2",borderRadius:8,background:"white"}}>Salin hasil</button>
     </section>}
-    <p style={{fontSize:12,color:"#7c879c",marginTop:18}}>Asisten ini aktif setelah administrator mengonfigurasi AI Gateway dan model server. Semua permintaan tercatat pada audit log sekolah; isi dokumen tidak disimpan oleh fitur asisten ini.</p>
+    <p style={{fontSize:12,color:"#7c879c",marginTop:18}}>Asisten memerlukan persetujuan model dan anggaran dari administrator. Setiap permintaan melibatkan dua agen; audit log hanya menyimpan metadata, bukan isi dokumen.</p>
   </main>;
 }
