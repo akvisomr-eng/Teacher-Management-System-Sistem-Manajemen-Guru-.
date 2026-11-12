@@ -7,7 +7,7 @@ The release adds an authenticated teacher-only assistant at `/teacher/ai` and `P
 The endpoint:
 - Requires a valid Neon Auth session, exactly one teacher membership, and exactly one active teacher record linked to that user, tenant, and school.
 - Uses the server-side Vercel AI Gateway endpoint; credentials are never sent to the browser.
-- Requires `TMS_AI_MODEL` and either the deployment-provided `VERCEL_OIDC_TOKEN` or a server-side `AI_GATEWAY_API_KEY`; without them, the feature returns a clear disabled/configuration response.
+- Requires `TMS_AI_ENABLED=true`, `TMS_AI_MODEL`, and either the deployment-provided `VERCEL_OIDC_TOKEN` or a server-side `AI_GATEWAY_API_KEY`; the feature remains disabled unless the explicit kill switch is enabled.
 - Limits request size and generated output, times out provider calls, and records action/type/model/character counts in the school audit log.
 - Does not persist prompts or generated content in TMS tables.
 - Treats generated content as a draft. The teacher must review and copy/adapt it; there is no automatic form overwrite or submission.
@@ -17,10 +17,11 @@ The endpoint:
 ## Vercel environment configuration
 
 Configure the following as Sensitive server-side Production variables (and separate Preview values when testing):
+- `TMS_AI_ENABLED`: keep `false` until a model, data-processing review, and monthly spend cap are approved; set to `true` only for an authorized pilot.
 - `TMS_AI_MODEL`: a currently supported model identifier from the AI Gateway catalog, in `provider/model` format. Verify availability and cost before selecting it.
 - Authentication: Vercel deployments use the automatically injected `VERCEL_OIDC_TOKEN`; non-Vercel runtimes may use `AI_GATEWAY_API_KEY` as a Sensitive server-only variable. Do not create or expose a public key.
 
-Never use a `NEXT_PUBLIC_` prefix. Keep the feature unavailable until the organization has approved provider, model, data processing terms, budget, and usage limits. Do not enable broad teacher access before an administrator has configured and tested the provider.
+Never use a `NEXT_PUBLIC_` prefix. Keep `TMS_AI_ENABLED=false` until the organization has approved provider, model, data processing terms, budget, and usage limits. Do not enable broad teacher access before an administrator has configured and tested the provider.
 
 ## Agent roadmap
 

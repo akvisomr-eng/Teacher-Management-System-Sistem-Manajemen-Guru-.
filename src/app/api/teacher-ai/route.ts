@@ -42,6 +42,7 @@ export async function POST(request: Request) {
   const contextText = contextEntries.map(([key, value]) => `- ${key}: ${value}`).join("\n");
   if (contextText.length > 12000) return NextResponse.json({ error: "Konteks terlalu panjang. Ringkas data sebelum meminta bantuan AI." }, { status: 413 });
 
+  const aiEnabled = process.env.TMS_AI_ENABLED === "true";
   const gatewayToken = process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN;
   const model = process.env.TMS_AI_MODEL;
 
@@ -69,7 +70,7 @@ export async function POST(request: Request) {
       `;
       if (teachers.length !== 1) return NextResponse.json({ error: "Akun belum tertaut ke satu data induk guru aktif." }, { status: 403 });
 
-      if (!gatewayToken || !model) return NextResponse.json({
+      if (!aiEnabled || !gatewayToken || !model) return NextResponse.json({
         error: "Asisten AI belum diaktifkan oleh administrator. Konfigurasi AI Gateway dan model pada environment server diperlukan."
       }, { status: 503 });
 
