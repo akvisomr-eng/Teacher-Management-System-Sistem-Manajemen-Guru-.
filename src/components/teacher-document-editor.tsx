@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 type Field = { key:string; label:string; type?:"text"|"date"|"number"|"textarea"|"select"; required?:boolean; options?:string[]; hint?:string };
 type Section = { title:string; fields:Field[] };
@@ -57,7 +57,6 @@ export default function TeacherDocumentEditor({itemType,onTypeChange,initialTitl
  const template=templates[itemType]??templates.lesson_plan;
  const [title,setTitle]=useState(initialTitle);
  const [values,setValues]=useState<Record<string,string>>(initialData);
- useEffect(()=>{setTitle(initialTitle);setValues(initialData);},[initialTitle,initialData,itemType]);
  const missing=useMemo(()=>template.sections.flatMap(section=>section.fields.filter(field=>field.required&&!String(values[field.key]??"").trim()).map(field=>field.label)),[template,values]);
  function setField(key:string,value:string){setValues(old=>({...old,[key]:value}));}
  return <section>
