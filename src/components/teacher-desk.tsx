@@ -261,8 +261,9 @@ function TeacherDeskContent({ identity, allowOfflineFallback }: { identity: Iden
     <section style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(min(100%,320px),1fr))",gap:18,marginTop:18}}>
       <div style={{background:"white",borderRadius:14,padding:20,border:"1px solid #e6eaf2"}}>
         <TeacherDocumentEditor
+          key={`${itemType}:${editingId ?? "new"}`}
           itemType={itemType}
-          onTypeChange={next => { setItemType(next); setEditingId(null); setEditorInitialData({}); }}
+          onTypeChange={next => { setItemType(next); setTitle(""); setEditingId(null); setEditorInitialData({}); }}
           initialTitle={title}
           initialData={editorInitialData}
           onSave={(documentTitle, formData) => void save(documentTitle, formData)}
