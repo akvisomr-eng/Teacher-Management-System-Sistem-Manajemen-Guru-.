@@ -42,7 +42,7 @@ export async function POST(request: Request) {
   const contextText = contextEntries.map(([key, value]) => `- ${key}: ${value}`).join("\n");
   if (contextText.length > 12000) return NextResponse.json({ error: "Konteks terlalu panjang. Ringkas data sebelum meminta bantuan AI." }, { status: 413 });
 
-  const aiEnabled = process.env.TMS_AI_ENABLED === "true";
+  const aiEnabled = process.env.TMS_AI_ENABLED === "true" && process.env.TMS_AI_BUDGET_APPROVED === "true";
   const gatewayToken = process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN;
   const model = process.env.TMS_AI_MODEL;
 
