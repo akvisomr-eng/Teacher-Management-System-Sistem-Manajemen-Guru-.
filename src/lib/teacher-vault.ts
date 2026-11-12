@@ -2,7 +2,7 @@ export type VaultWorkItem = {
   id: string;
   itemType: string;
   title: string;
-  content: { body: string; subject?: string; className?: string; dueDate?: string };
+  content: { body: string; subject?: string; className?: string; dueDate?: string; formData?: Record<string, string>; templateKey?: string; templateVersion?: number };
   schemaVersion: number;
   clientUpdatedAt: string;
   syncState: "local" | "synced" | "conflict";
