@@ -1,14 +1,14 @@
 # Commercial Launch Readiness
 
-Status checked: 10 November 2026
+Status checked: 12 November 2026
 
 ## Current release
 
 - Production URL: https://teacher-management-system-nine.vercel.app
-- Latest merged main commit: `4a7aacbd893b8ccd1c3795ac5c7c47f7bffa9ff5`
-- Main CI run #272 for this commit: passed typecheck, lint, production dependency audit, build and production smoke.
-- Vercel status for the latest main commit: `failure` due to Vercel build-rate-limit. The latest main changes are therefore not confirmed deployed to production. The last confirmed successful Vercel commit status is `1e7fccf34ee4fee349d409603b6de59db12abfd8`; verify a successful Production deployment before treating newer changes as live.
-- PRs #45–#49 are merged; their relevant CI/production-smoke checks passed. Do not upgrade Vercel or incur paid charges without approval.
+- Latest merged main commit at this review: `07cd2b45616602113306dd5cf00d303c5eca65f4` (PRs #60–#63 merged).
+- The immediately preceding main release `e5cc622607c1c9c5814749d5c267ca6f69ad2356` passed TMS CI #310 and Vercel Production status `success`; its production smoke verified 9/9 checks, including the teacher AI route's unauthenticated redirect and API rejection.
+- PR #63 adds the two-stage specialist + independent reviewer AI pipeline and is deployed in main commit `07cd2b45616602113306dd5cf00d303c5eca65f4`; TMS CI #312 passed and production smoke passed 9/9, with Vercel Production status `success`.
+- PRs #60–#62 are merged; PR #60 adds the AI workspace/API, PR #61 hardens auth and production smoke coverage, and PR #62 adds teacher-approved per-field suggestions. Do not upgrade Vercel or incur paid charges without approval.
 - Neon production and staging branches: READY.
 - Runtime database role `tms_app`: `rolsuper=false`, `rolbypassrls=false`.
 
@@ -58,3 +58,12 @@ These are external/product decisions or operational controls, not items that can
 - Payment integration is not live and collection remains disabled. Merchant account approval, credentials, approved prices/quotas, billing rules, signed webhook processing, subscription enforcement, and sandbox acceptance are still required.
 - The provider decision does not approve any price or authorize charging customers.
 - See [Midtrans Payment Foundation](PAYMENTS_MIDTRANS.md) for the implementation contract and release gates.
+
+
+## Teacher AI release status (12 November 2026)
+
+- `/teacher/ai` is deployed as an authenticated teacher-only workspace. Production smoke checks confirm unauthenticated page requests redirect to sign-in and unauthenticated API requests return 401.
+- The teacher document editor has per-field AI suggestion controls for all six document types. Suggestions remain separate until the teacher explicitly chooses to use them.
+- The current AI pipeline uses a document specialist followed by an independent reviewer. Each interaction makes two bounded model calls; per-user controls are 5 interactions/minute and 60 interactions/24 hours.
+- AI model execution remains disabled until a supported model is configured and the organization approves a monthly spend ceiling. Vercel OIDC is used for deployed requests; no API key is exposed to the browser.
+- Do not send identifiable student data to AI. The field-assistance flow transmits only an allowlist of general academic context fields; the teacher remains responsible for reviewing outputs.
