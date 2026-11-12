@@ -98,6 +98,6 @@ See [COMMERCIAL_LAUNCH_READINESS.md](COMMERCIAL_LAUNCH_READINESS.md) for the cur
 
 - PR #60, #61, and #62 are merged. `/teacher/ai` is a protected teacher route; unauthenticated page access redirects to sign-in and the unauthenticated API returns 401 in production smoke tests.
 - The Teacher Desk editor now offers contextual suggestions on each field across the six teacher document types. A suggestion is not applied until the teacher explicitly accepts it.
-- PR #63 adds the specialist + independent reviewer two-agent pipeline; production rollout is pending CI and Vercel status for the merged commit.
+- PR #63 adds the specialist + independent reviewer two-agent pipeline; main commit `07cd2b45616602113306dd5cf00d303c5eca65f4` is deployed with TMS CI #312 passed and production smoke 9/9.
 - AI model execution stays disabled until an approved model and monthly spend cap are configured. Vercel OIDC is used for deployed Gateway authentication. Each enabled interaction will invoke two bounded model calls.
 - Offline drafts remain available; AI suggestions require an authenticated online session. Avoid sending identifiable student data.
