@@ -31,4 +31,5 @@ jobs:
       - name: Smoke-test current production release
         env:
           TMS_PRODUCTION_URL: https://teacher-management-system-nine.vercel.app
+          TMS_EXPECT_TEACHER_AI_AUTH: ${{ github.event_name != 'pull_request' }}
         run: node scripts/production-smoke.mjs
