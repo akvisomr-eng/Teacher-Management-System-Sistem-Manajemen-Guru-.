@@ -23,7 +23,7 @@ Never use a `NEXT_PUBLIC_` prefix. Keep the feature unavailable until the organi
 
 ## Agent roadmap
 
-The current specialist profiles are prompt-routed roles within one orchestrated request, not independent autonomous agents. Production multi-agent orchestration, curriculum retrieval with verified source citations, field-level editor integration, school-level analytics, voice input, provider failover, per-tenant quotas, and admin usage dashboards remain later phases.
+The current pipeline uses two distinct model calls: a document-specific specialist agent creates a draft, then an independent reviewer agent checks facts, completeness, privacy, and unsupported assumptions before returning a reviewed draft. The teacher remains the final approver. Further agents for curriculum/source retrieval, school policy, differentiation, assessment design, school-level analytics, voice input, provider failover, per-tenant quotas, and admin usage dashboards remain later phases.
 
 ## Commercial and privacy gates
 
