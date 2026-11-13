@@ -11,6 +11,7 @@ const linkSchema = z.object({
   teacherId: databaseUuidSchema,
   email: z.string().trim().email().max(254)
 });
+const accountEmailSchema = linkSchema;
 
 const knownErrors = [
   ["TEACHER_ACCOUNT_NOT_READY", "Akun belum terdaftar. Minta guru membuat akun melalui halaman Login Guru terlebih dahulu.", 409],
@@ -84,7 +85,7 @@ async function withSchoolManager(work: (tx: DbTx, tenantId: string, schoolId: st
 export async function GET() {
   return withSchoolManager(async (tx, tenantId, schoolId) => {
     const rows = await tx`
-      SELECT id, full_name, employee_number, (user_id IS NOT NULL) AS account_linked
+      SELECT id, full_name, employee_number, account_email, (user_id IS NOT NULL) AS account_linked
       FROM teachers
       WHERE tenant_id = ${tenantId} AND school_id = ${schoolId}
       ORDER BY full_name ASC LIMIT 500
@@ -98,6 +99,12 @@ export async function POST(request: Request) {
   if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Data tautan akun tidak valid." }, { status: 400 });
   return withSchoolManager(async (tx, tenantId, schoolId) => {
     try {
+      const target = await tx`SELECT account_email FROM teachers WHERE id = ${parsed.data.teacherId} AND tenant_id = ${tenantId} AND school_id = ${schoolId} LIMIT 1`;
+      if (!target.length) return NextResponse.json({ error: "Data guru tidak ditemukan pada sekolah ini." }, { status: 404 });
+      const expectedEmail = target[0].account_email as string | null;
+      if (expectedEmail && expectedEmail.toLowerCase() !== parsed.data.email.toLowerCase()) {
+        return NextResponse.json({ error: "Email akun tidak sesuai dengan email yang telah ditetapkan untuk guru ini." }, { status: 409 });
+      }
       const rows = await tx`
         SELECT teacher_id, account_email
         FROM public.tms_link_teacher_account(${tenantId}, ${schoolId}, ${parsed.data.teacherId}, ${parsed.data.email})
@@ -106,6 +113,42 @@ export async function POST(request: Request) {
     } catch (error) {
       const known = knownErrorResponse(error);
       if (known) return known;
+      throw error;
+    }
+  });
+}
+
+
+export async function PATCH(request: Request) {
+  const parsed = accountEmailSchema.safeParse(await request.json().catch(() => null));
+  if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Data email akun tidak valid." }, { status: 400 });
+  return withSchoolManager(async (tx, tenantId, schoolId, userId) => {
+    try {
+      const existing = await tx`SELECT user_id, account_email FROM teachers WHERE id = ${parsed.data.teacherId} AND tenant_id = ${tenantId} AND school_id = ${schoolId} LIMIT 1`;
+      if (!existing.length) return NextResponse.json({ error: "Data guru tidak ditemukan pada sekolah ini." }, { status: 404 });
+      const currentEmail = existing[0].account_email as string | null;
+      if (existing[0].user_id && currentEmail?.toLowerCase() !== parsed.data.email.toLowerCase()) {
+        return NextResponse.json({ error: "Akun guru yang sudah tertaut tidak dapat diganti melalui formulir email. Gunakan proses perubahan akun terverifikasi." }, { status: 409 });
+      }
+      const rows = await tx`
+        UPDATE teachers
+        SET account_email = ${parsed.data.email.toLowerCase()}
+        WHERE id = ${parsed.data.teacherId}
+          AND tenant_id = ${tenantId}
+          AND school_id = ${schoolId}
+        RETURNING id, full_name, account_email, (user_id IS NOT NULL) AS account_linked
+      `;
+      if (!rows.length) return NextResponse.json({ error: "Data guru tidak ditemukan pada sekolah ini." }, { status: 404 });
+      const emailDomain = parsed.data.email.split("@")[1]?.toLowerCase() ?? "";
+      await tx`
+        INSERT INTO audit_logs (tenant_id, school_id, actor_user_id, action, resource_type, resource_id, metadata)
+        VALUES (${tenantId}, ${schoolId}, ${userId}, 'teacher_access.email_assigned', 'teacher', ${parsed.data.teacherId}, ${JSON.stringify({ emailDomain })}::jsonb)
+      `;
+      return NextResponse.json({ data: rows[0] });
+    } catch (error) {
+      if (errorText(error).includes("23505")) {
+        return NextResponse.json({ error: "Email tersebut sudah digunakan oleh data guru lain pada sekolah ini." }, { status: 409 });
+      }
       throw error;
     }
   });
