@@ -17,7 +17,8 @@ Atur di Vercel sesuai target dan jangan pernah memasukkan nilainya ke repository
 Preview memakai connection string dan Auth URL dari `tms-staging`; Production memakai nilai dari branch `production`. Setiap perubahan environment variable memerlukan redeploy.
 
 ## Migrasi
-Jalankan SQL secara berurutan:
+
+Jalankan SQL secara berurutan dan periksa status objek sebelum menerapkan ulang:
 1. `drizzle/0001_tms_foundation.sql`
 2. `drizzle/0002_tenant_rls.sql`
 3. `drizzle/0003_academic_operations.sql`
@@ -25,8 +26,14 @@ Jalankan SQL secara berurutan:
 5. `drizzle/0005_audit_log_immutability.sql`
 6. `drizzle/0006_student_registry_custom_forms.sql`
 7. `drizzle/0007_standard_module_records.sql`
+8. `drizzle/0008_standard_form_workflow_links.sql`
+9. `drizzle/0009_teacher_workspace_items.sql`
+10. `drizzle/0010_teacher_account_invitation_email.sql`
+11. `drizzle/0011_billing_payment_ledger.sql`
 
-Terapkan terlebih dahulu pada staging. Periksa tabel, constraint, RLS policy, dan akses lintas tenant sebelum production. Migrasi bersifat additive; jangan menjalankan ulang skrip yang menambahkan constraint tanpa memeriksa statusnya. Migrasi 0007 membuat arsip formulir pendukung per modul dengan RLS, versi skema/referensi, status review, dan audit trail. Migrasi 0007 telah diterapkan dan diverifikasi pada branch staging serta production.
+Terapkan perubahan baru terlebih dahulu pada staging. Periksa tabel, kolom, constraint, index, RLS policy, hak akses runtime, serta akses lintas tenant sebelum production. Migrasi bersifat additive dan sebagian menggunakan `IF NOT EXISTS`; jangan menganggap aman untuk menjalankan ulang seluruh skrip tanpa memeriksa efek dan kondisi aktual. Jangan pernah menjalankan migrasi production tanpa review dan persetujuan release yang sesuai.
+
+**Audit skema production 13 November 2026 (read-only):** objek penting dari rangkaian 0008–0011 terdeteksi: kolom dan constraint link entitas pada `standard_module_records`, `teacher_workspace_items` dengan RLS aktif dan FORCE RLS, kolom email akun guru, serta tiga tabel billing ledger dengan RLS aktif dan FORCE RLS. `standard_module_records` memiliki RLS aktif tetapi tidak FORCE RLS. Role runtime tetap harus non-owner, non-superuser, dan tanpa RLS bypass. Audit ini memverifikasi keberadaan objek, bukan pengganti pencatatan migrasi atau pengujian staging.
 
 ## Database security
 - Runtime memakai role `tms_app`; jangan gunakan role admin/superuser sebagai `DATABASE_URL`.
@@ -59,31 +66,16 @@ Email/password dan verifikasi OTP aktif. Shared SMTP masih digunakan untuk uji a
 - Deployment: environment, domain, trusted origin, dan health monitoring.
 - Operasional: SMTP bermerek, backup/recovery teruji, monitoring, kebijakan privasi/retensi, dukungan, dan prosedur insiden.
 
-## Status terverifikasi per 8 November 2026
-- Foundation, registry, master akademik, penugasan, penempatan siswa, perencanaan ajar, jurnal, asesmen, gradebook, Pusat Kurikulum, dan Pusat Laporan telah digabung ke `main`.
-- CI #126 (audit hardening) dan #128 (Pusat Kurikulum) berhasil: typecheck, lint, audit dependency produksi, dan production build.
-- Preview Pusat Kurikulum dan Pusat Laporan berstatus `READY`. Deployment Production untuk commit `20758d48f6d5cce983c7c821878f97433ea575b3` berstatus `READY`.
-- Neon `tms-staging` dan `production` berstatus ready. Kedua branch memiliki 20 tabel aplikasi; tabel tenant-scoped dilindungi RLS. Migrasi 0001–0007 telah diterapkan.
-- Migrasi 0005 telah diterapkan pada staging dan production. Hak `tms_app` untuk audit log diverifikasi: SELECT/INSERT diizinkan; UPDATE/DELETE/TRUNCATE ditolak. RLS audit log hanya SELECT/INSERT.
-- PR #15 (formulir administrasi pendidikan) merged pada commit `bdb08e0984e1d67e78c8362477a49b3b3a530547`; CI #166 lulus (typecheck, lint, audit dependency, build, smoke check). Deployment Production Vercel berstatus READY. Migrasi 0007 telah diterapkan pada staging dan production; RLS aktif, hak tabel role `tms_app` tersedia, dan tanpa tenant context tidak ada baris yang terlihat.
-- Pembacaan tanpa tenant context mengembalikan nol baris pada tabel tenant-scoped di staging dan production.
-- Vercel memiliki `DATABASE_URL` role `tms_app` yang terpisah untuk Preview dan Production; Auth URL dan cookie secret juga dipisahkan. `NEXT_PUBLIC_APP_URL` Production menggunakan `teacher-management-system-nine.vercel.app`.
-- Tidak ada runtime error yang terdeteksi pada rentang pemeriksaan terakhir 30 menit. Route workspace baru ter-build dan deployment READY; pengujian UI dan transaksi dengan sesi pengguna sekolah nyata masih diperlukan karena sesi autentikasi pengguna tidak tersedia untuk pengujian otomatis dari luar. Uji end-to-end sign-in, onboarding, dan transaksi sekolah dengan akun pengguna nyata tetap diperlukan.
-- Shared SMTP masih aktif. SMTP bermerek organisasi, uji autentikasi end-to-end, backup/recovery teruji, kebijakan privasi/retensi, dan prosedur insiden tetap menjadi release gate sebelum operasional komersial penuh.
-- Rapor lanjutan, remedial/enrichment, komunikasi wali, eksekusi model AI, analitik lanjutan, integrasi, dan billing belum dinyatakan siap operasional.
+## Status terverifikasi per 13 November 2026
 
-
-## Standard forms workflow (migration 0008)
-
-- Supporting form records can optionally link to a canonical teacher or student UUID. The API verifies that the linked entity belongs to the authenticated tenant and school; links do not overwrite master data.
-- Review lifecycle: `draft → submitted → approved/rejected → archived`. Every transition is recorded in `audit_logs`; reviewer, review time, and review note are stored on the record.
-- Migration `0008_standard_form_workflow_links.sql` adds optional polymorphic teacher/student link metadata and review note. Apply to staging, verify constraints/index/API, then request explicit approval before production migration.
-- The workflow is internal administrative approval, not an official Dapodik approval or synchronization.
-
-
-## Commercial launch readiness (10 November 2026)
-
-See [COMMERCIAL_LAUNCH_READINESS.md](COMMERCIAL_LAUNCH_READINESS.md) for the current release and outstanding blockers. Production is live for controlled pilot validation, not yet a fully commercial SaaS. Verified production snapshot (12 Nov 2026): 1 tenant, 1 school, 15 active teacher records, 15 teacher email fields populated, 1 linked teacher account, 1 teacher membership; Budi's teacher workspace contains six labeled sample documents. Neon Auth still uses the shared sender; billing/payment and approved pricing are not implemented. Neon production project is on free_v3 with 6-hour history retention and no separately listed snapshots; branch protection was unavailable at the current plan limit. A real teacher registration/linking test, branded SMTP/domain, backup/restore drill, and legal/support controls remain required.
+- Main commit `237b924bff28dc2507de64d4964620fe713ccdc7` (PR #84) passed TMS CI: typecheck, lint, production dependency audit, build, and production smoke. Matching Vercel Production deployment is READY at https://teacher-management-system-nine.vercel.app.
+- Production and staging Neon branches are `ready`. Production uses the `tms_app` runtime role; it is not superuser and does not bypass RLS.
+- Teacher Desk supports encrypted local drafts and portable backups, explicit sync, and conflict handling. The teacher-specific activity workflow remains separate from private/offline drafts.
+- Teacher AI is an authenticated workspace. Local knowledge retrieval and citation grounding are available; remote generative model execution remains fail-closed and disabled until both feature and budget approval gates are explicitly enabled.
+- Production aggregate audit: 1 tenant, 1 school, 15 teacher records, 15 assigned account emails, 1 linked teacher account, 14 unlinked teacher records, 1 teacher-role membership, 1 non-teacher membership, 2 app users, 2 Neon Auth users, 50 active students, 0 invoices, and 0 payment transactions. No personal student or teacher details were retrieved for this audit.
+- Neon production project remains on `free_v3` with 6-hour history retention. The production branch is unprotected; no automatic snapshot schedule or separately listed snapshots were found. A backup/restore drill has not been verified.
+- Shared Neon Auth sender remains in use. Business-owned SMTP, custom domain/trusted origin, legal/support procedures, real teacher activation, and disaster recovery remain commercial release gates.
+- Production remains for controlled school-pilot validation, not a declaration of full commercial readiness.
 
 ## Payment gateway (Midtrans)
 
