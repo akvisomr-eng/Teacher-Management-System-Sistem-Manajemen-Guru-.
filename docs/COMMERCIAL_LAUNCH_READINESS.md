@@ -5,10 +5,10 @@ Status checked: 13 November 2026
 ## Current release
 
 - Production URL: https://teacher-management-system-nine.vercel.app
-- Latest merged main commit at this review: `1f9337222a18b8c831cc9b4ab00391230b2e6338` (PR #82; final release-evidence and commercial-gate documentation).
-- The immediately preceding main release `e5cc622607c1c9c5814749d5c267ca6f69ad2356` passed TMS CI #310 and Vercel Production status `success`; its production smoke verified 9/9 checks, including the teacher AI route's unauthenticated redirect and API rejection.
-- PR #63 adds the two-stage specialist + independent reviewer AI pipeline and is deployed in main commit `07cd2b45616602113306dd5cf00d303c5eca65f4`; TMS CI #312 passed and production smoke passed 9/9, with Vercel Production status `success`.
-- PRs #60–#82 are merged. The current production build is READY for commit `1f9337222a18b8c831cc9b4ab00391230b2e6338`; post-merge TMS CI run `43424908611` (#366) completed successfully. Do not upgrade Vercel or incur paid charges without approval.
+- Latest merged main commit at this review: `e651252da1a250a3da2f5f84c664de70f9b3b31c` (PR #83; synchronized release-evidence documentation).
+- PRs #60–#83 are merged. Main CI run `43439384047` (#368) completed successfully on this exact commit: dependency installation, typecheck, lint, production dependency audit, build, and production smoke all passed.
+- Vercel production deployment `dpl_6QTBwW4JkT8ru2Mwh9AEALasoosQ` is `READY` for the same commit; canonical alias https://teacher-management-system-nine.vercel.app is attached with no alias error.
+- The prior application release `1f9337222a18b8c831cc9b4ab00391230b2e6338` also passed main CI and production deployment. PR #83 changes release documentation only; no application behavior, database schema, customer data, or credentials were changed.
 - Neon production and staging branches: READY.
 - Runtime database role `tms_app`: `rolsuper=false`, `rolbypassrls=false`.
 
@@ -81,7 +81,7 @@ These are external/product decisions or operational controls, not items that can
 
 ## Production data and auth snapshot — 13 November 2026
 
-- Read-only production count: 1 tenant, 1 school, 15 active teacher records, 1 linked teacher account, 1 teacher membership, 50 active students, 0 billing invoices, and 0 payment transactions.
+- Read-only production audit on 13 November 2026: 1 tenant, 1 school, 15 teacher records, all 15 have an assigned account email, 1 teacher record is linked to an app user, 14 teacher records remain unlinked, 1 teacher-role membership, 1 non-teacher membership, 2 app users, 2 Neon Auth users, 50 active students, 0 billing invoices, and 0 payment transactions. Counts are aggregate only; no teacher or student personal data was retrieved.
 - Neon Auth production has email/password sign-up enabled with required email verification and OTP verification. Localhost is disabled. The current sender is still the shared Neon Auth sender, not an organization-owned SMTP domain.
 - The production origin allowlist currently contains the canonical Vercel application host and two Vercel aliases. A business-controlled domain must be added only after ownership and DNS/TLS verification.
 - The Neon production project is Free (`free_v3`), history retention is 6 hours, and the production branch is currently unprotected. The runtime database role is least-privilege with superuser and RLS-bypass disabled.
@@ -112,11 +112,12 @@ This inventory checks variable names and configuration presence only; secret val
 
 ## Latest production verification — 13 November 2026
 
-- Latest merged main commit: `1f9337222a18b8c831cc9b4ab00391230b2e6338` (PR #82, final production evidence and commercial release gates).
-- Vercel production deployment for that exact commit: `READY` (`dpl_2ZZBDYuu2LRBx4ji28AQbh7M5pyW`); canonical alias remains https://teacher-management-system-nine.vercel.app.
-- Post-merge TMS CI run `43424908611` (#366): `success` on the exact main commit. The PR #82 Production Smoke run `43424737769` passed `17/17`; the post-merge CI also completed successfully.
-- The 17 smoke checks cover sign-in/password reset, unauthenticated workspace redirect, database/auth health, report/registry/onboarding authorization, teacher AI authorization, offline shell, service worker, PWA manifest, teacher account and email-assignment authorization, workspace sync authorization, and local knowledge API authorization.
-- This verifies deployability and public/authentication boundaries. It does **not** replace authenticated operator/teacher acceptance, a disaster-recovery drill, or payment end-to-end testing.
+- Latest merged main commit: `e651252da1a250a3da2f5f84c664de70f9b3b31c` (PR #83; release-evidence documentation synchronization).
+- Vercel production deployment for that exact commit: `READY` (`dpl_6QTBwW4JkT8ru2Mwh9AEALasoosQ`); canonical alias remains https://teacher-management-system-nine.vercel.app.
+- Main TMS CI run `43439384047` (#368): `success` on the exact main commit. Typecheck, lint, production dependency audit, build, and production smoke completed successfully.
+- PR #83 is documentation-only. Its preview CI and production smoke passed before merge; the post-merge main CI also passed.
+- The production smoke suite covers sign-in/password reset, unauthenticated workspace redirect, database/auth health, report/registry/onboarding authorization, teacher AI authorization, offline shell, service worker, PWA manifest, teacher account and email-assignment authorization, workspace sync authorization, and local knowledge API authorization.
+- These checks verify deployability and public/authentication boundaries. They do **not** replace authenticated operator/teacher acceptance, a disaster-recovery drill, or payment end-to-end testing.
 
 ## Commercial release decision
 
@@ -127,7 +128,7 @@ The following are hard blockers, not engineering tasks that can safely be guesse
 2. Organization-owned SMTP sender and credentials.
 3. Approved privacy notice, terms, data retention/deletion, support contact/SLA, incident response, and customer exit/export process.
 4. Neon production backup/retention upgrade decision and successful independent backup/restore drill.
-5. Real teacher onboarding: provide the 14 remaining teachers' actual email addresses, complete registration/email verification, link accounts, and test teacher/operator separation with real users.
+5. Real teacher onboarding: 14 of the 15 teacher records still have no linked user account. Their account emails are assigned in the roster, but each real teacher must register with that exact address, complete email verification, and be linked by the school operator; then test teacher/operator separation with real users.
 6. If AI generation is part of the paid offer: explicit AI provider/model, data-processing approval, and monthly spend ceiling. AI generation is currently disabled in production; local retrieval remains available.
 7. If paid subscriptions are part of the paid offer: approved Midtrans merchant account/credentials, plan prices and quotas, tax/invoice/refund terms, checkout, signed idempotent webhooks, entitlement enforcement, and sandbox acceptance. No payment route or payment collection is live.
 
