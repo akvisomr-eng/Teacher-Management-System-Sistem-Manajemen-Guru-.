@@ -20,6 +20,7 @@ export default function TeacherAiAssistant() {
   const [instruction, setInstruction] = useState("");
   const [context, setContext] = useState("");
   const [answer, setAnswer] = useState("");
+  const [aiSources, setAiSources] = useState<Array<{id:string;citation:string;title:string;category:string;source:{title:string;publisher:string;url:string;published:string;verifiedAt:string;status:string}}>>([]);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [knowledgeQuery, setKnowledgeQuery] = useState("");
@@ -29,7 +30,7 @@ export default function TeacherAiAssistant() {
   const [knowledgeError, setKnowledgeError] = useState("");
 
   async function submit() {
-    setBusy(true); setError(""); setAnswer("");
+    setBusy(true); setError(""); setAnswer(""); setAiSources([]);
     try {
       const parsed: Record<string,string> = {};
       for (const line of context.split("\n")) {
@@ -43,6 +44,7 @@ export default function TeacherAiAssistant() {
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "Permintaan tidak berhasil.");
       setAnswer(result.answer);
+      setAiSources(Array.isArray(result.knowledgeSources) ? result.knowledgeSources : []);
     } catch (e) { setError(e instanceof Error ? e.message : "Tidak dapat menghubungi asisten AI."); }
     finally { setBusy(false); }
   }
@@ -115,6 +117,8 @@ export default function TeacherAiAssistant() {
     </section>
     {answer && <section style={{marginTop:18,background:"white",border:"1px solid #e3e8f1",borderRadius:14,padding:20}}>
       <h2 style={{marginTop:0}}>Hasil bantuan AI</h2><pre style={{whiteSpace:"pre-wrap",fontFamily:"inherit",lineHeight:1.65,overflowWrap:"anywhere"}}>{answer}</pre>
+      <h3>Rujukan pengetahuan lokal TMS</h3>
+      {aiSources.length ? <div style={{display:"grid",gap:10}}>{aiSources.map(source=><div key={source.id} style={{borderTop:"1px solid #edf0f5",paddingTop:10}}><b>[{source.citation}] {source.title}</b><div style={{fontSize:13,color:"#65708a",margin:"4px 0"}}>{source.category} · {source.source.publisher} · {source.source.published}</div><a href={source.source.url} target="_blank" rel="noreferrer" style={{color:"#5144bb",fontSize:13}}>Periksa dokumen sumber ↗</a></div>)}</div> : <p style={{fontSize:13,color:"#8a5a20"}}>Tidak ada materi lokal yang cukup relevan untuk permintaan ini. Periksa sumber resmi secara mandiri.</p>}
       <p style={{fontSize:12,color:"#8a5a20",background:"#fff8eb",padding:12,borderRadius:8}}>Hasil telah diperiksa oleh agen spesialis dan reviewer independen. Tinjau kembali dengan kondisi nyata; AI tidak mengisi atau mengirim dokumen secara otomatis. Jangan masukkan identitas pribadi peserta didik.</p>
       <button onClick={()=>void navigator.clipboard.writeText(answer)} style={{padding:"9px 13px",border:"1px solid #ccd4e2",borderRadius:8,background:"white"}}>Salin hasil</button>
     </section>}
