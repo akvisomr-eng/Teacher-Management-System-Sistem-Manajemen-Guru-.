@@ -5,10 +5,10 @@ Status checked: 13 November 2026
 ## Current release
 
 - Production URL: https://teacher-management-system-nine.vercel.app
-- Latest merged main commit at this review: `1f9337222a18b8c831cc9b4ab00391230b2e6338` (PR #82; final release-evidence and commercial-gate documentation).
-- The immediately preceding main release `e5cc622607c1c9c5814749d5c267ca6f69ad2356` passed TMS CI #310 and Vercel Production status `success`; its production smoke verified 9/9 checks, including the teacher AI route's unauthenticated redirect and API rejection.
-- PR #63 adds the two-stage specialist + independent reviewer AI pipeline and is deployed in main commit `07cd2b45616602113306dd5cf00d303c5eca65f4`; TMS CI #312 passed and production smoke passed 9/9, with Vercel Production status `success`.
-- PRs #60–#82 are merged. The current production build is READY for commit `1f9337222a18b8c831cc9b4ab00391230b2e6338`; post-merge TMS CI run `43424908611` (#366) completed successfully. Do not upgrade Vercel or incur paid charges without approval.
+- Latest merged main commit at this review: `e651252da1a250a3da2f5f84c664de70f9b3b31c` (PR #83; synchronized release-evidence documentation).
+- PRs #60–#83 are merged. Main CI run `43439384047` (#368) completed successfully on this exact commit: dependency installation, typecheck, lint, production dependency audit, build, and production smoke all passed.
+- Vercel production deployment `dpl_6QTBwW4JkT8ru2Mwh9AEALasoosQ` is `READY` for the same commit; canonical alias https://teacher-management-system-nine.vercel.app is attached with no alias error.
+- The prior application release `1f9337222a18b8c831cc9b4ab00391230b2e6338` also passed main CI and production deployment. PR #83 changes release documentation only; no application behavior, database schema, customer data, or credentials were changed.
 - Neon production and staging branches: READY.
 - Runtime database role `tms_app`: `rolsuper=false`, `rolbypassrls=false`.
 
@@ -112,11 +112,12 @@ This inventory checks variable names and configuration presence only; secret val
 
 ## Latest production verification — 13 November 2026
 
-- Latest merged main commit: `1f9337222a18b8c831cc9b4ab00391230b2e6338` (PR #82, final production evidence and commercial release gates).
-- Vercel production deployment for that exact commit: `READY` (`dpl_2ZZBDYuu2LRBx4ji28AQbh7M5pyW`); canonical alias remains https://teacher-management-system-nine.vercel.app.
-- Post-merge TMS CI run `43424908611` (#366): `success` on the exact main commit. The PR #82 Production Smoke run `43424737769` passed `17/17`; the post-merge CI also completed successfully.
-- The 17 smoke checks cover sign-in/password reset, unauthenticated workspace redirect, database/auth health, report/registry/onboarding authorization, teacher AI authorization, offline shell, service worker, PWA manifest, teacher account and email-assignment authorization, workspace sync authorization, and local knowledge API authorization.
-- This verifies deployability and public/authentication boundaries. It does **not** replace authenticated operator/teacher acceptance, a disaster-recovery drill, or payment end-to-end testing.
+- Latest merged main commit: `e651252da1a250a3da2f5f84c664de70f9b3b31c` (PR #83; release-evidence documentation synchronization).
+- Vercel production deployment for that exact commit: `READY` (`dpl_6QTBwW4JkT8ru2Mwh9AEALasoosQ`); canonical alias remains https://teacher-management-system-nine.vercel.app.
+- Main TMS CI run `43439384047` (#368): `success` on the exact main commit. Typecheck, lint, production dependency audit, build, and production smoke completed successfully.
+- PR #83 is documentation-only. Its preview CI and production smoke passed before merge; the post-merge main CI also passed.
+- The production smoke suite covers sign-in/password reset, unauthenticated workspace redirect, database/auth health, report/registry/onboarding authorization, teacher AI authorization, offline shell, service worker, PWA manifest, teacher account and email-assignment authorization, workspace sync authorization, and local knowledge API authorization.
+- These checks verify deployability and public/authentication boundaries. They do **not** replace authenticated operator/teacher acceptance, a disaster-recovery drill, or payment end-to-end testing.
 
 ## Commercial release decision
 
