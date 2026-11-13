@@ -29,4 +29,5 @@ jobs:
           TMS_PRODUCTION_URL: https://teacher-management-system-nine.vercel.app
           TMS_EXPECT_TEACHER_AI_AUTH: ${{ github.event_name != 'pull_request' }}
           TMS_EXPECT_PASSWORD_RESET_PUBLIC: ${{ github.event_name != 'pull_request' }}
+          TMS_EXPECT_TEACHER_OFFLINE_PUBLIC: ${{ github.event_name != 'pull_request' }}
         run: node scripts/production-smoke.mjs
