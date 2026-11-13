@@ -77,3 +77,12 @@ These are external/product decisions or operational controls, not items that can
 - Teacher Desk supports encrypted local drafts, encrypted backup/restore, and explicit sync/conflict handling. Official school submission/review remains a separate online workflow.
 - The production smoke suite is being expanded to cover the offline shell, service worker, PWA manifest, teacher workspace sync authentication, and local knowledge API authentication.
 - Commercial readiness remains blocked by the external/operational gates listed above: real teacher acceptance, organization-owned SMTP, controlled domain and trusted origins, backup/restore drill and monitoring, legal/support controls, and approved Midtrans merchant credentials/pricing plus checkout/webhook/subscription acceptance. No payment collection or paid infrastructure changes are authorized by this engineering work.
+
+
+## Production data and auth snapshot — 13 November 2026
+
+- Read-only production count: 1 tenant, 1 school, 15 active teacher records, 1 linked teacher account, 1 teacher membership, 50 active students, 0 billing invoices, and 0 payment transactions.
+- Neon Auth production has email/password sign-up enabled with required email verification and OTP verification. Localhost is disabled. The current sender is still the shared Neon Auth sender, not an organization-owned SMTP domain.
+- The production origin allowlist currently contains the canonical Vercel application host and two Vercel aliases. A business-controlled domain must be added only after ownership and DNS/TLS verification.
+- The Neon production project is Free (`free_v3`), history retention is 6 hours, and the production branch is currently unprotected. The runtime database role is least-privilege with superuser and RLS-bypass disabled.
+- Billing ledger tables exist, but there are no invoices or payment transactions. This confirms payment collection has not started; it does not mean the billing product is implemented.
