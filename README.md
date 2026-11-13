@@ -17,11 +17,13 @@ PAUD, SD, SMP, SMA/SMK, SLB, Madrasah Aliyah, dan pendidikan kesetaraan. Platfor
 - Direktori guru dan siswa.
 - Tahun ajaran, kelas, mata pelajaran, penugasan guru, dan penempatan siswa.
 - Perencanaan ajar dan jurnal mengajar.
+- Teacher Desk pribadi untuk guru, termasuk draf offline terenkripsi, backup/restore terenkripsi, sinkronisasi eksplisit, dan penanganan konflik.
+- Asisten AI guru yang terlindungi autentikasi, pencarian pengetahuan lokal dengan referensi sumber, serta alur spesialis dan reviewer; generasi model tetap nonaktif sampai persetujuan provider dan anggaran.
 - Pusat asesmen dan gradebook.
 - Pusat Kurikulum dengan draf, penerbitan, arsip, dan versi kurikulum yang tidak dapat diubah setelah diterbitkan.
 - Pusat Laporan untuk direktori guru, daftar siswa, rombongan belajar, dan rekap nilai dengan ekspor CSV serta cetak.
 
-Modul rapor, remedial/enrichment, komunikasi wali, pengembangan guru, AI teaching assistant, analitik lanjutan, integrasi, dan billing masih memerlukan implementasi dan pengujian.
+Modul rapor lengkap, remedial/enrichment, komunikasi wali, pengembangan profesi guru, analitik lanjutan, integrasi eksternal, dan billing/checkout masih memerlukan implementasi serta pengujian. Asisten AI sudah tersedia sebagai fitur terlindungi, tetapi eksekusi model generatif dinonaktifkan di production sampai persetujuan provider, pemrosesan data, dan batas biaya diberikan.
 
 ## Development
 ```bash
@@ -41,8 +43,13 @@ Variabel lingkungan dijelaskan pada `.env.example` dan `docs/OPERATIONS.md`. Jan
 - `docs/OPERATIONS.md`: staging, production, migrasi, dan release gates.
 
 ## Status rilis
-Fondasi aplikasi telah digabung ke `main` dan dipublikasikan pada Vercel. CI menjalankan typecheck, lint, audit dependency produksi, dan production build. Pusat Kurikulum telah lolos CI dan Preview deployment; deployment Production untuk commit `3484615329b4691bd1cd37b8643c025e1de1945c` berstatus `READY`. Status `READY` pada Vercel tidak dengan sendirinya membuktikan seluruh alur bisnis telah diuji end-to-end. Lihat `docs/OPERATIONS.md` untuk status infrastruktur dan release gates yang masih terbuka.
 
+- Production: https://teacher-management-system-nine.vercel.app
+- Latest merged main commit: `237b924bff28dc2507de64d4964620fe713ccdc7` (PR #84).
+- Main TMS CI run `43440431348` passed: typecheck, lint, production dependency audit, build, and production smoke.
+- Matching Vercel Production deployment `dpl_9dwBaj8k7mWaSJaLiVHfcbSeZpro` is `READY` and has the canonical production alias.
+- A READY deployment and passing smoke checks establish deployability and tested public/auth boundaries; they do not replace authenticated school/teacher acceptance, backup/restore drills, or end-to-end payment tests.
+- Current use is limited to a controlled school pilot. See [Commercial Launch Readiness](docs/COMMERCIAL_LAUNCH_READINESS.md) for verified operational gates.
 
 ## Commercial launch status
 
