@@ -88,9 +88,9 @@ These are external/product decisions or operational controls, not items that can
 - Billing ledger tables exist, but there are no invoices or payment transactions. This confirms payment collection has not started; it does not mean the billing product is implemented.
 
 
-## Release verification — 13 November 2026
+## Release verification — 13 November 2026 (teacher activation release)
 
-- Main commit: `49115350172523a9961830959579b59861967a6b` (PR #79).
+- Main commit at that release: `49115350172523a9961830959579b59861967a6b` (PR #79).
 - Vercel production deployment for this commit: `READY`.
 - TMS CI completed successfully: typecheck, lint, dependency audit, build, and production smoke.
 - Production smoke: `17/17` checks passed, including public password-reset, teacher AI route/API authorization, offline shell, service worker, PWA manifest, teacher account management reads, teacher account email assignment writes, teacher workspace sync API, and local teacher knowledge API.
@@ -108,3 +108,27 @@ This inventory checks variable names and configuration presence only; secret val
 - **Email:** Neon Auth is configured, but no organization-owned SMTP sender is configured; verification email uses the shared Neon sender. No teacher invitation email is sent by the new account-email assignment flow.
 - **External launch inputs still required:** the approved domain and registrant/owner, organization-owned SMTP credentials and sender domain, AI provider/model and spending ceiling (if AI generation is required), Midtrans merchant account credentials, approved plan names/prices/terms, legal entity/contact and support channels, and the 14 remaining real teacher email addresses.
 - **Operational risk:** Neon production remains on the Free `free_v3` plan with 6-hour history retention and no verified independent backup/restore drill. This is unsuitable as the final commercial data-protection posture until the organization approves a retention/backup arrangement and a restore drill succeeds.
+
+
+## Latest production verification — 13 November 2026
+
+- Latest main commit: `b7bcb554dff32ac0a72c43a280e196665c3c5034` (PR #81, documentation-only audit of production environment and commercial blockers).
+- Vercel production deployment for that exact commit: `READY`, alias `teacher-management-system-nine.vercel.app`, no alias error.
+- TMS CI run `43424449169`: success. Typecheck, lint, production dependency audit, Next.js build, and production smoke all completed successfully.
+- Production smoke: `17/17` passed. Checks include sign-in/password reset, unauthenticated workspace redirect, database/auth health, report/registry/onboarding authorization, teacher AI authorization, offline shell, service worker, PWA manifest, teacher account and email-assignment authorization, workspace sync authorization, and local knowledge API authorization.
+- This verifies deployability and public/authentication boundaries. It does **not** replace an authenticated operator/teacher acceptance test, a disaster-recovery drill, or payment end-to-end testing.
+
+## Commercial release decision
+
+**NO-GO for public paid/commercial launch at this time. Controlled school pilot only.**
+
+The following are hard blockers, not engineering tasks that can safely be guessed:
+1. Business-controlled domain ownership, DNS/TLS, and verified auth origin.
+2. Organization-owned SMTP sender and credentials.
+3. Approved privacy notice, terms, data retention/deletion, support contact/SLA, incident response, and customer exit/export process.
+4. Neon production backup/retention upgrade decision and successful independent backup/restore drill.
+5. Real teacher onboarding: provide the 14 remaining teachers' actual email addresses, complete registration/email verification, link accounts, and test teacher/operator separation with real users.
+6. If AI generation is part of the paid offer: explicit AI provider/model, data-processing approval, and monthly spend ceiling. AI generation is currently disabled in production; local retrieval remains available.
+7. If paid subscriptions are part of the paid offer: approved Midtrans merchant account/credentials, plan prices and quotas, tax/invoice/refund terms, checkout, signed idempotent webhooks, entitlement enforcement, and sandbox acceptance. No payment route or payment collection is live.
+
+Do not accept paid customer data or advertise a paid subscription until the relevant gates are closed and verified. The current production application remains suitable for a controlled pilot subject to the school's lawful data handling and real-user acceptance.
