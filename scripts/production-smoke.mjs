@@ -103,7 +103,7 @@ if (process.env.TMS_EXPECT_TEACHER_OFFLINE_PUBLIC === "true") {
   });
 
   await check("teacher PWA manifest is available", async () => {
-    const { response, body } = await request("/teacher/manifest.webmanifest");
+    const { response, body } = await request("/teacher.webmanifest");
     assert.equal(response.status, 200);
     const manifest = JSON.parse(body);
     assert.ok(manifest.name || manifest.short_name);
