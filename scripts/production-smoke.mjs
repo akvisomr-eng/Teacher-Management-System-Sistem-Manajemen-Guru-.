@@ -26,10 +26,16 @@ await check("public sign-in page", async () => {
   assert.match(body, /Masuk ke workspace/);
 });
 
+await check("public password-reset page", async () => {
+  const { response, body } = await request("/auth/reset-password?token=smoke-test-token");
+  assert.equal(response.status, 200, `expected reset form, received ${response.status}`);
+  assert.match(body, /Buat kata sandi baru/);
+});
+
 await check("unauthenticated workspace is redirected to sign-in", async () => {
   const { response } = await request("/workspace/reports");
   assert.ok([302, 307].includes(response.status), `expected a sign-in redirect, received ${response.status}`);
-  assert.match(response.headers.get("location") || "", /auth\/sign-in/);
+  assert.match(response.headers.get("location") || "", /auth\\/sign-in/);
 });
 
 await check("production database and auth health", async () => {
