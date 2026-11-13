@@ -26,6 +26,16 @@ await check("public sign-in page", async () => {
   assert.match(body, /Masuk ke workspace/);
 });
 
+if (process.env.TMS_EXPECT_PASSWORD_RESET_PUBLIC === "true") {
+  await check("public password-reset page", async () => {
+    const { response, body } = await request("/auth/reset-password?token=smoke-test-token");
+    assert.equal(response.status, 200, `expected reset form, received ${response.status}`);
+    assert.match(body, /Buat kata sandi baru/);
+  });
+} else {
+  process.stdout.write("SKIP password-reset public check until the updated production release is deployed.\\n");
+}
+
 await check("unauthenticated workspace is redirected to sign-in", async () => {
   const { response } = await request("/workspace/reports");
   assert.ok([302, 307].includes(response.status), `expected a sign-in redirect, received ${response.status}`);
