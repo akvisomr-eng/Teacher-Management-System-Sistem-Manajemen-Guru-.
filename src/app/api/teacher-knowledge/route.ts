@@ -51,7 +51,7 @@ export async function POST(request: Request) {
       return NextResponse.json({
         answer,
         results: results.map(({ id, title, category, summary, source, relevance }) => ({ id, title, category, summary, source, relevance })),
-        mode: "local_knowledge_search",
+        mode: "local_knowledge_search_v2",
         sourceCount: results.length,
         generatedLocally: true
       });
