@@ -45,7 +45,9 @@ This implementation is a controlled foundation, not a declaration that AI is alr
 The teacher assistant now includes a public-source directory and simple online search entry point:
 - Indonesian curriculum portal: https://kurikulum.kemendikdasmen.go.id/
 - Kemendikdasmen repository: https://repositori.kemendikdasmen.go.id/
-- Rumah Pendidikan: https://rumah.pendidikan.go.id/
+- Rumah Pendidikan: https://rumah.pendidikan.go.id/ (portal publik; beberapa layanan meminta akun)
+- Ruang GTK: https://guru.kemendikdasmen.go.id/ (beberapa fitur memerlukan belajar.id)
+- Pusat Informasi Guru: https://pusatinformasi.guru.kemendikdasmen.go.id/
 - Kemendikdasmen official portal: https://www.kemendikdasmen.go.id/
 - UNESCO Education: https://www.unesco.org/en/education
 - CAST UDL Guidelines: https://udlguidelines.cast.org/
