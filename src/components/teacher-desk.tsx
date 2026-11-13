@@ -257,6 +257,7 @@ function TeacherDeskContent({ identity, allowOfflineFallback }: { identity: Iden
         <button onClick={()=>void sync()} disabled={busy} title="Mengirim dokumen lokal ke server TMS; perlu online dan vault terbuka">{busy?"Memproses…":"Sinkronkan"}</button>
       </div>
     </header>
+    <div role="status" style={{marginTop:18,padding:"12px 15px",border:"1px solid #e8d6a8",borderRadius:10,background:"#fff9eb",color:"#76521d",fontSize:13,lineHeight:1.6}}><b>MODE UJI COBA — DATA CONTOH.</b> Data master guru dan siswa pada lingkungan ini merupakan data simulasi. Saat mencoba fitur, gunakan data non-sensitif dan jangan masukkan identitas atau informasi pribadi peserta didik yang sebenarnya.</div>
     <section style={{background:"white",borderRadius:14,padding:20,marginTop:24,border:"1px solid #e6eaf2"}}>
       <div style={{display:"flex",justifyContent:"space-between",gap:12,flexWrap:"wrap"}}><b>Keamanan perangkat</b><span>{online?"● Online":"● Offline"}</span></div>
       <p style={{color:"#65708a",fontSize:13}}>{message}</p>
