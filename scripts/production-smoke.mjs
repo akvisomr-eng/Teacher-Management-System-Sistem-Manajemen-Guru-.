@@ -33,7 +33,7 @@ if (process.env.TMS_EXPECT_PASSWORD_RESET_PUBLIC === "true") {
     assert.match(body, /Buat kata sandi baru/);
   });
 } else {
-  process.stdout.write("SKIP password-reset public check until the updated production release is deployed.\\n");
+  process.stdout.write("SKIP password-reset public check until the updated production release is deployed.\n");
 }
 
 await check("unauthenticated workspace is redirected to sign-in", async () => {
@@ -90,7 +90,7 @@ if (process.env.TMS_EXPECT_TEACHER_OFFLINE_PUBLIC === "true") {
   await check("teacher offline workspace shell is publicly reachable", async () => {
     const { response, body } = await request("/teacher/offline");
     assert.equal(response.status, 200);
-    assert.match(response.headers.get("content-type") || "", /text\\/html/);
+    assert.match(response.headers.get("content-type") || "", /text\/html/);
     assert.match(body, /TMS Teacher Desk|Ruang kerja personal guru/);
   });
 
@@ -99,7 +99,7 @@ if (process.env.TMS_EXPECT_TEACHER_OFFLINE_PUBLIC === "true") {
     assert.equal(response.status, 200);
     assert.match(response.headers.get("content-type") || "", /javascript|ecmascript/);
     assert.match(body, /tms-teacher-shell-/);
-    assert.match(body, /\\/teacher\\/offline/);
+    assert.match(body, /\/teacher\/offline/);
   });
 
   await check("teacher PWA manifest is available", async () => {
@@ -110,7 +110,7 @@ if (process.env.TMS_EXPECT_TEACHER_OFFLINE_PUBLIC === "true") {
     assert.ok(Array.isArray(manifest.icons));
   });
 } else {
-  process.stdout.write("SKIP offline/PWA public-access checks until the updated production release is deployed.\\n");
+  process.stdout.write("SKIP offline/PWA public-access checks until the updated production release is deployed.\n");
 }
 
 await check("teacher workspace sync API rejects unauthenticated access", async () => {
