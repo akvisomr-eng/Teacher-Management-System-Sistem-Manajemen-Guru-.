@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { withAuthenticatedUser } from "@/db/connection";
 import { searchTeacherKnowledge } from "@/lib/teacher-knowledge";
+import { searchAdditionalTeacherKnowledge } from "@/lib/teacher-knowledge-extra";
 
 export const dynamic = "force-dynamic";
 
@@ -36,10 +37,13 @@ export async function POST(request: Request) {
       `;
       if (teachers.length !== 1) return NextResponse.json({ error: "Akun belum tertaut ke satu data induk guru aktif." }, { status: 403 });
 
-      const results = searchTeacherKnowledge(parsed.data.query);
+      const results = [...searchTeacherKnowledge(parsed.data.query), ...searchAdditionalTeacherKnowledge(parsed.data.query)]
+        .sort((a, b) => b.relevance - a.relevance)
+        .filter((item, index, all) => all.findIndex((candidate) => candidate.id === item.id) === index)
+        .slice(0, 5);
       if (!results.length) return NextResponse.json({
         answer: "Belum ditemukan materi yang cukup relevan dalam basis pengetahuan lokal TMS. Coba gunakan istilah yang lebih spesifik, misalnya asesmen formatif, pembelajaran mendalam, diferensiasi, atau Kurikulum 2025.",
-        results: [], mode: "local_knowledge_search", sourceCount: 0
+        results: [], mode: "local_knowledge_search_v2", sourceCount: 0
       });
       const answer = results.slice(0, 3).map((item, index) =>
         `${index + 1}. ${item.title}\n${item.summary}\n\nLangkah praktis:\n${item.guidance.slice(0, 3).map((step) => `- ${step}`).join("\n")}`
