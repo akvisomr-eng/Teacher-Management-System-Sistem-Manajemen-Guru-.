@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 
 const sources = [
   { name: "Kurikulum Nasional", publisher: "Kemendikdasmen", domain: "kurikulum.kemendikdasmen.go.id", url: "https://kurikulum.kemendikdasmen.go.id/", detail: "Kurikulum, CP, panduan mata pelajaran, pembelajaran mendalam", access: "Portal resmi gratis" },
@@ -17,7 +17,7 @@ export default function TeacherOnlineLibrary() {
   const [sourceIndex, setSourceIndex] = useState("0");
   const [notice, setNotice] = useState("");
 
-  function search(event: React.FormEvent<HTMLFormElement>) {
+  function search(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const cleanQuery = query.trim().slice(0, 300);
     if (cleanQuery.length < 3) {
