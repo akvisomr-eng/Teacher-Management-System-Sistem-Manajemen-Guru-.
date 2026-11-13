@@ -81,7 +81,7 @@ These are external/product decisions or operational controls, not items that can
 
 ## Production data and auth snapshot — 13 November 2026
 
-- Read-only production count: 1 tenant, 1 school, 15 active teacher records, 1 linked teacher account, 1 teacher membership, 50 active students, 0 billing invoices, and 0 payment transactions.
+- Read-only production audit on 13 November 2026: 1 tenant, 1 school, 15 teacher records, all 15 have an assigned account email, 1 teacher record is linked to an app user, 14 teacher records remain unlinked, 1 teacher-role membership, 1 non-teacher membership, 2 app users, 2 Neon Auth users, 50 active students, 0 billing invoices, and 0 payment transactions. Counts are aggregate only; no teacher or student personal data was retrieved.
 - Neon Auth production has email/password sign-up enabled with required email verification and OTP verification. Localhost is disabled. The current sender is still the shared Neon Auth sender, not an organization-owned SMTP domain.
 - The production origin allowlist currently contains the canonical Vercel application host and two Vercel aliases. A business-controlled domain must be added only after ownership and DNS/TLS verification.
 - The Neon production project is Free (`free_v3`), history retention is 6 hours, and the production branch is currently unprotected. The runtime database role is least-privilege with superuser and RLS-bypass disabled.
@@ -128,7 +128,7 @@ The following are hard blockers, not engineering tasks that can safely be guesse
 2. Organization-owned SMTP sender and credentials.
 3. Approved privacy notice, terms, data retention/deletion, support contact/SLA, incident response, and customer exit/export process.
 4. Neon production backup/retention upgrade decision and successful independent backup/restore drill.
-5. Real teacher onboarding: provide the 14 remaining teachers' actual email addresses, complete registration/email verification, link accounts, and test teacher/operator separation with real users.
+5. Real teacher onboarding: 14 of the 15 teacher records still have no linked user account. Their account emails are assigned in the roster, but each real teacher must register with that exact address, complete email verification, and be linked by the school operator; then test teacher/operator separation with real users.
 6. If AI generation is part of the paid offer: explicit AI provider/model, data-processing approval, and monthly spend ceiling. AI generation is currently disabled in production; local retrieval remains available.
 7. If paid subscriptions are part of the paid offer: approved Midtrans merchant account/credentials, plan prices and quotas, tax/invoice/refund terms, checkout, signed idempotent webhooks, entitlement enforcement, and sandbox acceptance. No payment route or payment collection is live.
 
