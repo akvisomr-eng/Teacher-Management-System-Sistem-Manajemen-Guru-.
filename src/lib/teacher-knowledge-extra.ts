@@ -68,8 +68,8 @@ export const additionalTeacherKnowledge: KnowledgeDocument[] = [
 ];
 
 const normalize = (value: string) => value.toLocaleLowerCase("id-ID")
-  .normalize("NFD").replace(/[\\u0300-\\u036f]/g, "")
-  .replace(/[^a-z0-9\\s]/g, " ").replace(/\\s+/g, " ").trim();
+  .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+  .replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
 
 const stopWords = new Set(["yang", "dan", "atau", "untuk", "dengan", "pada", "dari", "dalam", "apa", "bagaimana", "saya", "guru", "murid", "siswa", "buat", "tolong", "tentang", "cara", "ke", "di", "ini", "itu"]);
 
