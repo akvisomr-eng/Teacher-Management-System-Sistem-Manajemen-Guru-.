@@ -9,7 +9,9 @@ export default function TeacherAccessManager() {
   const [teacherId, setTeacherId] = useState("");
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("Memuat daftar guru…");
-  const [busy, setBusy] = useState(false);\n  const selectedTeacher = teachers.find(teacher => teacher.id === teacherId);
+  const [busy, setBusy] = useState(false);
+  const selectedTeacher = teachers.find(teacher => teacher.id === teacherId);
+  useEffect(() => { setEmail(selectedTeacher?.account_email ?? ""); }, [teacherId, selectedTeacher?.account_email]);
 
   const load = useCallback(async (showReadyMessage = true) => {
     try {
@@ -22,7 +24,9 @@ export default function TeacherAccessManager() {
       setMessage(error instanceof Error ? error.message : "Gagal memuat daftar guru.");
     }
   }, []);
-  useEffect(() => { void load(); }, [load]);\n\n  async function saveEmail() {
+  useEffect(() => { void load(); }, [load]);
+
+  async function saveEmail() {
     if (!teacherId || !email.trim()) { setMessage("Pilih guru dan isi email akun guru."); return; }
     setBusy(true);
     try {
