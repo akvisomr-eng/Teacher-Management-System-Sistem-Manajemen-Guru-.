@@ -5,10 +5,10 @@ Status checked: 13 November 2026
 ## Current release
 
 - Production URL: https://teacher-management-system-nine.vercel.app
-- Latest merged main commit at this review: `49115350172523a9961830959579b59861967a6b` (PR #79; PR #78 adds teacher account-email activation and PR #79 fixes the teacher roster email-selection state).
+- Latest merged main commit at this review: `1f9337222a18b8c831cc9b4ab00391230b2e6338` (PR #82; final release-evidence and commercial-gate documentation).
 - The immediately preceding main release `e5cc622607c1c9c5814749d5c267ca6f69ad2356` passed TMS CI #310 and Vercel Production status `success`; its production smoke verified 9/9 checks, including the teacher AI route's unauthenticated redirect and API rejection.
 - PR #63 adds the two-stage specialist + independent reviewer AI pipeline and is deployed in main commit `07cd2b45616602113306dd5cf00d303c5eca65f4`; TMS CI #312 passed and production smoke passed 9/9, with Vercel Production status `success`.
-- PRs #60–#75 are merged. The current production build is READY for commit `ad451c12f265859fe1ab97a259636b60c9e4a29c`; TMS CI #343 passed. Do not upgrade Vercel or incur paid charges without approval.
+- PRs #60–#82 are merged. The current production build is READY for commit `1f9337222a18b8c831cc9b4ab00391230b2e6338`; post-merge TMS CI run `43424908611` (#366) completed successfully. Do not upgrade Vercel or incur paid charges without approval.
 - Neon production and staging branches: READY.
 - Runtime database role `tms_app`: `rolsuper=false`, `rolbypassrls=false`.
 
@@ -22,7 +22,7 @@ Status checked: 13 November 2026
 - Teacher ownership checks and school-manager review transitions.
 - Administrative student-form sections now display in reverse order (bottom section first), as requested; standard administrative forms follow the same visual order. GTK standard-form sections are rendered in reverse order as well.
 - Teaching-journal source now uses the browser's local calendar timezone, avoiding UTC date rollover for Indonesian teachers.
-- Service worker cache cleanup is isolated to the TMS cache namespace and merged to main; production deployment confirmation is pending the Vercel build-rate-limit.
+- Service worker cache cleanup is isolated to the TMS cache namespace and included in the deployed production release.
 
 ## Commercial launch blockers
 
@@ -112,11 +112,11 @@ This inventory checks variable names and configuration presence only; secret val
 
 ## Latest production verification — 13 November 2026
 
-- Latest main commit: `b7bcb554dff32ac0a72c43a280e196665c3c5034` (PR #81, documentation-only audit of production environment and commercial blockers).
-- Vercel production deployment for that exact commit: `READY`, alias `teacher-management-system-nine.vercel.app`, no alias error.
-- TMS CI run `43424449169`: success. Typecheck, lint, production dependency audit, Next.js build, and production smoke all completed successfully.
-- Production smoke: `17/17` passed. Checks include sign-in/password reset, unauthenticated workspace redirect, database/auth health, report/registry/onboarding authorization, teacher AI authorization, offline shell, service worker, PWA manifest, teacher account and email-assignment authorization, workspace sync authorization, and local knowledge API authorization.
-- This verifies deployability and public/authentication boundaries. It does **not** replace an authenticated operator/teacher acceptance test, a disaster-recovery drill, or payment end-to-end testing.
+- Latest merged main commit: `1f9337222a18b8c831cc9b4ab00391230b2e6338` (PR #82, final production evidence and commercial release gates).
+- Vercel production deployment for that exact commit: `READY` (`dpl_2ZZBDYuu2LRBx4ji28AQbh7M5pyW`); canonical alias remains https://teacher-management-system-nine.vercel.app.
+- Post-merge TMS CI run `43424908611` (#366): `success` on the exact main commit. The PR #82 Production Smoke run `43424737769` passed `17/17`; the post-merge CI also completed successfully.
+- The 17 smoke checks cover sign-in/password reset, unauthenticated workspace redirect, database/auth health, report/registry/onboarding authorization, teacher AI authorization, offline shell, service worker, PWA manifest, teacher account and email-assignment authorization, workspace sync authorization, and local knowledge API authorization.
+- This verifies deployability and public/authentication boundaries. It does **not** replace authenticated operator/teacher acceptance, a disaster-recovery drill, or payment end-to-end testing.
 
 ## Commercial release decision
 
@@ -132,3 +132,10 @@ The following are hard blockers, not engineering tasks that can safely be guesse
 7. If paid subscriptions are part of the paid offer: approved Midtrans merchant account/credentials, plan prices and quotas, tax/invoice/refund terms, checkout, signed idempotent webhooks, entitlement enforcement, and sandbox acceptance. No payment route or payment collection is live.
 
 Do not accept paid customer data or advertise a paid subscription until the relevant gates are closed and verified. The current production application remains suitable for a controlled pilot subject to the school's lawful data handling and real-user acceptance.
+
+
+## Release verification addendum — 13 November 2026 (PR #82)
+
+- Main CI run `43424908611` completed with conclusion `success` on commit `1f9337222a18b8c831cc9b4ab00391230b2e6338`.
+- Vercel production deployment `dpl_2ZZBDYuu2LRBx4ji28AQbh7M5pyW` is `READY` for the same commit.
+- The release is still restricted to controlled pilot use. The NO-GO commercial decision and all outstanding external/operational gates remain in force.
