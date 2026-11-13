@@ -33,7 +33,7 @@ if (process.env.TMS_EXPECT_PASSWORD_RESET_PUBLIC === "true") {
     assert.match(body, /Buat kata sandi baru/);
   });
 } else {
-  process.stdout.write("SKIP password-reset public check until the updated production release is deployed.\\n");
+  process.stdout.write("SKIP password-reset public check until the updated production release is deployed.\n");
 }
 
 await check("unauthenticated workspace is redirected to sign-in", async () => {
@@ -85,6 +85,47 @@ if (process.env.TMS_EXPECT_TEACHER_AI_AUTH === "true") {
 } else {
   process.stdout.write("SKIP teacher AI auth checks until the updated production release is deployed.\n");
 }
+
+if (process.env.TMS_EXPECT_TEACHER_OFFLINE_PUBLIC === "true") {
+  await check("teacher offline workspace shell is publicly reachable", async () => {
+    const { response, body } = await request("/teacher/offline");
+    assert.equal(response.status, 200);
+    assert.match(response.headers.get("content-type") || "", /text\/html/);
+    assert.match(body, /TMS Teacher Desk|Ruang kerja personal guru/);
+  });
+
+  await check("teacher service worker is served from the application origin", async () => {
+    const { response, body } = await request("/teacher-sw.js");
+    assert.equal(response.status, 200);
+    assert.match(response.headers.get("content-type") || "", /javascript|ecmascript/);
+    assert.match(body, /tms-teacher-shell-/);
+    assert.match(body, /\/teacher\/offline/);
+  });
+
+  await check("teacher PWA manifest is available", async () => {
+    const { response, body } = await request("/teacher/manifest.webmanifest");
+    assert.equal(response.status, 200);
+    const manifest = JSON.parse(body);
+    assert.ok(manifest.name || manifest.short_name);
+    assert.ok(Array.isArray(manifest.icons));
+  });
+} else {
+  process.stdout.write("SKIP offline/PWA public-access checks until the updated production release is deployed.\n");
+}
+
+await check("teacher workspace sync API rejects unauthenticated access", async () => {
+  const { response, body } = await request("/api/teacher-workspace");
+  assert.equal(response.status, 401, body.slice(0, 300));
+});
+
+await check("local teacher knowledge API rejects unauthenticated access", async () => {
+  const { response, body } = await request("/api/teacher-knowledge", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ query: "asesmen formatif" })
+  });
+  assert.equal(response.status, 401, body.slice(0, 300));
+});
 
 await check("report API validates report type", async () => {
   const { response } = await request("/api/reports?type=not-a-report");
