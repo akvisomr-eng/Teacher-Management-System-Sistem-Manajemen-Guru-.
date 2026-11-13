@@ -18,12 +18,13 @@ PAUD, SD, SMP, SMA/SMK, SLB, Madrasah Aliyah, dan pendidikan kesetaraan. Platfor
 - Tahun ajaran, kelas, mata pelajaran, penugasan guru, dan penempatan siswa.
 - Perencanaan ajar dan jurnal mengajar.
 - Teacher Desk pribadi untuk guru, termasuk draf offline terenkripsi, backup/restore terenkripsi, sinkronisasi eksplisit, dan penanganan konflik.
-- Asisten AI guru yang terlindungi autentikasi, pencarian pengetahuan lokal dengan referensi sumber, serta alur spesialis dan reviewer; generasi model tetap nonaktif sampai persetujuan provider dan anggaran.
+- Asisten AI guru yang terlindungi autentikasi, pencarian pengetahuan lokal dengan referensi sumber, perpustakaan portal online gratis, serta alur spesialis dan reviewer; generasi model eksternal tetap nonaktif sampai persetujuan provider, pemrosesan data, dan anggaran.
+- Mode uji coba dengan data contoh guru dan siswa; jangan memasukkan data pribadi peserta didik yang sebenarnya selama pilot.
 - Pusat asesmen dan gradebook.
 - Pusat Kurikulum dengan draf, penerbitan, arsip, dan versi kurikulum yang tidak dapat diubah setelah diterbitkan.
 - Pusat Laporan untuk direktori guru, daftar siswa, rombongan belajar, dan rekap nilai dengan ekspor CSV serta cetak.
 
-Modul rapor lengkap, remedial/enrichment, komunikasi wali, pengembangan profesi guru, analitik lanjutan, integrasi eksternal, dan billing/checkout masih memerlukan implementasi serta pengujian. Asisten AI sudah tersedia sebagai fitur terlindungi, tetapi eksekusi model generatif dinonaktifkan di production sampai persetujuan provider, pemrosesan data, dan batas biaya diberikan.
+Modul rapor lengkap, remedial/enrichment, komunikasi wali, pengembangan profesi guru, analitik lanjutan, integrasi eksternal, dan billing/checkout masih memerlukan implementasi serta pengujian. Asisten AI sudah tersedia sebagai fitur terlindungi. Pencarian pengetahuan lokal berjalan tanpa model eksternal; perpustakaan online mengarahkan pengguna ke portal publik dan mesin pencari tanpa API berbayar TMS. Eksekusi model generatif dinonaktifkan di production sampai persetujuan provider, pemrosesan data, dan batas biaya diberikan.
 
 ## Development
 ```bash
@@ -45,9 +46,9 @@ Variabel lingkungan dijelaskan pada `.env.example` dan `docs/OPERATIONS.md`. Jan
 ## Status rilis
 
 - Production: https://teacher-management-system-nine.vercel.app
-- Latest merged main commit: `237b924bff28dc2507de64d4964620fe713ccdc7` (PR #84).
-- Main TMS CI run `43440431348` passed: typecheck, lint, production dependency audit, build, and production smoke.
-- Matching Vercel Production deployment `dpl_9dwBaj8k7mWaSJaLiVHfcbSeZpro` is `READY` and has the canonical production alias.
+- Latest merged main commit: `7668908e4a71390a0333461f977daa24be429f1b` (PR #85).
+- Main TMS CI run `43440919295` passed: typecheck, lint, production dependency audit, build, and production smoke.
+- Matching Vercel Production deployment `dpl_H1KdUdWYjysvf3RfJxjkAipdukaV` is `READY` and has the canonical production alias.
 - A READY deployment and passing smoke checks establish deployability and tested public/auth boundaries; they do not replace authenticated school/teacher acceptance, backup/restore drills, or end-to-end payment tests.
 - Current use is limited to a controlled school pilot. See [Commercial Launch Readiness](docs/COMMERCIAL_LAUNCH_READINESS.md) for verified operational gates.
 

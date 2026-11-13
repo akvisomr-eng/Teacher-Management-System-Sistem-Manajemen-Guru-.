@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import TeacherOnlineLibrary from "@/components/teacher-online-library";
 
 const docs = [
   ["lesson_plan", "Modul Ajar / RPP"], ["teaching_journal", "Jurnal Mengajar"],
@@ -92,6 +93,7 @@ export default function TeacherAiAssistant() {
         <p style={{fontSize:12,color:"#8a5a20",background:"#fff8eb",padding:10,borderRadius:8}}>Materi lokal adalah ringkasan berindeks, bukan pengganti dokumen resmi. Periksa sumber asli dan tanggal berlakunya sebelum menjadikannya dasar keputusan sekolah.</p>
       </div>}
     </section>
+    <TeacherOnlineLibrary />
     <section style={{background:"white",border:"1px solid #e3e8f1",borderRadius:14,padding:20,display:"grid",gap:14}}>
       <label style={{display:"grid",gap:6,fontWeight:600}}>Dokumen yang dibantu
         <select value={documentType} onChange={e=>setDocumentType(e.target.value as typeof documentType)} style={{padding:12,border:"1px solid #ccd4e2",borderRadius:8}}>
@@ -122,6 +124,6 @@ export default function TeacherAiAssistant() {
       <p style={{fontSize:12,color:"#8a5a20",background:"#fff8eb",padding:12,borderRadius:8}}>Hasil telah diperiksa oleh agen spesialis dan reviewer independen. Tinjau kembali dengan kondisi nyata; AI tidak mengisi atau mengirim dokumen secara otomatis. Jangan masukkan identitas pribadi peserta didik.</p>
       <button onClick={()=>void navigator.clipboard.writeText(answer)} style={{padding:"9px 13px",border:"1px solid #ccd4e2",borderRadius:8,background:"white"}}>Salin hasil</button>
     </section>}
-    <p style={{fontSize:12,color:"#7c879c",marginTop:18}}>Asisten memerlukan persetujuan model dan anggaran dari administrator. Setiap permintaan melibatkan dua agen; audit log hanya menyimpan metadata, bukan isi dokumen.</p>
+    <p style={{fontSize:12,color:"#7c879c",marginTop:18}}>Pencarian pengetahuan lokal dan akses ke portal online gratis tidak memerlukan AI generatif. Tombol Minta bantuan AI memakai model eksternal melalui dua panggilan agen; fitur ini tetap nonaktif sampai administrator menyetujui provider, pemrosesan data, dan batas anggaran. Audit log hanya menyimpan metadata, bukan isi dokumen.</p>
   </main>;
 }

@@ -39,3 +39,25 @@ Before commercial enablement:
 6. Publish a clear AI-use notice and prohibit identifiable student data unless a documented lawful basis and approved safeguards exist.
 
 This implementation is a controlled foundation, not a declaration that AI is already active or that the full TMS is commercially ready.
+
+## Free online knowledge access (13 November 2026)
+
+The teacher assistant now includes a public-source directory and simple online search entry point:
+- Indonesian curriculum portal: https://kurikulum.kemendikdasmen.go.id/
+- Kemendikdasmen repository: https://repositori.kemendikdasmen.go.id/
+- Rumah Pendidikan: https://rumah.pendidikan.go.id/
+- Kemendikdasmen official portal: https://www.kemendikdasmen.go.id/
+- UNESCO Education: https://www.unesco.org/en/education
+- CAST UDL Guidelines: https://udlguidelines.cast.org/
+- ERIC education research: https://eric.ed.gov/
+
+Search is opened on DuckDuckGo with a `site:` restriction for the selected source. TMS does not proxy, scrape, summarize, or store online search results. Search is free to use without a TMS API key or subscription; the query is sent directly to the external search provider. Source-site content and download rights vary, so users must check the original publisher's terms and document version.
+
+This online-source directory is intentionally a no-API, no-subscription baseline. It is not a live AI web-research agent and does not claim that every linked document is free or current. Future direct search integrations must be reviewed for provider terms, privacy, quotas, and cost before activation.
+
+## Cost and consent policy
+
+- Local knowledge retrieval: runs within TMS; no external model call or per-query AI provider fee.
+- Online source directory and DuckDuckGo search: no TMS subscription or API credential required; external provider receives the search query. Users should not include personal student information.
+- Generative AI: calls the external AI Gateway twice per request (specialist and reviewer). It remains disabled until the organization approves the provider/model, data-processing terms, and an explicit monthly budget ceiling. The user-facing interface must disclose this before activation.
+- No paid search, AI, storage, or other third-party service may be silently enabled or billed to a teacher. Any future paid provider requires clear disclosure of provider, free allowance, expected charges, quotas, and user/administrator consent.
