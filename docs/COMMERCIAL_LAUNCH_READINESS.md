@@ -96,3 +96,15 @@ These are external/product decisions or operational controls, not items that can
 - Production smoke: `17/17` checks passed, including public password-reset, teacher AI route/API authorization, offline shell, service worker, PWA manifest, teacher account management reads, teacher account email assignment writes, teacher workspace sync API, and local teacher knowledge API.
 - The teacher account-email workflow is deployed, but it does not create or invite users automatically. The school must provide the 14 remaining real email addresses; each teacher must register and verify that email before the operator links the account.
 - No production database migration or teacher account creation was performed in PRs #76–#79.
+
+
+## Production environment audit — 13 November 2026
+
+This inventory checks variable names and configuration presence only; secret values were not requested or exposed.
+
+- **Custom domain:** the production project has only the verified Vercel host `teacher-management-system-nine.vercel.app`. No organization-owned custom domain is attached.
+- **AI generation:** production has no `TMS_AI_ENABLED`, `TMS_AI_BUDGET_APPROVED`, `TMS_AI_MODEL`, or `AI_GATEWAY_API_KEY` project variables. Generative AI responses are therefore disabled in production. Local teacher knowledge retrieval and citation grounding remain available; retrieval is not the same as a local generative model. Do not enable remote AI generation until the model/provider and monthly spending limit are explicitly approved.
+- **Payments:** no Midtrans server/client key variables are configured, and no checkout or webhook route exists in the application yet. Billing ledger tables exist, but production currently has 0 invoices and 0 payment transactions. Payment collection is not available.
+- **Email:** Neon Auth is configured, but no organization-owned SMTP sender is configured; verification email uses the shared Neon sender. No teacher invitation email is sent by the new account-email assignment flow.
+- **External launch inputs still required:** the approved domain and registrant/owner, organization-owned SMTP credentials and sender domain, AI provider/model and spending ceiling (if AI generation is required), Midtrans merchant account credentials, approved plan names/prices/terms, legal entity/contact and support channels, and the 14 remaining real teacher email addresses.
+- **Operational risk:** Neon production remains on the Free `free_v3` plan with 6-hour history retention and no verified independent backup/restore drill. This is unsuitable as the final commercial data-protection posture until the organization approves a retention/backup arrangement and a restore drill succeeds.
