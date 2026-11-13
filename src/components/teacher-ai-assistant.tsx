@@ -70,6 +70,7 @@ export default function TeacherAiAssistant() {
     <header style={{margin:"20px 0"}}><small style={{color:"#6254d9",fontWeight:700,letterSpacing:1.5}}>TMS • TEACHING ASSISTANT</small>
       <h1 style={{fontSize:30,margin:"8px 0"}}>Asisten AI Guru</h1>
       <p style={{color:"#65708a"}}>Agen spesialis menyusun saran, reviewer independen memeriksa, dan guru tetap memutuskan hasil akhir.</p>
+      <p role="status" style={{margin:"12px 0",padding:12,border:"1px solid #e8d6a8",borderRadius:9,background:"#fff9eb",color:"#76521d",fontSize:13,lineHeight:1.6}}><b>MODE UJI COBA — DATA CONTOH.</b> Data master guru dan siswa pada lingkungan ini adalah simulasi. Jangan masukkan identitas, nilai, catatan kesehatan, atau informasi pribadi murid ke kolom AI maupun pencarian online.</p>
     </header>
     <section style={{margin:"18px 0",background:"#f7f8fc",border:"1px solid #dfe4ef",borderRadius:14,padding:20}}>
       <small style={{color:"#6254d9",fontWeight:700,letterSpacing:1}}>TMS • PENGETAHUAN LOKAL</small>
