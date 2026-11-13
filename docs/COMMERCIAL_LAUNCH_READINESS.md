@@ -5,7 +5,7 @@ Status checked: 13 November 2026
 ## Current release
 
 - Production URL: https://teacher-management-system-nine.vercel.app
-- Latest merged main commit at this review: `ad451c12f265859fe1ab97a259636b60c9e4a29c` (PR #75; PRs #73–#75 add local teacher knowledge, expanded curriculum/assessment/AI competency coverage, and grounded AI responses with source citations).
+- Latest merged main commit at this review: `49115350172523a9961830959579b59861967a6b` (PR #79; PR #78 adds teacher account-email activation and PR #79 fixes the teacher roster email-selection state).
 - The immediately preceding main release `e5cc622607c1c9c5814749d5c267ca6f69ad2356` passed TMS CI #310 and Vercel Production status `success`; its production smoke verified 9/9 checks, including the teacher AI route's unauthenticated redirect and API rejection.
 - PR #63 adds the two-stage specialist + independent reviewer AI pipeline and is deployed in main commit `07cd2b45616602113306dd5cf00d303c5eca65f4`; TMS CI #312 passed and production smoke passed 9/9, with Vercel Production status `success`.
 - PRs #60–#75 are merged. The current production build is READY for commit `ad451c12f265859fe1ab97a259636b60c9e4a29c`; TMS CI #343 passed. Do not upgrade Vercel or incur paid charges without approval.
@@ -75,7 +75,7 @@ These are external/product decisions or operational controls, not items that can
 - TMS CI #343 completed successfully after the local retrieval + grounded teacher AI changes. The prior Production Smoke #144 also passed on the preceding release. These checks verify build and unauthenticated access controls; they do not replace authenticated teacher acceptance.
 - Local knowledge search runs on the TMS server from bundled reference material. AI response generation still depends on the configured remote AI Gateway and remains fail-closed behind `TMS_AI_ENABLED` and `TMS_AI_BUDGET_APPROVED`; the product must not be marketed as fully offline generative AI.
 - Teacher Desk supports encrypted local drafts, encrypted backup/restore, and explicit sync/conflict handling. Official school submission/review remains a separate online workflow.
-- The production smoke suite is being expanded to cover the offline shell, service worker, PWA manifest, teacher workspace sync authentication, and local knowledge API authentication.
+- The production smoke suite now covers the offline shell, service worker, PWA manifest, teacher account management and email-assignment authentication, teacher workspace sync authentication, and local knowledge API authentication. The latest main CI run passed all quality gates and production smoke passed 17/17 checks.
 - Commercial readiness remains blocked by the external/operational gates listed above: real teacher acceptance, organization-owned SMTP, controlled domain and trusted origins, backup/restore drill and monitoring, legal/support controls, and approved Midtrans merchant credentials/pricing plus checkout/webhook/subscription acceptance. No payment collection or paid infrastructure changes are authorized by this engineering work.
 
 
@@ -86,3 +86,13 @@ These are external/product decisions or operational controls, not items that can
 - The production origin allowlist currently contains the canonical Vercel application host and two Vercel aliases. A business-controlled domain must be added only after ownership and DNS/TLS verification.
 - The Neon production project is Free (`free_v3`), history retention is 6 hours, and the production branch is currently unprotected. The runtime database role is least-privilege with superuser and RLS-bypass disabled.
 - Billing ledger tables exist, but there are no invoices or payment transactions. This confirms payment collection has not started; it does not mean the billing product is implemented.
+
+
+## Release verification — 13 November 2026
+
+- Main commit: `49115350172523a9961830959579b59861967a6b` (PR #79).
+- Vercel production deployment for this commit: `READY`.
+- TMS CI completed successfully: typecheck, lint, dependency audit, build, and production smoke.
+- Production smoke: `17/17` checks passed, including public password-reset, teacher AI route/API authorization, offline shell, service worker, PWA manifest, teacher account management reads, teacher account email assignment writes, teacher workspace sync API, and local teacher knowledge API.
+- The teacher account-email workflow is deployed, but it does not create or invite users automatically. The school must provide the 14 remaining real email addresses; each teacher must register and verify that email before the operator links the account.
+- No production database migration or teacher account creation was performed in PRs #76–#79.
