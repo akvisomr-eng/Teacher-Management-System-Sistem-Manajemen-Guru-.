@@ -71,8 +71,8 @@ export default function TeacherAccessManager() {
         {teachers.map(t=><option key={t.id} value={t.id}>{t.full_name + (t.employee_number ? " · " + t.employee_number : "") + (t.account_linked ? " · akun sudah tertaut" : "")}</option>)}
       </select>
       <label style={{display:"block",fontSize:13,marginBottom:6}}>Email akun pribadi guru</label>
-      <input value={email} onChange={e=>setEmail(e.target.value)} type="email" placeholder="nama@sekolah.sch.id" style={{width:"100%",padding:12,marginBottom:14}}/>
-      <div style={{display:"flex",gap:10,flexWrap:"wrap"}}><button disabled={busy} onClick={()=>void saveEmail()} style={{background:"#eef0ff",color:"#4d43b8",border:0,borderRadius:9,padding:"12px 18px",cursor:"pointer"}}>{busy?"Memproses…":"Simpan email guru"}</button><button disabled={busy} onClick={()=>void linkAccount()} style={{background:"#6254d9",color:"white",border:0,borderRadius:9,padding:"12px 18px",cursor:"pointer"}}>{busy?"Memproses…":"Tautkan akun terdaftar"}</button></div>
+      <input value={email} onChange={e=>setEmail(e.target.value)} type="email" disabled={Boolean(selectedTeacher?.account_linked)} placeholder="nama@sekolah.sch.id" style={{width:"100%",padding:12,marginBottom:14}}/>
+      <div style={{display:"flex",gap:10,flexWrap:"wrap"}}><button disabled={busy || Boolean(selectedTeacher?.account_linked)} onClick={()=>void saveEmail()} style={{background:"#eef0ff",color:"#4d43b8",border:0,borderRadius:9,padding:"12px 18px",cursor:"pointer"}}>{busy?"Memproses…":"Simpan email guru"}</button><button disabled={busy || Boolean(selectedTeacher?.account_linked)} onClick={()=>void linkAccount()} style={{background:"#6254d9",color:"white",border:0,borderRadius:9,padding:"12px 18px",cursor:"pointer"}}>{busy?"Memproses…":"Tautkan akun terdaftar"}</button></div>
       <p role="status" style={{fontSize:13,color:"#58647d",marginTop:14}}>{message}</p>
     </section>
     <section style={{background:"white",border:"1px solid #e6eaf2",borderRadius:14,padding:22,marginTop:18}}>
