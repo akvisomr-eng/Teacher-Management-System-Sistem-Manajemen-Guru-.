@@ -124,6 +124,12 @@ export async function PATCH(request: Request) {
   if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Data email akun tidak valid." }, { status: 400 });
   return withSchoolManager(async (tx, tenantId, schoolId, userId) => {
     try {
+      const existing = await tx`SELECT user_id, account_email FROM teachers WHERE id = ${parsed.data.teacherId} AND tenant_id = ${tenantId} AND school_id = ${schoolId} LIMIT 1`;
+      if (!existing.length) return NextResponse.json({ error: "Data guru tidak ditemukan pada sekolah ini." }, { status: 404 });
+      const currentEmail = existing[0].account_email as string | null;
+      if (existing[0].user_id && currentEmail?.toLowerCase() !== parsed.data.email.toLowerCase()) {
+        return NextResponse.json({ error: "Akun guru yang sudah tertaut tidak dapat diganti melalui formulir email. Gunakan proses perubahan akun terverifikasi." }, { status: 409 });
+      }
       const rows = await tx`
         UPDATE teachers
         SET account_email = ${parsed.data.email.toLowerCase()}
