@@ -76,7 +76,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Paket sinkronisasi melebihi batas 12 MB." }, { status: 413 });
   }
   const raw = await request.text().catch(() => "");
-  if (raw.length > maxBodyBytes) {
+  if (new TextEncoder().encode(raw).byteLength > maxBodyBytes) {
     return NextResponse.json({ error: "Paket sinkronisasi melebihi batas 12 MB." }, { status: 413 });
   }
   let body: unknown;
