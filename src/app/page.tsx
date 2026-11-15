@@ -53,6 +53,10 @@ export default function Home() {
         const data = await response.json();
         if (response.status === 401) { router.replace("/admin/sign-in"); return; }
         if (response.status === 403) {
+          if (data.portal === "teacher") {
+            router.replace("/teacher");
+            return;
+          }
           throw new Error(data.error || "Akun ini tidak memiliki hak akses administrator.");
         }
         if (!response.ok) throw new Error(data.error || "Tidak dapat memuat data sekolah.");
@@ -96,7 +100,7 @@ export default function Home() {
               </div>}
             </div></div></header>
         <div className="content">
-          <div className="welcome-row"><div><div className="eyebrow">WORKSPACE AKADEMIK</div><h1>Selamat datang, {session?.user?.name?.split(" ")[0] ?? "Admin"}! <span>✦</span></h1><p>Berikut ringkasan aktivitas akademik sekolah Anda hari ini.</p></div><button className="period-button"><CalendarDays size={16}/> Tahun Ajaran Aktif <ChevronDown size={15}/></button></div>
+          <div className="welcome-row"><div><div className="eyebrow">PANEL ADMINISTRATOR SEKOLAH</div><h1>Selamat datang, {session?.user?.name?.split(" ")[0] ?? "Administrator"}! <span>✦</span></h1><p>Kelola data, operasional, dan pemantauan akademik sekolah Anda dari satu tempat.</p></div><button className="period-button"><CalendarDays size={16}/> Tahun Ajaran Aktif <ChevronDown size={15}/></button></div>
           <div role="status" style={{margin:"18px 0",padding:"13px 16px",border:"1px solid #e8d6a8",borderRadius:10,background:"#fff9eb",color:"#76521d",fontSize:13,lineHeight:1.6}}><b>MODE UJI COBA — DATA CONTOH.</b> Data master guru dan siswa pada lingkungan ini merupakan data simulasi. Gunakan data non-sensitif saat mencoba fitur; jangan masukkan identitas atau informasi pribadi peserta didik yang sebenarnya.</div>
           <div className="notice"><div className="notice-icon"><ShieldCheck size={19}/></div><div><b>{loadError ? "Koneksi data perlu diperiksa" : "Workspace sekolah Anda"}</b><p>{loadError || `Data ditampilkan dalam lingkup ${summary?.school.schoolName ?? "sekolah"}. Akses dibatasi berdasarkan keanggotaan dan peran.`}</p></div><button aria-label="Tutup informasi" onClick={(e) => e.currentTarget.parentElement?.remove()}><X size={17}/></button></div>
           <div className="section-heading"><div><h2>Ringkasan sekolah</h2><p>Pantau indikator utama kegiatan akademik.</p></div><button className="text-action">Lihat laporan <span>→</span></button></div>
