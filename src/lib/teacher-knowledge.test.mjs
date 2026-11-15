@@ -60,3 +60,18 @@ test("dokumen perencanaan pembelajaran menemukan komponen minimum terbaru", () =
   assert.match(regulation.summary, /tujuan pembelajaran, langkah pembelajaran, dan penilaian atau asesmen/);
   assert.ok(regulation.source.url.includes("peraturan.bpk.go.id"));
 });
+
+test("perencanaan kinerja guru menemukan panduan resmi PKG", () => {
+  const results = searchAdditionalTeacherKnowledge("bagaimana mengisi perencanaan kinerja guru di Ruang GTK");
+  assert.equal(results[0]?.id, "teacher-performance-planning-pkg");
+  assert.equal(results[0]?.source.status, "official");
+  assert.ok(results[0]?.guidance.some((item) => item.includes("surat keputusan atau surat tugas")));
+});
+
+test("panduan PKG mengingatkan variasi untuk guru pendidikan khusus dan sekolah swasta", () => {
+  const result = searchAdditionalTeacherKnowledge("PKG guru pendidikan khusus sekolah swasta")
+    .find((item) => item.id === "teacher-performance-planning-pkg");
+  assert.ok(result);
+  assert.ok(result.summary.includes("dapat berbeda"));
+  assert.ok(result.source.url.includes("pusatinformasi.ult.kemendikdasmen.go.id"));
+});

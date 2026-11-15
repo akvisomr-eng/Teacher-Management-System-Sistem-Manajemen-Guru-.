@@ -98,6 +98,25 @@ export const additionalTeacherKnowledge: KnowledgeDocument[] = [
     keywords: ["permendikdasmen 1 2026", "standar proses", "perencanaan pembelajaran", "dokumen perencanaan", "tujuan pembelajaran", "langkah pembelajaran", "asesmen pembelajaran", "berkesadaran", "bermakna", "menggembirakan", "permendikbudristek 16 2022", "administrasi guru"],
     source: { title: "Permendikdasmen Nomor 1 Tahun 2026 tentang Standar Proses", publisher: "JDIH BPK RI", url: "https://peraturan.bpk.go.id/Details/344196/permendikdasmen-no-1-tahun-2026", published: "2026", verifiedAt: "2026-11-15", status: "official" }
   },
+
+  {
+    id: "teacher-performance-planning-pkg",
+    title: "Perencanaan Kinerja Guru pada Pengelolaan Kinerja",
+    category: "Administrasi dan pengembangan profesional guru",
+    audience: "Guru PAUD/TK, pendidikan dasar dan menengah; perhatikan panduan khusus untuk pendidikan khusus dan satuan pendidikan swasta",
+    summary: "Panduan resmi Pusat Informasi ULT Kemendikdasmen yang diperbarui 26 November 2025 menjelaskan alur umum Perencanaan Kinerja Guru: meninjau pelaksanaan tugas pokok dan tugas tambahan yang didukung surat keputusan atau surat tugas, memilih fokus praktik kinerja, menentukan indikator pengembangan kompetensi, memilih perilaku kerja, meninjau rangkuman, lalu mengajukan rencana untuk diperiksa dan disepakati bersama atasan. Rincian alur dan pejabat penilai dapat berbeda menurut jenis satuan pendidikan, status guru, jenjang, dan pembaruan sistem Ruang GTK.",
+    guidance: [
+      "Mulai dari uraian tugas pokok dan tambahkan tugas lain hanya jika benar-benar ditetapkan melalui surat keputusan atau surat tugas yang relevan.",
+      "Pilih fokus praktik kinerja berdasarkan kebutuhan peningkatan pembelajaran dan bukti yang tersedia; rekomendasi Rapor Pendidikan dapat dipertimbangkan sesuai jenjang.",
+      "Pilih indikator pengembangan kompetensi yang paling sesuai dengan kebutuhan profesional dan diskusikan dengan kepala sekolah atau Tim Kinerja.",
+      "Tentukan perilaku kerja yang realistis untuk dikembangkan dan sepakati bersama pihak penilai sesuai mekanisme satuan pendidikan.",
+      "Periksa seluruh rangkuman sebelum mengajukan; setelah konfirmasi, perubahan dapat dibatasi dan mungkin memerlukan proses revisi resmi.",
+      "Jangan menganggap alur umum ini berlaku identik bagi guru pendidikan khusus, guru di sekolah swasta, atau satuan pendidikan dengan Plt. kepala sekolah; rujuk panduan khusus terbaru.",
+      "Gunakan artikel ini sebagai panduan operasional Ruang GTK, bukan sebagai pengganti peraturan kepegawaian atau kebijakan resmi instansi."
+    ],
+    keywords: ["perencanaan kinerja guru", "pkg", "pengelolaan kinerja", "ruang gtk", "tugas pokok", "tugas tambahan", "praktik kinerja", "pengembangan kompetensi", "perilaku kerja", "rapor pendidikan", "kepala sekolah", "tim kinerja", "skp guru"],
+    source: { title: "Cara Mengisi Perencanaan Kinerja Untuk Guru", publisher: "Pusat Informasi ULT, Kemendikdasmen", url: "https://pusatinformasi.ult.kemendikdasmen.go.id/hc/id/articles/40450716460441-Cara-Mengisi-Perencanaan-Kinerja-Untuk-Guru", published: "2025", verifiedAt: "2026-11-15", status: "official" }
+  },
 ];
 
 const normalize = (value: string) => value.toLocaleLowerCase("id-ID")
