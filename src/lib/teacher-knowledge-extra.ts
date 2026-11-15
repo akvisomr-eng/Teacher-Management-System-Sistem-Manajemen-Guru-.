@@ -67,22 +67,6 @@ export const additionalTeacherKnowledge: KnowledgeDocument[] = [
   }
 
   {
-    id: "unesco-student-ai-literacy",
-    title: "Literasi dan kompetensi AI untuk peserta didik",
-    category: "Literasi digital dan pembelajaran",
-    audience: "Guru dan perancang pembelajaran PAUD hingga pendidikan menengah, dengan adaptasi sesuai usia",
-    summary: "UNESCO AI Competency Framework for Students (2024) menguraikan 12 kompetensi dalam empat dimensi: pola pikir berpusat pada manusia, etika AI, teknik dan aplikasi AI, serta desain sistem AI. Perkembangan kompetensi bergerak melalui Understand, Apply, dan Create. Kerangka ini dapat menjadi rujukan untuk mengembangkan literasi AI yang kritis, aman, inklusif, dan sesuai usia; bukan instruksi untuk menyerahkan keputusan belajar kepada sistem AI.",
-    guidance: [
-      "Mulai dari contoh penggunaan AI yang dekat dengan kehidupan murid dan jelaskan bahwa keluaran AI dapat keliru atau bias.",
-      "Latih murid memeriksa fakta, membandingkan sumber, serta mengenali konten sintetis dan deepfake.",
-      "Ajarkan perlindungan data pribadi, hak cipta, atribusi, dan etika saat menggunakan AI.",
-      "Sesuaikan kegiatan dengan usia, fase, kesiapan, akses teknologi, dan tujuan mata pelajaran.",
-      "Dorong transparansi penggunaan AI serta penjelasan kontribusi dan proses berpikir murid sendiri."
-    ],
-    keywords: ["literasi ai siswa", "kompetensi ai peserta didik", "unesco students", "etika ai", "teknik ai", "desain sistem ai", "berpikir kritis", "deepfake", "privasi murid", "understand apply create"],
-    source: { title: "AI competency framework for students", publisher: "UNESCO", url: "https://www.unesco.org/en/articles/ai-competency-framework-students", published: "2024", verifiedAt: "2026-11-15", status: "research" }
-  },
-  {
     id: "unesco-teacher-ai-frameworks-2026",
     title: "Peta kerangka kompetensi AI guru dan implementasinya",
     category: "Literasi AI dan pengembangan profesional",
