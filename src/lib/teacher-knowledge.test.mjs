@@ -1,0 +1,48 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { searchTeacherKnowledge } from "./teacher-knowledge.ts";
+import { searchAdditionalTeacherKnowledge } from "./teacher-knowledge-extra.ts";
+
+const combined = (query) => [
+  ...searchTeacherKnowledge(query),
+  ...searchAdditionalTeacherKnowledge(query),
+].sort((a, b) => b.relevance - a.relevance)
+  .filter((item, index, all) => all.findIndex((candidate) => candidate.id === item.id) === index)
+  .slice(0, 5);
+
+test("CP dan TP menemukan panduan analisis CP, TP, dan ATP", () => {
+  const results = searchAdditionalTeacherKnowledge("CP dan TP");
+  assert.ok(results.some((item) => item.id === "cp-tp-atp-design"));
+});
+
+test("pertanyaan penyusunan ATP memprioritaskan panduan CP-TP-ATP", () => {
+  const results = searchAdditionalTeacherKnowledge("bagaimana menyusun ATP?");
+  assert.equal(results[0]?.id, "cp-tp-atp-design");
+});
+
+test("asesmen diagnostik menemukan materi asesmen formatif", () => {
+  const results = combined("asesmen diagnostik");
+  assert.ok(results.some((item) => item.id === "formative-assessment-feedback"));
+});
+
+test("literasi AI siswa menemukan kerangka kompetensi peserta didik", () => {
+  const results = combined("literasi AI siswa");
+  assert.ok(results.some((item) => item.id === "unesco-ai-student-competencies"));
+});
+
+test("kompetensi AI guru menemukan kerangka kompetensi pendidik", () => {
+  const results = combined("kompetensi AI guru");
+  assert.ok(results.some((item) => item.id === "unesco-ai-teacher-competencies" || item.id === "teacher-ai-literacy"));
+});
+
+test("akronim UDL tetap dapat dicari sebagai istilah pendek", () => {
+  const results = searchTeacherKnowledge("UDL");
+  assert.ok(results.some((item) => item.id === "inclusive-udl"));
+});
+
+test("pencarian lokal mengembalikan dokumen beserta sumber dan status", () => {
+  const result = combined("CP dan TP").find((item) => item.id === "cp-tp-atp-design");
+  assert.ok(result);
+  assert.ok(result.source.url.startsWith("https://"));
+  assert.ok(["official", "research", "framework"].includes(result.source.status));
+});
