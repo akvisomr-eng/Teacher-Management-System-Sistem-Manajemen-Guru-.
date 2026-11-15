@@ -109,6 +109,7 @@ function TeacherDeskContent({ identity, allowOfflineFallback }: { identity: Iden
       const pending = (await readTeacherItems(dbName, vaultKey)).filter(x => x.syncState !== "synced");
       if (!pending.length) { setMessage("Semua dokumen lokal sudah tersinkron."); return; }
       const accepted = new Set<string>();
+      const rejected = new Set<string>();
       let received = 0;
       for (let offset = 0; offset < pending.length; offset += 25) {
         const batch = pending.slice(offset, offset + 25);
@@ -123,6 +124,9 @@ function TeacherDeskContent({ identity, allowOfflineFallback }: { identity: Iden
         const result = await response.json();
         received += Number(result.received ?? batch.length);
         for (const row of (result.items ?? []) as Array<{id:string}>) accepted.add(row.id);
+        // Rejected IDs cannot be safely resolved against this account's server record.
+        // Preserve these drafts locally instead of creating an unresolvable conflict.
+        for (const id of (result.rejected ?? []) as string[]) rejected.add(id);
         for (const remote of (result.conflicts ?? []) as Array<{id:string;item_type:string;title:string;content:VaultWorkItem["content"];schema_version:number;client_updated_at:string}>) {
           const local = pending.find(item => item.id === remote.id);
           if (local) await writeTeacherItem(dbName, vaultKey, { ...local, syncState: "conflict",
@@ -133,10 +137,12 @@ function TeacherDeskContent({ identity, allowOfflineFallback }: { identity: Iden
       for (const item of pending) {
         const latest = (await readTeacherItems(dbName, vaultKey)).find(row => row.id === item.id) ?? item;
         if (accepted.has(item.id)) await writeTeacherItem(dbName, vaultKey, { ...latest, syncState: "synced", serverVersion: undefined });
+        else if (rejected.has(item.id)) await writeTeacherItem(dbName, vaultKey, { ...latest, syncState: "local", serverVersion: undefined });
         else if (latest.syncState !== "conflict") await writeTeacherItem(dbName, vaultKey, { ...latest, syncState: "conflict" });
       }
       await refresh();
-      setMessage(`${accepted.size} dari ${received} dokumen diterima server. Konflik ditandai untuk pemeriksaan.`);
+      const unresolved = pending.length - accepted.size - rejected.size;
+      setMessage(`${accepted.size} dari ${received} dokumen diterima server. ${rejected.size} dokumen tetap lokal karena tidak dapat ditautkan ke arsip akun ini; ${unresolved} konflik perlu ditinjau.`);
     } catch (error) { setMessage(error instanceof Error ? error.message : "Tidak dapat terhubung ke server."); }
     finally { setBusy(false); }
   }
