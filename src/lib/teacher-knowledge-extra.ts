@@ -64,7 +64,23 @@ export const additionalTeacherKnowledge: KnowledgeDocument[] = [
     ],
     keywords: ["literasi ai siswa", "kompetensi ai peserta didik", "unesco students", "etika ai", "teknik ai", "desain sistem ai", "berpikir kritis", "deepfake", "privasi murid"],
     source: { title: "AI competency framework for students", publisher: "UNESCO", url: "https://www.unesco.org/en/articles/ai-competency-framework-students", published: "2024", verifiedAt: "2026-11-13", status: "research" }
-  }
+  },
+  {
+    id: "unesco-teacher-ai-frameworks-2026",
+    title: "Peta kerangka kompetensi AI guru dan implementasinya",
+    category: "Literasi AI dan pengembangan profesional",
+    audience: "Guru, kepala sekolah, pengembang pelatihan, pengelola kebijakan pendidikan",
+    summary: "Laporan analitis UNESCO Institute for Information Technologies in Education tahun 2026 meninjau kerangka kompetensi AI guru, keterkaitan dengan pedagogi dan kurikulum, skenario implementasi pada tingkat kebijakan hingga praktik pembelajaran, serta pendekatan untuk mengevaluasi kompetensi. Gunakan laporan ini sebagai bahan pengembangan profesional dan perencanaan program, bukan sebagai pengganti regulasi nasional Indonesia.",
+    guidance: [
+      "Hubungkan pengembangan kompetensi AI guru dengan kebutuhan pembelajaran dan kurikulum, bukan sekadar penguasaan aplikasi.",
+      "Bangun dukungan secara berjenjang: kebijakan sekolah, pelatihan dan pendampingan, lalu praktik pembelajaran.",
+      "Nilai kompetensi melalui bukti praktik, refleksi, dan dampak pada pembelajaran; jangan hanya berdasarkan sertifikat penggunaan alat.",
+      "Pastikan kebijakan sekolah melindungi privasi, agensi guru dan murid, inklusi, serta akuntabilitas manusia.",
+      "Bandingkan rekomendasi internasional dengan peraturan dan panduan resmi Indonesia sebelum diterapkan."
+    ],
+    keywords: ["unesco iite", "kerangka kompetensi ai guru 2026", "teacher ai competency frameworks", "pengembangan profesional", "evaluasi kompetensi ai", "kebijakan ai pendidikan", "pedagogi ai"],
+    source: { title: "Analytical Report: Teacher AI Competency Frameworks", publisher: "UNESCO Institute for Information Technologies in Education", url: "https://iite.unesco.org/publications/analytical-report-teacher-ai-competency-frameworks/", published: "2026", verifiedAt: "2026-11-15", status: "research" }
+  },
 ];
 
 const normalize = (value: string) => value.toLocaleLowerCase("id-ID")
