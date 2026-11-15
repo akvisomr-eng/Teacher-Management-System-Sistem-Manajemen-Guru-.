@@ -91,7 +91,8 @@ const stopWords = new Set(["yang", "dan", "atau", "untuk", "dengan", "pada", "da
 
 export function searchAdditionalTeacherKnowledge(question: string) {
   const normalized = normalize(question);
-  const terms = [...new Set(normalized.split(" ").filter((term) => term.length > 2 && !stopWords.has(term)))];
+  const shortTerms = new Set(["cp", "tp", "atp", "sd", "mi", "smp", "sma", "smk", "slb", "udl", "ai"]);
+  const terms = [...new Set(normalized.split(" ").filter((term) => (term.length > 2 || shortTerms.has(term)) && !stopWords.has(term)))];
   return additionalTeacherKnowledge.map((doc) => {
     const title = normalize(doc.title);
     const searchable = normalize([doc.title, doc.category, doc.audience, doc.summary, ...doc.guidance, ...doc.keywords].join(" "));
