@@ -46,3 +46,17 @@ test("pencarian lokal mengembalikan dokumen beserta sumber dan status", () => {
   assert.ok(result.source.url.startsWith("https://"));
   assert.ok(["official", "research", "framework"].includes(result.source.status));
 });
+
+test("standar proses 2026 menemukan regulasi yang berlaku", () => {
+  const results = searchAdditionalTeacherKnowledge("standar proses 2026");
+  assert.equal(results[0]?.id, "permendikdasmen-1-2026-standard-process");
+  assert.equal(results[0]?.source.status, "official");
+});
+
+test("dokumen perencanaan pembelajaran menemukan komponen minimum terbaru", () => {
+  const result = searchAdditionalTeacherKnowledge("dokumen perencanaan pembelajaran");
+  const regulation = result.find((item) => item.id === "permendikdasmen-1-2026-standard-process");
+  assert.ok(regulation);
+  assert.match(regulation.summary, /tujuan pembelajaran, langkah pembelajaran, dan penilaian atau asesmen/);
+  assert.ok(regulation.source.url.includes("peraturan.bpk.go.id"));
+});

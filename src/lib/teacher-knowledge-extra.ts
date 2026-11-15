@@ -81,6 +81,23 @@ export const additionalTeacherKnowledge: KnowledgeDocument[] = [
     keywords: ["unesco iite", "kerangka kompetensi ai guru 2026", "teacher ai competency frameworks", "pengembangan profesional", "evaluasi kompetensi ai", "kebijakan ai pendidikan", "pedagogi ai"],
     source: { title: "Analytical Report: Teacher AI Competency Frameworks", publisher: "UNESCO Institute for Information Technologies in Education", url: "https://iite.unesco.org/publications/analytical-report-teacher-ai-competency-frameworks/", published: "2026", verifiedAt: "2026-11-15", status: "research" }
   },
+  {
+    id: "permendikdasmen-1-2026-standard-process",
+    title: "Standar Proses Pendidikan berdasarkan Permendikdasmen Nomor 1 Tahun 2026",
+    category: "Regulasi dan perencanaan pembelajaran",
+    audience: "Pendidik dan satuan pendidikan PAUD, pendidikan dasar, dan pendidikan menengah",
+    summary: "Permendikdasmen Nomor 1 Tahun 2026 tentang Standar Proses berlaku sejak 5 Januari 2026. Peraturan ini mengatur perencanaan pembelajaran, pelaksanaan pembelajaran, dan penilaian proses pembelajaran serta mencabut Permendikbudristek Nomor 16 Tahun 2022 dan Permendiknas Nomor 3 Tahun 2008. Dokumen perencanaan pembelajaran paling sedikit memuat tujuan pembelajaran, langkah pembelajaran, dan penilaian atau asesmen. Proses pembelajaran berlandaskan prinsip berkesadaran, bermakna, dan menggembirakan.",
+    guidance: [
+      "Gunakan Permendikdasmen Nomor 1 Tahun 2026 sebagai rujukan Standar Proses yang berlaku; jangan menyajikan Permendikbudristek Nomor 16 Tahun 2022 sebagai aturan yang masih berlaku.",
+      "Pastikan dokumen perencanaan sekurang-kurangnya memuat tujuan pembelajaran, langkah pembelajaran, dan penilaian atau asesmen.",
+      "Rumuskan tujuan dengan memperhatikan kompetensi, konten, karakteristik murid, dan sumber daya satuan pendidikan.",
+      "Rancang langkah belajar yang memberi pengalaman untuk mencapai tujuan dan menerapkan prinsip berkesadaran, bermakna, serta menggembirakan.",
+      "Pilih teknik dan instrumen asesmen yang sesuai dengan tujuan pembelajaran; sesuaikan format dokumen dengan konteks tanpa mengabaikan ketentuan yang berlaku.",
+      "Periksa naskah peraturan dan ketentuan turunannya sebelum mengambil keputusan administratif atau hukum."
+    ],
+    keywords: ["permendikdasmen 1 2026", "standar proses", "perencanaan pembelajaran", "dokumen perencanaan", "tujuan pembelajaran", "langkah pembelajaran", "asesmen pembelajaran", "berkesadaran", "bermakna", "menggembirakan", "permendikbudristek 16 2022", "administrasi guru"],
+    source: { title: "Permendikdasmen Nomor 1 Tahun 2026 tentang Standar Proses", publisher: "JDIH BPK RI", url: "https://peraturan.bpk.go.id/Details/344196/permendikdasmen-no-1-tahun-2026", published: "2026", verifiedAt: "2026-11-15", status: "official" }
+  },
 ];
 
 const normalize = (value: string) => value.toLocaleLowerCase("id-ID")
