@@ -46,10 +46,10 @@ Variabel lingkungan dijelaskan pada `.env.example` dan `docs/OPERATIONS.md`. Jan
 ## Status rilis
 
 - Production: https://teacher-management-system-nine.vercel.app
-- Latest merged main commit: `7668908e4a71390a0333461f977daa24be429f1b` (PR #85).
-- Main TMS CI run `43440919295` passed: typecheck, lint, production dependency audit, build, and production smoke.
-- Matching Vercel Production deployment `dpl_H1KdUdWYjysvf3RfJxjkAipdukaV` is `READY` and has the canonical production alias.
-- A READY deployment and passing smoke checks establish deployability and tested public/auth boundaries; they do not replace authenticated school/teacher acceptance, backup/restore drills, or end-to-end payment tests.
+- Latest main commit observed in the repository tree: `3cfc74342bcbcd24d9d31c51a5727156bed9d46d` (14 November 2026).
+- TMS CI run #380 completed successfully on `main` (13 November 2026); scheduled Production Smoke #170 completed successfully (14 November 2026).
+- These workflow results support build/release confidence but do not, by themselves, prove every authenticated teacher workflow, backup/restore recovery, or payment processing end to end.
+- Confirm the matching Vercel deployment status and authenticated school/teacher acceptance separately before expanding beyond the controlled pilot.
 - Current use is limited to a controlled school pilot. See [Commercial Launch Readiness](docs/COMMERCIAL_LAUNCH_READINESS.md) for verified operational gates.
 
 ## Commercial launch status
