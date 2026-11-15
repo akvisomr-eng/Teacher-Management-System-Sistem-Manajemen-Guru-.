@@ -68,7 +68,24 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const parsed = syncSchema.safeParse(await request.json().catch(() => null));
+  // Bound the raw body before JSON parsing so a malformed or oversized offline
+  // sync package cannot force unbounded request-body parsing in the route.
+  const maxBodyBytes = 12 * 1024 * 1024;
+  const contentLength = Number(request.headers.get("content-length") ?? 0);
+  if (Number.isFinite(contentLength) && contentLength > maxBodyBytes) {
+    return NextResponse.json({ error: "Paket sinkronisasi melebihi batas 12 MB." }, { status: 413 });
+  }
+  const raw = await request.text().catch(() => "");
+  if (raw.length > maxBodyBytes) {
+    return NextResponse.json({ error: "Paket sinkronisasi melebihi batas 12 MB." }, { status: 413 });
+  }
+  let body: unknown;
+  try {
+    body = JSON.parse(raw);
+  } catch {
+    return NextResponse.json({ error: "Format paket sinkronisasi bukan JSON yang valid." }, { status: 400 });
+  }
+  const parsed = syncSchema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Paket sinkronisasi tidak valid." }, { status: 400 });
   return withTeacher(async (tx, teacher, profile) => {
     const accepted: Array<{ id: string; updated_at: string }> = [];
