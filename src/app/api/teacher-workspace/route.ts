@@ -90,6 +90,7 @@ export async function POST(request: Request) {
   return withTeacher(async (tx, teacher, profile) => {
     const accepted: Array<{ id: string; updated_at: string }> = [];
     const conflicts: Array<Record<string, unknown>> = [];
+    const rejected: string[] = [];
     for (const item of parsed.data.items) {
       const rows = await tx`
         INSERT INTO teacher_workspace_items
@@ -119,6 +120,7 @@ export async function POST(request: Request) {
             AND owner_user_id = ${profile.id} LIMIT 1
         `;
         if (current[0]) conflicts.push(current[0]);
+        else rejected.push(item.id);
       }
     }
     await tx`
@@ -126,6 +128,6 @@ export async function POST(request: Request) {
       VALUES (${teacher.tenant_id}, ${teacher.school_id}, ${profile.id}, 'teacher_workspace.sync', 'teacher_workspace_items',
         ${tx.json({ received: parsed.data.items.length, accepted: accepted.length })})
     `;
-    return NextResponse.json({ accepted: accepted.length, received: parsed.data.items.length, items: accepted, conflicts });
+    return NextResponse.json({ accepted: accepted.length, received: parsed.data.items.length, items: accepted, conflicts, rejected });
   });
 }
