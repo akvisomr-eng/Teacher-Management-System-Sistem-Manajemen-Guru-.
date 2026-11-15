@@ -64,8 +64,7 @@ export const additionalTeacherKnowledge: KnowledgeDocument[] = [
     ],
     keywords: ["literasi ai siswa", "kompetensi ai peserta didik", "unesco students", "etika ai", "teknik ai", "desain sistem ai", "berpikir kritis", "deepfake", "privasi murid"],
     source: { title: "AI competency framework for students", publisher: "UNESCO", url: "https://www.unesco.org/en/articles/ai-competency-framework-students", published: "2024", verifiedAt: "2026-11-13", status: "research" }
-  }
-
+  },
   {
     id: "unesco-teacher-ai-frameworks-2026",
     title: "Peta kerangka kompetensi AI guru dan implementasinya",
