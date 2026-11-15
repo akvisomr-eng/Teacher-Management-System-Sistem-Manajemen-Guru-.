@@ -1,19 +1,11 @@
 import { NextResponse } from "next/server";
 import type { TransactionSql } from "postgres";
-import { z } from "zod";
 import { withAuthenticatedUser } from "@/db/connection";
+import { syncSchema } from "@/lib/teacher-workspace-schema";
 
 export const dynamic = "force-dynamic";
 
-const itemSchema = z.object({
-  id: z.string().uuid(),
-  itemType: z.enum(["lesson_plan","teaching_journal","learning_material","assessment_draft","reflection","personal_note"]),
-  title: z.string().trim().min(1).max(200),
-  content: z.record(z.string(), z.unknown()).refine(value => JSON.stringify(value).length <= 100_000, "Ukuran dokumen melebihi batas 100 KB."),
-  schemaVersion: z.number().int().min(1).max(100),
-  clientUpdatedAt: z.string().datetime()
-});
-const syncSchema = z.object({ items: z.array(itemSchema).min(1).max(25) });
+
 
 type DbTx = TransactionSql<Record<string, never>>;
 type TeacherIdentity = { teacher_id: string; tenant_id: string; school_id: string; full_name: string; role: string; scope: Record<string, unknown>; school_name: string };
@@ -126,7 +118,7 @@ export async function POST(request: Request) {
     await tx`
       INSERT INTO audit_logs (tenant_id, school_id, actor_user_id, action, resource_type, metadata)
       VALUES (${teacher.tenant_id}, ${teacher.school_id}, ${profile.id}, 'teacher_workspace.sync', 'teacher_workspace_items',
-        ${tx.json({ received: parsed.data.items.length, accepted: accepted.length })})
+        ${tx.json({ received: parsed.data.items.length, accepted: accepted.length, rejected: rejected.length, conflicts: conflicts.length })})
     `;
     return NextResponse.json({ accepted: accepted.length, received: parsed.data.items.length, items: accepted, conflicts, rejected });
   });
