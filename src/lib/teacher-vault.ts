@@ -26,7 +26,40 @@ export function bytesToBase64(bytes: Uint8Array): string {
   }
   return btoa(binary);
 }
-const base64ToBytes = (value: string) => Uint8Array.from(atob(value), c => c.charCodeAt(0));
+export function base64ToBytes(value: string): Uint8Array {
+  if (typeof value !== "string" || !value || value.length % 4 !== 0 ||
+      !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(value)) {
+    throw new Error("Data Base64 tidak valid.");
+  }
+  const decoded = Uint8Array.from(atob(value), character => character.charCodeAt(0));
+  if (bytesToBase64(decoded) !== value) throw new Error("Data Base64 tidak valid.");
+  return decoded;
+}
+
+type TeacherBackupEnvelope = { format: "tms-teacher-desk-encrypted"; version: 2; salt: string; iv: string; payload: string };
+
+export function validateTeacherBackupEnvelope(text: string): TeacherBackupEnvelope {
+  if (typeof text !== "string" || new TextEncoder().encode(text).byteLength > 5 * 1024 * 1024) {
+    throw new Error("Ukuran paket melebihi batas 5 MB.");
+  }
+  let parsed: unknown;
+  try { parsed = JSON.parse(text); } catch { throw new Error("File cadangan bukan JSON yang valid."); }
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+    throw new Error("Format paket terenkripsi tidak dikenali.");
+  }
+  const backup = parsed as Record<string, unknown>;
+  if (backup.format !== "tms-teacher-desk-encrypted" || backup.version !== 2 ||
+      typeof backup.salt !== "string" || typeof backup.iv !== "string" || typeof backup.payload !== "string") {
+    throw new Error("Format paket terenkripsi tidak dikenali.");
+  }
+  const salt = base64ToBytes(backup.salt);
+  const iv = base64ToBytes(backup.iv);
+  const payload = base64ToBytes(backup.payload);
+  if (salt.byteLength !== 16 || iv.byteLength !== 12 || payload.byteLength < 16) {
+    throw new Error("Struktur enkripsi paket tidak valid.");
+  }
+  return backup as TeacherBackupEnvelope;
+}
 const randomBytes = (length: number) => crypto.getRandomValues(new Uint8Array(length));
 
 function openDb(name: string): Promise<IDBDatabase> {
@@ -152,14 +185,18 @@ export async function createTeacherBackup(passphrase: string, salt: string, teac
 }
 
 export async function openTeacherBackup(text: string, passphrase: string) {
-  const backup = JSON.parse(text) as { format?: string; version?: number; salt?: string; iv?: string; payload?: string };
-  if (backup.format !== "tms-teacher-desk-encrypted" || backup.version !== 2 || !backup.salt || !backup.iv || !backup.payload) {
-    throw new Error("Format paket terenkripsi tidak dikenali.");
-  }
+  const backup = validateTeacherBackupEnvelope(text);
   const key = await deriveKey(passphrase, base64ToBytes(backup.salt));
+  let result: { teacher: { teacherId: string }; items: VaultWorkItem[] };
   try {
-    return await unseal<{ teacher: { teacherId: string }; items: VaultWorkItem[] }>(key, backup.iv, backup.payload);
+    result = await unseal<{ teacher: { teacherId: string }; items: VaultWorkItem[] }>(key, backup.iv, backup.payload);
   } catch {
     throw new Error("Frasa sandi paket salah atau file rusak.");
   }
+  if (!result || typeof result !== "object" || !result.teacher ||
+      typeof result.teacher.teacherId !== "string" || !result.teacher.teacherId.trim() ||
+      !Array.isArray(result.items) || result.items.length > 500) {
+    throw new Error("Isi cadangan tidak valid atau melebihi batas jumlah dokumen.");
+  }
+  return result;
 }
