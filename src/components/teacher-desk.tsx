@@ -7,7 +7,7 @@ import { authClient } from "@/lib/auth/client";
 import TeacherDocumentEditor from "@/components/teacher-document-editor";
 import {
   clearTeacherItems, createTeacherBackup, openTeacherBackup, readTeacherItems,
-  unlockTeacherVault, writeTeacherItem, writeTeacherItems, type VaultWorkItem
+  unlockTeacherVault, inspectTeacherVault, writeTeacherItem, writeTeacherItems, type VaultWorkItem
 } from "@/lib/teacher-vault";
 
 type Identity = { teacherId: string; name: string; school: string } | null;
@@ -42,6 +42,7 @@ function TeacherDeskContent({ identity, allowOfflineFallback }: { identity: Iden
   const [vaultSalt, setVaultSalt] = useState<string | null>(null);
   const [passphrase, setPassphrase] = useState("");
   const [showPassphrase, setShowPassphrase] = useState(false);
+  const [vaultDiagnostic, setVaultDiagnostic] = useState<string | null>(null);
   const [message, setMessage] = useState("Data offline akan dienkripsi sebelum disimpan pada perangkat.");
 
   const pendingCount = items.filter(item => item.syncState !== "synced").length;
@@ -68,6 +69,22 @@ function TeacherDeskContent({ identity, allowOfflineFallback }: { identity: Iden
     if ("serviceWorker" in navigator) void navigator.serviceWorker.register("/teacher-sw.js").catch(() => undefined);
     return () => { window.removeEventListener("online", update); window.removeEventListener("offline", update); };
   }, [identity?.teacherId, allowOfflineFallback]);
+
+  async function runVaultDiagnostic() {
+    if (!dbName) { setVaultDiagnostic("Identitas guru belum tersedia. Login dengan akun guru terlebih dahulu."); return; }
+    setBusy(true);
+    try {
+      const result = await inspectTeacherVault(dbName);
+      if (!result.databaseFound) {
+        setVaultDiagnostic("Database vault untuk identitas guru yang sedang aktif tidak ditemukan pada browser ini. Pemeriksaan tidak membuat database baru.");
+      } else {
+        const metadata = !result.metadataFound ? "metadata tidak ditemukan" : result.metadataValid ? "metadata valid secara struktur" : "metadata tidak valid";
+        setVaultDiagnostic(`Database ditemukan; ${metadata}; ${result.encryptedRecords} catatan terenkripsi valid secara struktur; ${result.legacyRecords} catatan format lama; ${result.malformedRecords} catatan dengan struktur tidak valid.${result.metadataIssue ? " " + result.metadataIssue : ""} Pemeriksaan ini tidak mendekripsi atau mengubah data.`);
+      }
+    } catch (error) {
+      setVaultDiagnostic(error instanceof Error ? error.message : "Pemeriksaan vault tidak dapat diselesaikan.");
+    } finally { setBusy(false); }
+  }
 
   async function unlock() {
     if (!dbName) { setMessage("Login online sekali sebagai guru untuk membuka ruang kerja pribadi."); return; }
@@ -284,6 +301,10 @@ function TeacherDeskContent({ identity, allowOfflineFallback }: { identity: Iden
       <div style={{display:"flex",justifyContent:"space-between",gap:12,flexWrap:"wrap"}}><b>Keamanan perangkat</b><span>{online?"● Online":"● Offline"}</span></div>
       <p style={{color:"#65708a",fontSize:13}}>{message}</p>
       {!vaultKey && <p role="status" style={{fontSize:13,background:"#fff7e9",border:"1px solid #f0d8ae",borderRadius:8,padding:10,color:"#79521d"}}>Tombol cadangan, ambil, bersihkan, impor, dan sinkronisasi menunggu vault dibuka. Ini perlindungan keamanan, bukan kerusakan tombol. Setelah vault terbuka, fungsi perangkat tersedia; Ambil dari TMS dan Sinkronkan juga memerlukan koneksi online.</p>}
+      <div style={{display:"flex",gap:8,flexWrap:"wrap",alignItems:"center",marginTop:10}}>
+        <button type="button" onClick={()=>void runVaultDiagnostic()} disabled={busy || !dbName} title="Memeriksa struktur penyimpanan lokal tanpa mengubah atau mendekripsi data">Periksa vault (hanya baca)</button>
+      </div>
+      {vaultDiagnostic && <p role="status" style={{fontSize:13,background:"#f2f5fb",border:"1px solid #d9e1ef",borderRadius:8,padding:12,color:"#35415c"}}>{vaultDiagnostic}</p>}
       {!vaultKey ? <div style={{display:"flex",gap:8,flexWrap:"wrap",alignItems:"center"}}>
         <input type={showPassphrase ? "text" : "password"} value={passphrase} onChange={e=>setPassphrase(e.target.value)} placeholder="Frasa sandi vault (minimal 10 karakter)" autoComplete="current-password" spellCheck={false} style={{padding:11,minWidth:260,flex:1}} aria-label="Frasa sandi vault"/>\n        <button type="button" onClick={()=>setShowPassphrase(value=>!value)} aria-label={showPassphrase ? "Sembunyikan frasa sandi" : "Tampilkan frasa sandi"}>{showPassphrase ? "Sembunyikan" : "Tampilkan"}</button>
         <button onClick={()=>void unlock()} disabled={busy||passphrase.length<10}>{busy?"Membuka…":"Buka / buat vault"}</button>
