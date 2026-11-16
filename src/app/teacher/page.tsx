@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { withAuthenticatedUser } from "@/db/connection";
 import TeacherDesk from "@/components/teacher-desk";
+import TeacherAcademicWorkspace from "@/components/teacher-academic-workspace";
 
 export const dynamic = "force-dynamic";
 
@@ -58,5 +59,5 @@ export default async function TeacherPage() {
       <a href="/workspace/teachers">Kembali ke TMS</a>
     </main>;
   }
-  return <TeacherDesk identity={result.identity} />;
+  return <><TeacherDesk identity={result.identity} /><TeacherAcademicWorkspace /></>;
 }
