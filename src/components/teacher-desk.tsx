@@ -7,7 +7,7 @@ import { authClient } from "@/lib/auth/client";
 import TeacherDocumentEditor from "@/components/teacher-document-editor";
 import {
   clearTeacherItems, createTeacherBackup, openTeacherBackup, readTeacherItems,
-  unlockTeacherVault, writeTeacherItem, type VaultWorkItem
+  unlockTeacherVault, writeTeacherItem, writeTeacherItems, type VaultWorkItem
 } from "@/lib/teacher-vault";
 
 type Identity = { teacherId: string; name: string; school: string } | null;
@@ -236,9 +236,10 @@ function TeacherDeskContent({ identity, allowOfflineFallback }: { identity: Iden
         }
         incomingIds.add(item.id);
       }
-      // Validate the entire package before writing any row, so a malformed later
-      // entry cannot leave a partially restored backup on this device.
+      // Validate the full package, prepare all encrypted rows, then commit them
+      // in one IndexedDB transaction so a storage failure cannot half-restore it.
       let restored = 0, duplicates = 0, conflicts = 0;
+      const toRestore: VaultWorkItem[] = [];
       for (const item of backup.items) {
         const current = existing.get(item.id);
         if (current) {
@@ -247,16 +248,17 @@ function TeacherDeskContent({ identity, allowOfflineFallback }: { identity: Iden
             current.clientUpdatedAt === item.clientUpdatedAt;
           if (same) { duplicates++; continue; }
           const copy = { ...item, id: crypto.randomUUID(), title: `${item.title} (salinan impor)`, syncState: "local" as const };
-          await writeTeacherItem(dbName, vaultKey, copy);
+          toRestore.push(copy);
           existing.set(copy.id, copy);
           conflicts++;
         } else {
           const restoredItem = { ...item, syncState: "local" as const };
-          await writeTeacherItem(dbName, vaultKey, restoredItem);
+          toRestore.push(restoredItem);
           existing.set(restoredItem.id, restoredItem);
         }
         restored++;
       }
+      await writeTeacherItems(dbName, vaultKey, toRestore);
       await refresh();
       setMessage(`${restored} dokumen dipulihkan; ${duplicates} duplikat identik dilewati; ${conflicts} ID yang berbenturan disimpan sebagai salinan agar data lama tidak tertimpa.`);
     } catch (error) { setMessage(error instanceof Error ? error.message : "Impor gagal."); }
