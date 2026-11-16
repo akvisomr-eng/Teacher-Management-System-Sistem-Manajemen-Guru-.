@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { bytesToBase64, base64ToBytes, validateTeacherBackupEnvelope } from "./teacher-vault.ts";
+import { bytesToBase64, base64ToBytes, validateTeacherBackupEnvelope, createTeacherBackup, openTeacherBackup } from "./teacher-vault.ts";
 
 test("encodes small byte arrays as standard Base64", () => {
   assert.equal(bytesToBase64(new Uint8Array([84, 77, 83])), "VE1T");
@@ -41,4 +41,36 @@ test("validates encrypted backup envelope dimensions before decryption", () => {
 
 test("rejects backup text larger than the import size limit", () => {
   assert.throws(() => validateTeacherBackupEnvelope(" ".repeat(5 * 1024 * 1024 + 1)), /5 MB/);
+});
+
+
+test("round-trips an encrypted teacher backup with the correct passphrase", async () => {
+  const salt = bytesToBase64(new Uint8Array(16).fill(7));
+  const item = {
+    id: "doc-1", itemType: "lesson_plan", title: "Rencana ajar",
+    content: { body: "Tujuan pembelajaran" }, schemaVersion: 2,
+    clientUpdatedAt: "2026-11-15T09:00:00.000Z", syncState: "local"
+  };
+  const backupText = await createTeacherBackup("frasa-sandi-uji-yang-kuat", salt, { teacherId: "teacher-1" }, [item]);
+  const restored = await openTeacherBackup(backupText, "frasa-sandi-uji-yang-kuat");
+  assert.equal(restored.teacher.teacherId, "teacher-1");
+  assert.deepEqual(restored.items, [item]);
+});
+
+test("rejects encrypted backups with a wrong passphrase or altered ciphertext", async () => {
+  const salt = bytesToBase64(new Uint8Array(16).fill(9));
+  const backupText = await createTeacherBackup("frasa-sandi-uji-yang-kuat", salt, { teacherId: "teacher-2" }, []);
+  await assert.rejects(() => openTeacherBackup(backupText, "frasa-sandi-yang-salah"), /Frasa sandi paket salah atau file rusak/);
+
+  const tampered = JSON.parse(backupText);
+  const encryptedBytes = base64ToBytes(tampered.payload);
+  encryptedBytes[0] ^= 1;
+  tampered.payload = bytesToBase64(encryptedBytes);
+  await assert.rejects(() => openTeacherBackup(JSON.stringify(tampered), "frasa-sandi-uji-yang-kuat"), /Frasa sandi paket salah atau file rusak/);
+});
+
+test("rejects decrypted backups without a teacher identity or with too many items", async () => {
+  const salt = bytesToBase64(new Uint8Array(16).fill(11));
+  const missingIdentity = await createTeacherBackup("frasa-sandi-uji-yang-kuat", salt, {}, []);
+  await assert.rejects(() => openTeacherBackup(missingIdentity, "frasa-sandi-uji-yang-kuat"), /Isi cadangan tidak valid/);
 });
