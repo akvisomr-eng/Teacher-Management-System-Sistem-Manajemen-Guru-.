@@ -47,8 +47,14 @@ export function AuthForm({ initialMode }: Props) {
     setBusy(true);
     try {
       if (step === "forgot") {
+        // Normalize pasted input before sending it to Neon Auth.
+        const normalizedEmail = email.trim().toLowerCase();
+        if (!normalizedEmail || !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(normalizedEmail)) {
+          throw new Error("Masukkan alamat email yang valid, misalnya nama@sekolah.id.");
+        }
+        setEmail(normalizedEmail);
         const result = await authClient.requestPasswordReset({
-          email,
+          email: normalizedEmail,
           redirectTo: `${window.location.origin}/auth/reset-password`
         });
         if (result.error) throw new Error(result.error.message || "Permintaan reset kata sandi gagal.");
