@@ -203,6 +203,10 @@ function TeacherDeskContent({ identity, allowOfflineFallback }: { identity: Iden
   async function exportData() {
     if (!dbName || !vaultKey || !vaultSalt) { setMessage("Ekspor cadangan memerlukan vault yang sudah dibuka. Masukkan frasa sandi lalu pilih Buka / buat vault."); return; }
     const backup = await createTeacherBackup(passphrase, vaultSalt, identity ?? { teacherId: effectiveTeacherId ?? "" }, await readTeacherItems(dbName, vaultKey));
+    if (new Blob([backup]).size > 5 * 1024 * 1024) {
+      setMessage("Cadangan melebihi batas impor 5 MB. Kurangi jumlah atau ukuran dokumen sebelum mengekspor agar file dapat dipulihkan kembali.");
+      return;
+    }
     const blob = new Blob([backup], { type: "application/json" });
     const url = URL.createObjectURL(blob); const a = document.createElement("a");
     a.href = url; a.download = `tms-teacher-desk-encrypted-${new Date().toISOString().slice(0,10)}.json`; a.click(); URL.revokeObjectURL(url);
@@ -218,15 +222,24 @@ function TeacherDeskContent({ identity, allowOfflineFallback }: { identity: Iden
       if (!backup.teacher?.teacherId || backup.teacher.teacherId !== effectiveTeacherId) throw new Error("Identitas guru pada paket tidak cocok.");
       if (!Array.isArray(backup.items) || backup.items.length > 500) throw new Error("Struktur paket tidak valid atau jumlah data melebihi batas.");
       const existing = new Map((await readTeacherItems(dbName, vaultKey)).map(item => [item.id, item]));
+      const incomingIds = new Set<string>();
+      for (const item of backup.items) {
+        if (typeof item.id !== "string" || item.id.length > 100 || incomingIds.has(item.id) ||
+            typeof item.title !== "string" || !item.title.trim() || item.title.length > 200 ||
+            !TYPES.some(([type]) => type === item.itemType) ||
+            !item.content || typeof item.content !== "object" ||
+            typeof item.content.body !== "string" || item.content.body.length > 100_000 ||
+            !Number.isInteger(item.schemaVersion) || item.schemaVersion < 1 ||
+            !Number.isFinite(Date.parse(item.clientUpdatedAt)) ||
+            !["local", "synced", "conflict"].includes(item.syncState)) {
+          throw new Error("Ada dokumen dengan struktur tidak valid atau ID duplikat. Tidak ada data yang diimpor.");
+        }
+        incomingIds.add(item.id);
+      }
+      // Validate the entire package before writing any row, so a malformed later
+      // entry cannot leave a partially restored backup on this device.
       let restored = 0, duplicates = 0, conflicts = 0;
       for (const item of backup.items) {
-        if (typeof item.id !== "string" || item.id.length > 100 || typeof item.title !== "string" || !item.title.trim() ||
-            item.title.length > 200 || !TYPES.some(([type]) => type === item.itemType) ||
-            typeof item.content?.body !== "string" || item.content.body.length > 100_000 ||
-            !Number.isInteger(item.schemaVersion) || item.schemaVersion < 1 ||
-            !Number.isFinite(Date.parse(item.clientUpdatedAt))) {
-          throw new Error("Ada dokumen dengan struktur tidak valid.");
-        }
         const current = existing.get(item.id);
         if (current) {
           const same = current.title === item.title && current.itemType === item.itemType &&
