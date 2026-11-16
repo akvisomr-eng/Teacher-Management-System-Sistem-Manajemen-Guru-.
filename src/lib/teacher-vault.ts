@@ -115,6 +115,74 @@ async function readRawRows(dbName: string): Promise<Array<VaultWorkItem | Encryp
   return rows;
 }
 
+export type TeacherVaultDiagnostic = {
+  databaseFound: boolean;
+  metadataFound: boolean;
+  metadataValid: boolean | null;
+  encryptedRecords: number;
+  legacyRecords: number;
+  malformedRecords: number;
+  metadataIssue?: string;
+};
+
+/**
+ * Read-only inspection. Does not create a database, decrypt records, or expose
+ * metadata values, record IDs, passphrases, or document content.
+ */
+export async function inspectTeacherVault(dbName: string): Promise<TeacherVaultDiagnostic> {
+  if (typeof indexedDB.databases !== "function") {
+    throw new Error("Browser ini tidak mendukung pemeriksaan daftar database lokal secara aman. Gunakan Chrome versi terbaru.");
+  }
+  const databases = await indexedDB.databases();
+  if (!databases.some(database => database.name === dbName)) {
+    return { databaseFound: false, metadataFound: false, metadataValid: null, encryptedRecords: 0, legacyRecords: 0, malformedRecords: 0 };
+  }
+  const db = await new Promise<IDBDatabase>((resolve, reject) => {
+    const request = indexedDB.open(dbName);
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+    request.onblocked = () => reject(new Error("Pemeriksaan penyimpanan sedang tertahan oleh tab lain."));
+  });
+  try {
+    if (!db.objectStoreNames.contains(META) || !db.objectStoreNames.contains(STORE)) {
+      return { databaseFound: true, metadataFound: false, metadataValid: false, encryptedRecords: 0, legacyRecords: 0, malformedRecords: 0, metadataIssue: "Struktur penyimpanan tidak lengkap." };
+    }
+    const tx = db.transaction([META, STORE], "readonly");
+    const [meta, rows] = await Promise.all([
+      requestValue(tx.objectStore(META).get("vault")) as Promise<VaultMeta | undefined>,
+      requestValue(tx.objectStore(STORE).getAll()) as Promise<Array<VaultWorkItem | EncryptedRecord>>
+    ]);
+    let metadataValid: boolean | null = null;
+    let metadataIssue: string | undefined;
+    if (meta) {
+      try {
+        if (typeof meta.salt !== "string" || typeof meta.verifierIv !== "string" || typeof meta.verifier !== "string") throw new Error();
+        if (base64ToBytes(meta.salt).byteLength !== 16 || base64ToBytes(meta.verifierIv).byteLength !== 12 || base64ToBytes(meta.verifier).byteLength < 16) throw new Error();
+        metadataValid = true;
+      } catch {
+        metadataValid = false;
+        metadataIssue = "Metadata ditemukan tetapi format atau ukuran datanya tidak valid.";
+      }
+    }
+    let encryptedRecords = 0, legacyRecords = 0, malformedRecords = 0;
+    for (const row of rows) {
+      if ("encrypted" in row && row.encrypted === true && typeof row.iv === "string" && typeof row.payload === "string") {
+        try {
+          if (base64ToBytes(row.iv).byteLength !== 12 || base64ToBytes(row.payload).byteLength < 16) malformedRecords++;
+          else encryptedRecords++;
+        } catch { malformedRecords++; }
+      } else if ("encrypted" in row) {
+        malformedRecords++;
+      } else {
+        legacyRecords++;
+      }
+    }
+    return { databaseFound: true, metadataFound: Boolean(meta), metadataValid, encryptedRecords, legacyRecords, malformedRecords, metadataIssue };
+  } finally {
+    db.close();
+  }
+}
+
 export async function unlockTeacherVault(dbName: string, passphrase: string) {
   if (passphrase.length < 10) throw new Error("Gunakan frasa sandi minimal 10 karakter.");
   const db = await openDb(dbName);
