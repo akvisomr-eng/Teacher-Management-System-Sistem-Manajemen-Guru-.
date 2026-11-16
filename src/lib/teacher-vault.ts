@@ -91,7 +91,13 @@ async function seal(key: CryptoKey, value: unknown) {
 }
 
 async function unseal<T>(key: CryptoKey, iv: string, payload: string): Promise<T> {
-  const plain = await crypto.subtle.decrypt({ name: "AES-GCM", iv: base64ToBytes(iv) }, key, base64ToBytes(payload));
+  const ivBytes = base64ToBytes(iv);
+  const payloadBytes = base64ToBytes(payload);
+  const ivBuffer = new ArrayBuffer(ivBytes.byteLength);
+  const payloadBuffer = new ArrayBuffer(payloadBytes.byteLength);
+  new Uint8Array(ivBuffer).set(ivBytes);
+  new Uint8Array(payloadBuffer).set(payloadBytes);
+  const plain = await crypto.subtle.decrypt({ name: "AES-GCM", iv: ivBuffer }, key, payloadBuffer);
   return JSON.parse(new TextDecoder().decode(plain)) as T;
 }
 
