@@ -31,7 +31,6 @@ export default function TeacherAcademicWorkspace() {
   const [activeTab, setActiveTab] = useState<"overview" | "students" | "assignments" | "assessments">("overview");
 
   const load = useCallback(async () => {
-    setLoading(true); setError("");
     try {
       const response = await fetch("/api/teacher-academic", { cache: "no-store" });
       const result = await response.json();
@@ -68,7 +67,7 @@ export default function TeacherAcademicWorkspace() {
           <h2 style={{ margin: "6px 0" }}>Kelas, Siswa, Penugasan & Asesmen</h2>
           <p style={{ ...muted, margin: 0 }}>Data mengikuti penugasan resmi akun guru pada tahun ajaran aktif{data?.academicYear ? ` · ${data.academicYear}` : ""}.</p>
         </div>
-        <button type="button" onClick={() => void load()} disabled={loading} style={{ padding: "9px 13px", border: "1px solid #c9c3f4", borderRadius: 8, background: "white", cursor: "pointer" }}>{loading ? "Memuat…" : "Muat ulang data"}</button>
+        <button type="button" onClick={() => { setLoading(true); setError(""); void load(); }} disabled={loading} style={{ padding: "9px 13px", border: "1px solid #c9c3f4", borderRadius: 8, background: "white", cursor: "pointer" }}>{loading ? "Memuat…" : "Muat ulang data"}</button>
       </div>
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 14 }}>
         {tabs.map(([id, label]) => <button key={id} type="button" onClick={() => setActiveTab(id)} aria-pressed={activeTab === id} style={{ padding: "9px 13px", borderRadius: 8, border: activeTab === id ? "1px solid #6254d9" : "1px solid #d9ddec", background: activeTab === id ? "#6254d9" : "#fff", color: activeTab === id ? "#fff" : "#35415c", fontWeight: 700, cursor: "pointer" }}>{label}</button>)}
