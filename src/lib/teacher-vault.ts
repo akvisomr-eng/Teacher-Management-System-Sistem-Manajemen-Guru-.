@@ -170,6 +170,25 @@ export async function writeTeacherItem(dbName: string, key: CryptoKey, item: Vau
   db.close();
 }
 
+export async function writeTeacherItems(dbName: string, key: CryptoKey, items: VaultWorkItem[]) {
+  if (!items.length) return;
+  const encryptedRows = await Promise.all(items.map(async item => ({
+    id: item.id, encrypted: true as const, ...await seal(key, item)
+  })));
+  const db = await openDb(dbName);
+  try {
+    const tx = db.transaction(STORE, "readwrite");
+    for (const row of encryptedRows) tx.objectStore(STORE).put(row);
+    await new Promise<void>((resolve, reject) => {
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+      tx.onabort = () => reject(tx.error ?? new Error("Penyimpanan dibatalkan."));
+    });
+  } finally {
+    db.close();
+  }
+}
+
 export async function clearTeacherItems(dbName: string) {
   const db = await openDb(dbName);
   const tx = db.transaction(STORE, "readwrite");
