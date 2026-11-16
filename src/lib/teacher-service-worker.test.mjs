@@ -24,7 +24,7 @@ async function loadWorker() {
     skipWaiting: async () => undefined,
     addEventListener: (name, callback) => listeners.set(name, callback)
   };
-  vm.runInNewContext(await readFile(new URL("../public/teacher-sw.js", import.meta.url), "utf8"), { self, caches, URL, Promise, fetch: (...args) => globalThis.fetch(...args) });
+  vm.runInNewContext(await readFile(new URL("../../public/teacher-sw.js", import.meta.url), "utf8"), { self, caches, URL, Promise, fetch: (...args) => globalThis.fetch(...args) });
   return { listeners, entries, deleted, cache };
 }
 
