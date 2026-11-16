@@ -8,7 +8,7 @@
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
-    "test": "node --experimental-strip-types --test src/lib/teacher-knowledge.test.mjs src/lib/teacher-workspace-schema.test.mjs"
+    "test": "node --experimental-strip-types --test src/lib/teacher-knowledge.test.mjs src/lib/teacher-workspace-schema.test.mjs src/lib/teacher-vault.test.mjs"
   },
   "dependencies": {
     "drizzle-orm": "^0.45.4",

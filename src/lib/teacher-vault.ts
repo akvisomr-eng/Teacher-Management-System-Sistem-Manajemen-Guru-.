@@ -15,7 +15,17 @@ const STORE = "work-items";
 const META = "vault-meta";
 const ITERATIONS = 310_000;
 
-const bytesToBase64 = (bytes: Uint8Array) => btoa(String.fromCharCode(...bytes));
+export function bytesToBase64(bytes: Uint8Array): string {
+  // Avoid spreading a multi-megabyte encrypted backup into a single function call.
+  // Chunking keeps the conversion below browser argument-count limits.
+  const chunkSize = 0x8000;
+  let binary = "";
+  for (let offset = 0; offset < bytes.length; offset += chunkSize) {
+    const chunk = bytes.subarray(offset, Math.min(offset + chunkSize, bytes.length));
+    binary += String.fromCharCode(...chunk);
+  }
+  return btoa(binary);
+}
 const base64ToBytes = (value: string) => Uint8Array.from(atob(value), c => c.charCodeAt(0));
 const randomBytes = (length: number) => crypto.getRandomValues(new Uint8Array(length));
 
