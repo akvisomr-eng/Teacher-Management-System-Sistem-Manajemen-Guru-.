@@ -122,13 +122,29 @@ export async function unlockTeacherVault(dbName: string, passphrase: string) {
   db.close();
 
   if (meta) {
-    const salt = base64ToBytes(meta.salt);
-    const key = await deriveKey(passphrase, salt);
+    let salt: Uint8Array;
     try {
-      const verifier = await unseal<string>(key, meta.verifierIv, meta.verifier);
-      if (verifier !== "TMS-TEACHER-VAULT-V1") throw new Error("Frasa sandi tidak cocok.");
+      if (typeof meta.salt !== "string" || typeof meta.verifierIv !== "string" || typeof meta.verifier !== "string") {
+        throw new Error("Metadata tidak lengkap.");
+      }
+      salt = base64ToBytes(meta.salt);
+      const verifierIv = base64ToBytes(meta.verifierIv);
+      const verifierPayload = base64ToBytes(meta.verifier);
+      if (salt.byteLength !== 16 || verifierIv.byteLength !== 12 || verifierPayload.byteLength < 16) {
+        throw new Error("Ukuran metadata tidak valid.");
+      }
     } catch {
-      throw new Error("Frasa sandi salah atau data vault rusak. Data terenkripsi tidak diubah.");
+      throw new Error("Metadata keamanan vault rusak atau tidak lengkap. Data terenkripsi tetap dipertahankan; jangan hapus penyimpanan browser.");
+    }
+    const key = await deriveKey(passphrase, salt);
+    let verifier: string;
+    try {
+      verifier = await unseal<string>(key, meta.verifierIv, meta.verifier);
+    } catch {
+      throw new Error("Kunci tidak cocok dengan vault ini, atau pemeriksaan integritas vault gagal. Pastikan akun guru dan browser/perangkat yang sama digunakan serta frasa sandi dimasukkan persis (huruf besar-kecil dan spasi ikut dihitung). Data terenkripsi tidak diubah.");
+    }
+    if (verifier !== "TMS-TEACHER-VAULT-V1") {
+      throw new Error("Pemeriksaan identitas vault tidak valid. Metadata keamanan mungkin rusak; data terenkripsi tidak diubah.");
     }
     return { key, salt: meta.salt };
   }

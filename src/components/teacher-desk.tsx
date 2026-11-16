@@ -41,6 +41,7 @@ function TeacherDeskContent({ identity, allowOfflineFallback }: { identity: Iden
   const [vaultKey, setVaultKey] = useState<CryptoKey | null>(null);
   const [vaultSalt, setVaultSalt] = useState<string | null>(null);
   const [passphrase, setPassphrase] = useState("");
+  const [showPassphrase, setShowPassphrase] = useState(false);
   const [message, setMessage] = useState("Data offline akan dienkripsi sebelum disimpan pada perangkat.");
 
   const pendingCount = items.filter(item => item.syncState !== "synced").length;
@@ -284,10 +285,10 @@ function TeacherDeskContent({ identity, allowOfflineFallback }: { identity: Iden
       <p style={{color:"#65708a",fontSize:13}}>{message}</p>
       {!vaultKey && <p role="status" style={{fontSize:13,background:"#fff7e9",border:"1px solid #f0d8ae",borderRadius:8,padding:10,color:"#79521d"}}>Tombol cadangan, ambil, bersihkan, impor, dan sinkronisasi menunggu vault dibuka. Ini perlindungan keamanan, bukan kerusakan tombol. Setelah vault terbuka, fungsi perangkat tersedia; Ambil dari TMS dan Sinkronkan juga memerlukan koneksi online.</p>}
       {!vaultKey ? <div style={{display:"flex",gap:8,flexWrap:"wrap",alignItems:"center"}}>
-        <input type="password" value={passphrase} onChange={e=>setPassphrase(e.target.value)} placeholder="Frasa sandi vault (minimal 10 karakter)" autoComplete="new-password" style={{padding:11,minWidth:260,flex:1}}/>
+        <input type={showPassphrase ? "text" : "password"} value={passphrase} onChange={e=>setPassphrase(e.target.value)} placeholder="Frasa sandi vault (minimal 10 karakter)" autoComplete="current-password" spellCheck={false} style={{padding:11,minWidth:260,flex:1}} aria-label="Frasa sandi vault"/>\n        <button type="button" onClick={()=>setShowPassphrase(value=>!value)} aria-label={showPassphrase ? "Sembunyikan frasa sandi" : "Tampilkan frasa sandi"}>{showPassphrase ? "Sembunyikan" : "Tampilkan"}</button>
         <button onClick={()=>void unlock()} disabled={busy||passphrase.length<10}>{busy?"Membuka…":"Buka / buat vault"}</button>
       </div> : <div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}><b>Vault terbuka · AES-256-GCM</b><button onClick={lock}>Kunci vault</button></div>}
-      <p style={{fontSize:12,color:"#9a5a19",background:"#fff7e9",padding:12,borderRadius:8}}>Frasa sandi tidak disimpan oleh aplikasi. Jika hilang, data lokal dan cadangan terenkripsi tidak dapat dipulihkan. Gunakan frasa sandi kuat dan simpan dengan aman. Hindari memasukkan data sensitif siswa pada perangkat bersama.</p>
+      <p style={{fontSize:12,color:"#9a5a19",background:"#fff7e9",padding:12,borderRadius:8}}>Frasa sandi tidak disimpan oleh aplikasi. Sistem membedakan huruf besar-kecil dan mempertahankan spasi di awal/akhir; jangan menambah atau menghapus spasi saat mengetik. Gunakan tombol Tampilkan untuk memeriksa ejaan sebelum membuka. Frasa sandi yang hilang tidak dapat dipulihkan. Hindari memasukkan data sensitif siswa pada perangkat bersama.</p>
     </section>
     <section aria-label="Ringkasan pekerjaan guru" style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:12,marginTop:18}}>
       {[[items.length,"Total dokumen"],[pendingCount,"Belum tersinkron"],[syncedCount,"Tersinkron"],[items.filter(item=>item.syncState==="conflict").length,"Perlu pemeriksaan"]].map(([value,label])=><article key={String(label)} style={{background:"white",border:"1px solid #e6eaf2",borderRadius:12,padding:16}}><strong style={{display:"block",fontSize:26,color:"#6254d9"}}>{value}</strong><span style={{fontSize:13,color:"#65708a"}}>{label}</span></article>)}
